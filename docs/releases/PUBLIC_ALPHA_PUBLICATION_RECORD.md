@@ -2,11 +2,11 @@
 
 ## Summary
 
-Release publication status: MANUAL_PUBLICATION_PENDING
+Release publication status: PUBLISHED_AS_GITHUB_PRERELEASE
 
 Release decision: CONDITIONAL_GO
 
-The local release package and documentation are prepared, but the GitHub Release was not created from this environment because no git remote is configured and GitHub CLI is unavailable.
+The GitHub Release was manually created as a prerelease with CONDITIONAL_GO wording.
 
 ## Release Metadata
 
@@ -15,20 +15,18 @@ The local release package and documentation are prepared, but the GitHub Release
 | Release tag | `v0.2.9-public-alpha-conditional` |
 | Release title | BookTrans Desk v0.2.9 Public Alpha (Conditional) |
 | Release decision | CONDITIONAL_GO |
-| Pushed commit | BLOCKED_NO_REMOTE_OR_PERMISSION |
-| Pushed tag | BLOCKED_NO_REMOTE_OR_PERMISSION |
-| Release URL | Not created |
-| Prerelease status | Must be marked prerelease when manually published |
+| Pushed commit | `633cf0c` on `master` |
+| Pushed tag | `v0.2.9-public-alpha-conditional`, `v0.2.10-public-alpha-publication` |
+| Release URL | https://github.com/conanxin/booktrans-desk/releases/tag/v0.2.9-public-alpha-conditional |
+| Prerelease status | Published as GitHub prerelease |
 
 ## Uploaded Artifacts
 
-ARTIFACTS_UPLOADED: NO
+ARTIFACTS_UPLOADED: YES
 
-Manual upload still required:
-
-- `release/BookTrans Desk Setup 0.2.8-alpha.0.exe`
-- `release/BookTrans Desk 0.2.8-alpha.0.exe`
-- `release/BookTrans Desk Setup 0.2.8-alpha.0.exe.blockmap`
+- `BookTrans Desk Setup 0.2.8-alpha.0.exe`
+- `BookTrans Desk 0.2.8-alpha.0.exe`
+- `BookTrans Desk Setup 0.2.8-alpha.0.exe.blockmap`
 
 ## Checksums
 
@@ -38,18 +36,12 @@ Manual upload still required:
 | `BookTrans Desk 0.2.8-alpha.0.exe` | `B2BAA8A22F33C2862775A8D2D889B4B77D49B3FF70EC4142F84ABE35B084D8C5` |
 | `BookTrans Desk Setup 0.2.8-alpha.0.exe.blockmap` | `2E4E6B4AB8157F8D19FC3751D7D907CEB0729BEDADBB3BAB38A4EC031ADB888C` |
 
-## Manual Steps Remaining
+## Publication Notes
 
-1. Configure a GitHub remote or open the GitHub repository in the browser.
-2. Push `master` or the intended release branch.
-3. Push tag `v0.2.9-public-alpha-conditional`.
-4. Open GitHub Releases and draft a new release.
-5. Choose tag `v0.2.9-public-alpha-conditional`.
-6. Use title `BookTrans Desk v0.2.9 Public Alpha (Conditional)`.
-7. Paste body from `docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md`.
-8. Mark the release as prerelease.
-9. Upload the three artifacts listed above.
-10. Confirm checksums match this record before publishing.
+- Release was manually published in GitHub.
+- Release remains a prerelease.
+- Release wording must remain CONDITIONAL_GO.
+- Artifact checksums match the recorded values above.
 
 ## Next Validation Work
 

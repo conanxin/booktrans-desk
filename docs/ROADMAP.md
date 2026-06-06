@@ -95,10 +95,11 @@
 
 ## Phase 2.10 Conditional Public Alpha Publication
 
-- Status: publication package prepared, GitHub publication pending.
-- Push blocked because no git remote is configured.
-- GitHub Release creation blocked because GitHub CLI is unavailable.
-- Manual publication steps recorded in `docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md`.
+- Status: published as GitHub prerelease.
+- Release URL: https://github.com/conanxin/booktrans-desk/releases/tag/v0.2.9-public-alpha-conditional
+- Final decision remains `CONDITIONAL_GO`.
+- Uploaded Windows installer, portable exe, and blockmap artifacts.
+- Publication record stored in `docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md`.
 
 ## Phase 3 Local Library Management
 

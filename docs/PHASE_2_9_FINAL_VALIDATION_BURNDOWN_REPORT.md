@@ -51,7 +51,7 @@ The release can be published only with explicit conditional validation wording. 
 
 Recommend publishing only if the maintainer accepts the conditional validation language in `docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md`. For a full GO, first complete visual app UI validation and visible Calibre or Thorium baseline EPUB validation.
 
-Publication status after Phase 2.10 attempt: manual publication pending. No git remote is configured and GitHub CLI is unavailable in this environment.
+Publication status after Phase 2.10: published manually as GitHub prerelease at https://github.com/conanxin/booktrans-desk/releases/tag/v0.2.9-public-alpha-conditional. Final decision remains CONDITIONAL_GO.
 
 ## Release Steps
 

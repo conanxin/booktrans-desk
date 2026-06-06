@@ -60,7 +60,7 @@ Phase 2.8 decision status: CONDITIONAL_GO. Automatic checks, packaging, dist art
 
 Phase 2.9 final validation status: CONDITIONAL_GO. App and portable processes start, Calibre reader process smoke opened a temporary validated minimal EPUB, but visual UI and visible reader text confirmation remain incomplete.
 
-Public alpha release package prepared; GitHub publication pending because no remote is configured in this environment and GitHub CLI is unavailable.
+Public alpha prerelease published: [BookTrans Desk v0.2.9 Public Alpha (Conditional)](https://github.com/conanxin/booktrans-desk/releases/tag/v0.2.9-public-alpha-conditional). Final decision remains CONDITIONAL_GO.
 
 ## Release Check
 

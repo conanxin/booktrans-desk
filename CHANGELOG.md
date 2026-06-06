@@ -2,7 +2,8 @@
 
 ## Unreleased / v0.2.8-public-alpha
 
-- Record conditional public alpha publication as manual pending because no git remote is configured and GitHub CLI is unavailable.
+- Record GitHub prerelease publication URL for `v0.2.9-public-alpha-conditional`.
+- Record conditional public alpha publication as a GitHub prerelease.
 - Refresh public alpha release checksums after final `npm run dist`.
 - Record Phase 2.9 final validation burn-down as CONDITIONAL_GO.
 - Add Calibre reader process smoke result for a temporary exported synthetic minimal EPUB.
