@@ -11,5 +11,6 @@ BookTrans Desk runs locally on your computer.
 - Job cache, export history, and translation profile stores do not save API keys.
 - External EPUBCheck, if configured, runs as a local command.
 - Diagnostic bundles are generated locally and are designed to omit original EPUB files, exported EPUB files, API keys, Authorization headers, and full book text. The app shows this summary before export and writes it into `diagnostic-summary.md`.
+- Public issue reports should not include copyrighted EPUBs, exported copyrighted EPUBs, API keys, Authorization headers, private provider logs, or full book text.
 
 You are responsible for confirming that you have the right to process and translate EPUB content with your selected model provider.

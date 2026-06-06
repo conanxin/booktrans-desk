@@ -25,11 +25,16 @@ export const requiredDocs = [
   "docs/triage/ALPHA_FEEDBACK_WORKFLOW.md",
   "docs/releases/ALPHA_RELEASE_CHECKLIST.md",
   "docs/releases/v0.2.5-alpha-rc.md",
+  "docs/releases/MANUAL_READER_VALIDATION_CHECKLIST.md",
+  "docs/releases/RC_BURNDOWN.md",
+  "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md",
+  "docs/releases/INSTALLER_CHECKSUMS.md",
+  "docs/releases/WINDOWS_UNSIGNED_WARNING.md",
   "scripts/github-labels.json"
 ];
 
-export const currentPackageVersion = "0.2.5-alpha.0";
-export const currentReleaseVersion = "v0.2.5-alpha-rc";
+export const currentPackageVersion = "0.2.6-alpha.0";
+export const currentReleaseVersion = "v0.2.6-public-alpha-prep";
 
 const requiredCompatibilityFixtures = [
   "nested-sections",
@@ -129,6 +134,9 @@ function runVersionAndReleaseChecks({ fileSet, readFile, failures }) {
     if (!readme.includes("Alpha warning")) {
       failures.push("README.md must contain Alpha warning");
     }
+    if (!/unsigned warning/i.test(readme)) {
+      failures.push("README.md must contain unsigned warning");
+    }
     if (!readme.includes(currentReleaseVersion)) {
       failures.push(`README.md must mention ${currentReleaseVersion}`);
     }
@@ -150,6 +158,24 @@ function runVersionAndReleaseChecks({ fileSet, readFile, failures }) {
         failures.push(`docs/EPUB_COMPATIBILITY_MATRIX.md must mention ${fixture}`);
       }
     }
+  }
+
+  const releaseDraftPath = "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md";
+  if (fileSet.has(releaseDraftPath)) {
+    validateReleaseDraft(safeRead(readFile, releaseDraftPath), failures);
+  }
+}
+
+function validateReleaseDraft(content, failures) {
+  const lower = content.toLowerCase();
+  if (!lower.includes("privacy model")) {
+    failures.push("GitHub release draft must contain privacy model");
+  }
+  if (!lower.includes("sha256_placeholder") && !lower.includes("checksum")) {
+    failures.push("GitHub release draft must contain checksum placeholder");
+  }
+  if (!/do not upload.*copyrighted epub.*api keys/s.test(lower)) {
+    failures.push("GitHub release draft must warn not to upload copyrighted EPUBs or API keys");
   }
 }
 

@@ -18,7 +18,8 @@ BookTrans Desk is local-first.
 - Generated test fixtures are synthetic and contain no commercial book content.
 - Diagnostic bundles omit original EPUBs, exported EPUBs, API keys, Authorization headers, and full book text, and include `diagnostic-summary.md` so testers can verify those exclusions before sharing.
 - `npm run labels:print` is print-only; it does not call GitHub APIs and does not read tokens.
-- `npm run release:check` verifies `v0.2.5-alpha-rc` release documents, package version consistency, alpha warning copy, label JSON validity, and targeted compatibility matrix coverage.
+- `npm run release:check` verifies `v0.2.6-public-alpha-prep` release prep documents, package version consistency, alpha warning copy, unsigned warning copy, label JSON validity, targeted compatibility matrix coverage, and GitHub Release draft safety wording.
+- Public alpha release copy warns users not to upload copyrighted EPUBs or API keys.
 - Tests use `MockTranslator` and never call a real external API.
 - The app contains no telemetry, auto-update, cloud sync, login, online store, or account system.
 

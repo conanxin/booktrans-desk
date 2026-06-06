@@ -2,11 +2,13 @@
 
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-lightgrey)](.github/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.2.5--alpha--rc-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.2.6--public--alpha--prep-orange)](CHANGELOG.md)
 
 BookTrans Desk is an open source desktop alpha for translating reflowable EPUB books into Simplified Chinese with an OpenAI-compatible API. It is local-first: no telemetry, no account system, no cloud sync, and no bundled commercial EPUB content.
 
 > Alpha warning: this project is still intended for technical testers. Keep backups of original EPUB files and review provider privacy terms before translating private or copyrighted content.
+
+> Windows unsigned warning: current Windows alpha packages are unsigned. Download only from the project GitHub Release page, verify checksums when provided, or build from source.
 
 ## Screenshot
 
@@ -52,6 +54,8 @@ npm run dist
 
 Packaging uses electron-builder. Artifacts are written to `release/`, which is ignored by git. Windows packaging is the primary target; Linux AppImage is configured as a secondary target. macOS packaging is roadmap-only.
 
+Before publishing a public alpha, follow the [manual reader validation checklist](docs/releases/MANUAL_READER_VALIDATION_CHECKLIST.md), [RC burn-down](docs/releases/RC_BURNDOWN.md), [checksum instructions](docs/releases/INSTALLER_CHECKSUMS.md), and [Windows unsigned warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md).
+
 ## Release Check
 
 ```bash
@@ -89,6 +93,10 @@ Unsupported formats: fixed-layout EPUB, DRM EPUB, PDF, MOBI, AZW3.
 - [Test Fixtures](docs/TEST_FIXTURES.md)
 - [Alpha Release Checklist](docs/releases/ALPHA_RELEASE_CHECKLIST.md)
 - [v0.2.5 RC Release Notes](docs/releases/v0.2.5-alpha-rc.md)
+- [GitHub Release Draft](docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md)
+- [Installer Checksums](docs/releases/INSTALLER_CHECKSUMS.md)
+- [Windows Unsigned Warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md)
+- [RC Burn-down](docs/releases/RC_BURNDOWN.md)
 - [Roadmap](docs/ROADMAP.md)
 
 ## License

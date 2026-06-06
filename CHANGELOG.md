@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased / v0.2.5-alpha-rc
+## Unreleased / v0.2.6-public-alpha-prep
+
+- Add manual reader validation checklist for public alpha release prep.
+- Add RC burn-down criteria and decision rule.
+- Add GitHub Release draft for `v0.2.6-public-alpha-prep`.
+- Add installer checksum instructions and Windows unsigned warning copy.
+- Update README, alpha docs, privacy notice, roadmap, reader notes, release checklist, and release checks for public alpha prep.
+
+## v0.2.5-alpha-rc
 
 - Add targeted synthetic EPUB regression fixtures for nested sections, split inline text, special entities, nav landmarks, duplicate resource paths, and large chapter progress.
 - Skip EPUB nav and non-linear spine items during chapter import.

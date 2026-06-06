@@ -53,11 +53,20 @@
 
 ## Phase 2.5 Targeted EPUB Compatibility RC
 
-- Status: current release target `v0.2.5-alpha-rc`.
+- Status: completed in `v0.2.5-alpha-rc`.
 - Add targeted synthetic fixtures for common real-world EPUB structure boundaries.
 - Improve import handling for nav, non-linear spine entries, URL-encoded manifest hrefs, and path separators.
 - Add reader compatibility notes and release candidate documentation.
 - Strengthen release checks for RC docs and compatibility matrix fixture coverage.
+
+## Phase 2.6 Public Alpha Prep
+
+- Status: current release target `v0.2.6-public-alpha-prep`.
+- Add manual reader validation checklist.
+- Add RC burn-down criteria.
+- Add GitHub Release draft, checksum instructions, and Windows unsigned warning copy.
+- Keep manual reader validation and checksum generation outside git artifacts.
+- Strengthen release checks for public alpha release prep documents.
 
 ## Phase 3 Local Library Management
 

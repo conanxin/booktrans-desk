@@ -51,8 +51,8 @@ describe("releaseCheckCore", () => {
     expect(check([...requiredDocs], { "CHANGELOG.md": "# Changelog\n" }).failures.some((failure: string) => failure.includes("CHANGELOG.md"))).toBe(true);
     expect(check([...requiredDocs], { "README.md": "# Readme\n" }).failures.some((failure: string) => failure.includes("Alpha warning"))).toBe(true);
     expect(
-      check([...requiredDocs], { "docs/releases/v0.2.5-alpha-rc.md": "# Release\n" }).failures.some((failure: string) =>
-        failure.includes("v0.2.5-alpha-rc.md")
+      check([...requiredDocs], { "README.md": "# Readme\n\nAlpha warning\n\nv0.2.6-public-alpha-prep\n" }).failures.some((failure: string) =>
+        failure.includes("unsigned warning")
       )
     ).toBe(true);
   });
@@ -66,6 +66,13 @@ describe("releaseCheckCore", () => {
     const result = check([...requiredDocs], { "docs/EPUB_COMPATIBILITY_MATRIX.md": "minimal-epub3" });
     expect(result.failures.some((failure: string) => failure.includes("nested-sections"))).toBe(true);
     expect(result.failures.some((failure: string) => failure.includes("large-chapter-chunking"))).toBe(true);
+  });
+
+  it("fails when release draft omits public alpha safety sections", () => {
+    const result = check([...requiredDocs], { "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md": "# Draft\n" });
+    expect(result.failures.some((failure: string) => failure.includes("privacy model"))).toBe(true);
+    expect(result.failures.some((failure: string) => failure.includes("checksum placeholder"))).toBe(true);
+    expect(result.failures.some((failure: string) => failure.includes("copyrighted EPUBs or API keys"))).toBe(true);
   });
 
   it("passes normal repository state", () => {
@@ -83,16 +90,19 @@ function check(files: string[], content: Record<string, string>) {
 
 function defaultContent(file: string): string {
   if (file === "package.json") {
-    return JSON.stringify({ version: "0.2.5-alpha.0" });
+    return JSON.stringify({ version: "0.2.6-alpha.0" });
   }
   if (file === "package-lock.json") {
-    return JSON.stringify({ version: "0.2.5-alpha.0", packages: { "": { version: "0.2.5-alpha.0" } } });
+    return JSON.stringify({ version: "0.2.6-alpha.0", packages: { "": { version: "0.2.6-alpha.0" } } });
   }
   if (file === "README.md") {
-    return "# Readme\n\nAlpha warning\n\nv0.2.5-alpha-rc\n";
+    return "# Readme\n\nAlpha warning\n\nWindows unsigned warning\n\nv0.2.6-public-alpha-prep\n";
   }
-  if (file === "CHANGELOG.md" || file === "docs/releases/v0.2.5-alpha-rc.md") {
-    return "# v0.2.5-alpha-rc\n";
+  if (file === "CHANGELOG.md") {
+    return "# v0.2.6-public-alpha-prep\n";
+  }
+  if (file === "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md") {
+    return "# v0.2.6-public-alpha-prep\n\n## Privacy Model\n\n## Checksums\nSHA256_PLACEHOLDER\n\nDo not upload copyrighted EPUBs or API keys.\n";
   }
   if (file === "docs/EPUB_COMPATIBILITY_MATRIX.md") {
     return "nested-sections split-text-inline entities-special-chars nav-landmarks duplicate-hrefs large-chapter-chunking";

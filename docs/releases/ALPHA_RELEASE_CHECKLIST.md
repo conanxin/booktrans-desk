@@ -4,9 +4,9 @@ Use this checklist before publishing an alpha build.
 
 ## Version
 
-- `package.json` version is `0.2.5-alpha.0`.
-- `package-lock.json` root version matches `0.2.5-alpha.0`.
-- README, CHANGELOG, release notes, and phase report reference `v0.2.5-alpha-rc`.
+- `package.json` version is `0.2.6-alpha.0`.
+- `package-lock.json` root version matches `0.2.6-alpha.0`.
+- README, CHANGELOG, release prep docs, and phase report reference `v0.2.6-public-alpha-prep`.
 
 ## Privacy And Security
 
@@ -34,6 +34,16 @@ Use this checklist before publishing an alpha build.
 - Reader compatibility notes updated.
 - Targeted fixtures cover nested sections, split inline text, entities/special chars, nav landmarks, duplicate resource paths, and large chapter chunking.
 - Manual packed app launch checked if possible.
+
+## Public Alpha Prep
+
+- Manual reader validation checklist exists.
+- RC burn-down is current and has no P0/P1 known blockers.
+- GitHub Release draft exists.
+- Installer checksum instructions exist.
+- Windows unsigned warning copy exists.
+- Manual reader validation status is recorded before publishing.
+- Checksums are generated locally by the publisher and pasted into the GitHub Release.
 
 ## Packaging
 
