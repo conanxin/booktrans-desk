@@ -1,4 +1,3 @@
-import { contextBridge, ipcRenderer } from "electron";
 import type {
   ExportHistoryItem,
   ExportedEpubResult,
@@ -11,6 +10,9 @@ import type {
   TranslationSettings,
   ValidationReport
 } from "../shared/types.js";
+
+const electron = require("electron") as typeof import("electron");
+const { contextBridge, ipcRenderer } = electron;
 
 const api = {
   importEpub: (): Promise<ImportedBook | null> => ipcRenderer.invoke("book:import"),
@@ -54,7 +56,9 @@ const api = {
   onProgress: (callback: (progress: TranslationProgress) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, progress: TranslationProgress) => callback(progress);
     ipcRenderer.on("translation:progress", listener);
-    return () => ipcRenderer.removeListener("translation:progress", listener);
+    return () => {
+      ipcRenderer.removeListener("translation:progress", listener);
+    };
   }
 };
 

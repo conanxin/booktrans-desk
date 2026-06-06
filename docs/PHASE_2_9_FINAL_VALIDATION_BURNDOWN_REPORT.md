@@ -53,6 +53,8 @@ Recommend publishing only if the maintainer accepts the conditional validation l
 
 Publication status after Phase 2.10: published manually as GitHub prerelease at https://github.com/conanxin/booktrans-desk/releases/tag/v0.2.9-public-alpha-conditional. Final decision remains CONDITIONAL_GO.
 
+Post-publication hotfix note: user testing found a packaged Windows white screen. The root cause is outside EPUB translation logic: preload was packaged with ESM syntax while Electron executed it as CommonJS, and renderer assets were emitted with absolute `/assets/...` paths. `v0.2.12-white-screen-hotfix` is recommended to supersede the affected package.
+
 ## Release Steps
 
 1. Recompute checksums immediately before upload.

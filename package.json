@@ -1,12 +1,13 @@
 {
   "name": "booktrans-desk",
-  "version": "0.2.8-alpha.0",
+  "version": "0.2.12-alpha.0",
   "description": "Open source desktop EPUB AI translation alpha.",
   "main": "dist/main/index.js",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k \"tsc -w -p tsconfig.json\" \"vite --host 127.0.0.1\" \"wait-on dist/main/index.js http://127.0.0.1:5173 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .\"",
-    "build": "tsc -p tsconfig.json && vite build",
+    "clean:dist": "node scripts/clean-dist.mjs",
+    "build": "npm run clean:dist && tsc -p tsconfig.json && vite build",
     "test": "vitest run",
     "start": "electron .",
     "pack": "electron-builder --dir",

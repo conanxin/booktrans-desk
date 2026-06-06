@@ -101,6 +101,14 @@
 - Uploaded Windows installer, portable exe, and blockmap artifacts.
 - Publication record stored in `docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md`.
 
+## Phase 2.12 Packaged Electron White Screen Hotfix
+
+- Status: hotfix target `v0.2.12-white-screen-hotfix`.
+- Fix packaged preload ESM/CommonJS mismatch by emitting `dist/main/preload.cjs`.
+- Fix packaged renderer asset paths by using relative Vite assets.
+- Add clean `dist/` build step, packaged path regression tests, ErrorBoundary, and white screen troubleshooting documentation.
+- Recommend superseding the `v0.2.9-public-alpha-conditional` Windows package for testers who encounter a blank renderer window.
+
 ## Phase 3 Local Library Management
 
 - Multi-book local library.

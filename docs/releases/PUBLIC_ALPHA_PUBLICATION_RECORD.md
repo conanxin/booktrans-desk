@@ -8,6 +8,8 @@ Release decision: CONDITIONAL_GO
 
 The GitHub Release was manually created as a prerelease with CONDITIONAL_GO wording.
 
+Post-publication update: packaged Windows users reported a blank renderer window. The hotfix target is `v0.2.12-white-screen-hotfix`; the existing public alpha package should be considered superseded for users who hit the white screen.
+
 ## Release Metadata
 
 | Field | Value |
@@ -42,12 +44,14 @@ ARTIFACTS_UPLOADED: YES
 - Release remains a prerelease.
 - Release wording must remain CONDITIONAL_GO.
 - Artifact checksums match the recorded values above.
+- Hotfix documentation records the packaged white screen issue and recommends upgrading once the hotfix release is published.
 
 ## Next Validation Work
 
 - Complete visual UI verification.
 - Complete visible Calibre or Thorium reader validation for at least one baseline exported EPUB.
 - Keep `CONDITIONAL_GO` wording unless those checks are completed.
+- Publish the white screen hotfix as a new prerelease.
 
 ## Security Notes
 

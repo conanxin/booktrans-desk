@@ -1,7 +1,12 @@
 # Changelog
 
-## Unreleased / v0.2.8-public-alpha
+## Unreleased / v0.2.12-white-screen-hotfix
 
+- Fix Windows packaged app white screen by emitting preload as CommonJS `preload.cjs`.
+- Fix packaged renderer asset loading by generating relative `./assets/...` paths.
+- Add clean `dist/` step to prevent stale preload artifacts from being packaged.
+- Add packaged renderer path regression tests and white screen troubleshooting docs.
+- Add renderer ErrorBoundary for React render failures.
 - Record GitHub prerelease publication URL for `v0.2.9-public-alpha-conditional`.
 - Record conditional public alpha publication as a GitHub prerelease.
 - Refresh public alpha release checksums after final `npm run dist`.
@@ -23,6 +28,10 @@
 - Add GitHub Release draft for `v0.2.6-public-alpha-prep`.
 - Add installer checksum instructions and Windows unsigned warning copy.
 - Update README, alpha docs, privacy notice, roadmap, reader notes, release checklist, and release checks for public alpha prep.
+
+## v0.2.8-public-alpha
+
+- Prepared public alpha documentation, checksums, burn-down records, and conditional release publication notes.
 
 ## v0.2.5-alpha-rc
 

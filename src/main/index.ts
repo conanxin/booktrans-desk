@@ -10,7 +10,7 @@ async function createWindow(): Promise<void> {
     minHeight: 640,
     title: "BookTrans Desk",
     webPreferences: {
-      preload: path.join(app.getAppPath(), "dist/main/preload.js"),
+      preload: path.join(app.getAppPath(), "dist/main/preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false
     }

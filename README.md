@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-lightgrey)](.github/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.2.8--public--alpha-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.2.12--white--screen--hotfix-orange)](CHANGELOG.md)
 
 BookTrans Desk is an open source desktop alpha for translating reflowable EPUB books into Simplified Chinese with an OpenAI-compatible API. It is local-first: no telemetry, no account system, no cloud sync, and no bundled commercial EPUB content.
 
@@ -62,6 +62,8 @@ Phase 2.9 final validation status: CONDITIONAL_GO. App and portable processes st
 
 Public alpha prerelease published: [BookTrans Desk v0.2.9 Public Alpha (Conditional)](https://github.com/conanxin/booktrans-desk/releases/tag/v0.2.9-public-alpha-conditional). Final decision remains CONDITIONAL_GO.
 
+Packaged app hotfix status: `v0.2.12-white-screen-hotfix` fixes the Windows packaged renderer white screen caused by preload ESM/CommonJS mismatch and absolute Vite asset paths. Users of the public alpha package should upgrade to the hotfix release once published.
+
 ## Release Check
 
 ```bash
@@ -108,6 +110,8 @@ Unsupported formats: fixed-layout EPUB, DRM EPUB, PDF, MOBI, AZW3.
 - [Packed App Launch Results](docs/releases/PACKED_APP_MANUAL_LAUNCH_RESULTS.md)
 - [Phase 2.9 Final Validation Burn-down](docs/PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md)
 - [Public Alpha Publication Record](docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md)
+- [White Screen Troubleshooting](docs/troubleshooting/WHITE_SCREEN.md)
+- [Phase 2.12 White Screen Hotfix Report](docs/PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md)
 - [Windows Unsigned Warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md)
 - [RC Burn-down](docs/releases/RC_BURNDOWN.md)
 - [Roadmap](docs/ROADMAP.md)

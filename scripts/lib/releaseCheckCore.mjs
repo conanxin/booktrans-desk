@@ -11,6 +11,7 @@ export const requiredDocs = [
   "docs/ROADMAP.md",
   "docs/EPUB_COMPATIBILITY_MATRIX.md",
   "docs/READER_COMPATIBILITY_NOTES.md",
+  "docs/troubleshooting/WHITE_SCREEN.md",
   "docs/TEST_FIXTURES.md",
   ".github/ISSUE_TEMPLATE/bug_report.yml",
   ".github/ISSUE_TEMPLATE/epub_compatibility.yml",
@@ -39,11 +40,12 @@ export const requiredDocs = [
   "docs/PHASE_2_7_PUBLIC_ALPHA_DECISION_REPORT.md",
   "docs/PHASE_2_8_FINAL_ALPHA_RELEASE_REPORT.md",
   "docs/PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md",
+  "docs/PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md",
   "scripts/github-labels.json"
 ];
 
-export const currentPackageVersion = "0.2.8-alpha.0";
-export const currentReleaseVersion = "v0.2.8-public-alpha";
+export const currentPackageVersion = "0.2.12-alpha.0";
+export const currentReleaseVersion = "v0.2.12-white-screen-hotfix";
 
 const requiredCompatibilityFixtures = [
   "nested-sections",

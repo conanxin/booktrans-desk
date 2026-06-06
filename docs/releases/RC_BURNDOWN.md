@@ -83,6 +83,16 @@ FINAL_DECISION: CONDITIONAL_GO
 
 The GitHub Release can be published only with explicit conditional validation wording. Upgrade to GO requires visual app UI verification plus at least one baseline exported EPUB visibly opening in Calibre or Thorium.
 
+## Phase 2.12 Hotfix Burn-down
+
+| Item | Result | Notes |
+| --- | --- | --- |
+| Packaged white screen | FIX_IN_PROGRESS | Root cause is preload ESM/CommonJS mismatch plus absolute renderer asset paths |
+| Hotfix target | `v0.2.12-white-screen-hotfix` | Recommended as a prerelease superseding the affected Windows package |
+| Release decision | CONDITIONAL_GO | Keep conditional wording until visible UI and reader validation are completed |
+
+The original public alpha package is not a full GO. Users who see a blank packaged window should upgrade to the hotfix release once available.
+
 ## Decision Rule
 
 `v0.2.5-alpha-rc` can proceed to public alpha if:
