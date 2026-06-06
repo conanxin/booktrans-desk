@@ -2,9 +2,11 @@
 
 BookTrans Desk is a local-first desktop alpha for AI-assisted translation of reflowable EPUB books into Simplified Chinese.
 
-Current alpha target: `v0.2.12-white-screen-hotfix`.
+Current alpha target: `v0.2.14-chinese-ui-redesign`.
 
 The earlier public alpha package can show a Windows packaged white screen. If the app opens but the UI stays blank, upgrade to the hotfix release and see `docs/troubleshooting/WHITE_SCREEN.md`.
+
+Phase 2.14 changes the app to a Chinese-first interface with a cleaner workflow layout. Please report any remaining English UI copy, layout overflow, or unclear Chinese wording.
 
 ## Supported Today
 

@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased / v0.2.12-white-screen-hotfix
+## Unreleased / v0.2.14-chinese-ui-redesign
+
+- Localize the renderer UI to Chinese-first copy across navigation, workflow actions, settings, progress, validation, jobs, and exports.
+- Redesign the translation workbench around a four-step import/configure/translate/export flow.
+- Replace the old heavy-panel visual style with a cleaner light desktop UI using CSS variables, softer cards, restrained tabs, and responsive width constraints.
+- Add UI copy regression tests for Chinese tabs, style labels, diagnostic safety copy, and empty states.
+- Update alpha docs and roadmap for the Chinese UI redesign phase.
+
+## v0.2.12-white-screen-hotfix
 
 - Fix Windows packaged app white screen by emitting preload as CommonJS `preload.cjs`.
 - Fix packaged renderer asset loading by generating relative `./assets/...` paths.

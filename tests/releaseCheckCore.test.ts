@@ -53,6 +53,7 @@ describe("releaseCheckCore", () => {
     const withoutBurnDownReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md");
     const withoutTroubleshooting = requiredDocs.filter((file: string) => file !== "docs/troubleshooting/WHITE_SCREEN.md");
     const withoutHotfixReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md");
+    const withoutChineseUiReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md");
     expect(check(withoutReaderResults, {}).failures.some((failure: string) => failure.includes("MANUAL_READER_VALIDATION_RESULTS.md"))).toBe(true);
     expect(check(withoutChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md"))).toBe(true);
     expect(check(withoutFinalChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.8-public-alpha.md"))).toBe(true);
@@ -63,6 +64,7 @@ describe("releaseCheckCore", () => {
     expect(check(withoutBurnDownReport, {}).failures.some((failure: string) => failure.includes("PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md"))).toBe(true);
     expect(check(withoutTroubleshooting, {}).failures.some((failure: string) => failure.includes("WHITE_SCREEN.md"))).toBe(true);
     expect(check(withoutHotfixReport, {}).failures.some((failure: string) => failure.includes("PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md"))).toBe(true);
+    expect(check(withoutChineseUiReport, {}).failures.some((failure: string) => failure.includes("PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md"))).toBe(true);
   });
 
 
@@ -114,16 +116,16 @@ function check(files: string[], content: Record<string, string>) {
 
 function defaultContent(file: string): string {
   if (file === "package.json") {
-    return JSON.stringify({ version: "0.2.12-alpha.0" });
+    return JSON.stringify({ version: "0.2.14-alpha.0" });
   }
   if (file === "package-lock.json") {
-    return JSON.stringify({ version: "0.2.12-alpha.0", packages: { "": { version: "0.2.12-alpha.0" } } });
+    return JSON.stringify({ version: "0.2.14-alpha.0", packages: { "": { version: "0.2.14-alpha.0" } } });
   }
   if (file === "README.md") {
-    return "# Readme\n\nAlpha warning\n\nWindows unsigned warning\n\nv0.2.12-white-screen-hotfix\n";
+    return "# Readme\n\nAlpha warning\n\nWindows unsigned warning\n\nv0.2.14-chinese-ui-redesign\n";
   }
   if (file === "CHANGELOG.md") {
-    return "# v0.2.12-white-screen-hotfix\n";
+    return "# v0.2.14-chinese-ui-redesign\n";
   }
   if (file === "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md") {
     return "# v0.2.8-public-alpha\n\n## Final Decision\n\n## Windows Unsigned Warning\n\n## Privacy Model\n\nPrivacy warning\n\n## Checksums\nSHA256_PLACEHOLDER\n\nDo not upload copyrighted EPUBs or API keys.\n";

@@ -41,11 +41,12 @@ export const requiredDocs = [
   "docs/PHASE_2_8_FINAL_ALPHA_RELEASE_REPORT.md",
   "docs/PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md",
   "docs/PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md",
+  "docs/PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md",
   "scripts/github-labels.json"
 ];
 
-export const currentPackageVersion = "0.2.12-alpha.0";
-export const currentReleaseVersion = "v0.2.12-white-screen-hotfix";
+export const currentPackageVersion = "0.2.14-alpha.0";
+export const currentReleaseVersion = "v0.2.14-chinese-ui-redesign";
 
 const requiredCompatibilityFixtures = [
   "nested-sections",

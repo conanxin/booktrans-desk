@@ -2,9 +2,11 @@
 
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-lightgrey)](.github/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.2.12--white--screen--hotfix-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.2.14--chinese--ui--redesign-orange)](CHANGELOG.md)
 
 BookTrans Desk is an open source desktop alpha for translating reflowable EPUB books into Simplified Chinese with an OpenAI-compatible API. It is local-first: no telemetry, no account system, no cloud sync, and no bundled commercial EPUB content.
+
+Phase 2.14 status: `v0.2.14-chinese-ui-redesign` localizes the app to a Chinese-first interface and refreshes the renderer into a cleaner, modern desktop workbench while keeping the EPUB translation pipeline unchanged.
 
 > Alpha warning: this project is still intended for technical testers. Keep backups of original EPUB files and review provider privacy terms before translating private or copyrighted content.
 
@@ -36,6 +38,7 @@ Use Settings to configure a compatible API provider, or enable the mock translat
 - Export privacy-safe diagnostic bundles for issue reports.
 - Run generated EPUB fixture regression tests.
 - Review reader compatibility notes for manual alpha checks.
+- Use a Chinese-first, modernized desktop UI for the import, translation, export, jobs, and settings workflows.
 
 ## Development
 
@@ -63,6 +66,8 @@ Phase 2.9 final validation status: CONDITIONAL_GO. App and portable processes st
 Public alpha prerelease published: [BookTrans Desk v0.2.9 Public Alpha (Conditional)](https://github.com/conanxin/booktrans-desk/releases/tag/v0.2.9-public-alpha-conditional). Final decision remains CONDITIONAL_GO.
 
 Packaged app hotfix status: `v0.2.12-white-screen-hotfix` fixes the Windows packaged renderer white screen caused by preload ESM/CommonJS mismatch and absolute Vite asset paths. Users of the public alpha package should upgrade to the hotfix release once published.
+
+Chinese UI redesign status: `v0.2.14-chinese-ui-redesign` updates the alpha UI copy, navigation, workflow layout, settings panel, progress panel, validation report, jobs, exports, and visual styling for Chinese testers.
 
 ## Release Check
 
@@ -112,6 +117,7 @@ Unsupported formats: fixed-layout EPUB, DRM EPUB, PDF, MOBI, AZW3.
 - [Public Alpha Publication Record](docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md)
 - [White Screen Troubleshooting](docs/troubleshooting/WHITE_SCREEN.md)
 - [Phase 2.12 White Screen Hotfix Report](docs/PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md)
+- [Phase 2.14 Chinese UI Redesign Report](docs/PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md)
 - [Windows Unsigned Warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md)
 - [RC Burn-down](docs/releases/RC_BURNDOWN.md)
 - [Roadmap](docs/ROADMAP.md)

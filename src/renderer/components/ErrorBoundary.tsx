@@ -31,10 +31,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     return (
       <main className="error-boundary">
         <section className="error-boundary-panel">
-          <p className="error-boundary-label">Renderer error</p>
-          <h1>BookTrans Desk could not render this screen.</h1>
+          <p className="error-boundary-label">渲染错误</p>
+          <h1>BookTrans Desk 无法显示当前界面。</h1>
           <p>
-            Open DevTools and copy the Console error into a GitHub issue. Do not paste API keys, Authorization headers, or private book text.
+            请打开 DevTools，将 Console 中的错误提交到 GitHub issue。不要粘贴 API 密钥、Authorization Header 或私密书籍正文。
           </p>
           <pre>{this.state.errorSummary}</pre>
         </section>

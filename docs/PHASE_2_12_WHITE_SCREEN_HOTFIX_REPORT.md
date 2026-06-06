@@ -57,3 +57,4 @@ Yes, a new hotfix release is recommended. The existing `v0.2.9-public-alpha-cond
 - Publish `v0.2.12-white-screen-hotfix` as a prerelease hotfix.
 - Ask testers who saw the white screen to upgrade to the hotfix.
 - Complete visible UI verification and Calibre or Thorium reader validation before changing the decision from CONDITIONAL_GO to GO.
+- After the hotfix, Phase 2.14 addresses Chinese localization and product-grade UI polish based on tester feedback that the previous English UI felt like an internal tool.

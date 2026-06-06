@@ -1,4 +1,5 @@
 import type { Chapter, ChapterProgress } from "../../shared/types.js";
+import { chapterStatusLabels } from "../uiText.js";
 
 interface ChapterListProps {
   chapters: Chapter[];
@@ -9,7 +10,7 @@ export function ChapterList({ chapters, progress }: ChapterListProps) {
   const progressById = new Map(progress.map((item) => [item.chapterId, item]));
   return (
     <section className="panel chapter-panel">
-      <h2>Chapters</h2>
+      <h2>章节结构</h2>
       {chapters.length ? (
         <div className="chapter-list">
           {chapters.map((chapter) => {
@@ -19,15 +20,15 @@ export function ChapterList({ chapters, progress }: ChapterListProps) {
                 <span className="chapter-order">{chapter.order + 1}</span>
                 <div>
                   <strong>{chapter.title}</strong>
-                  <span>{chapter.text.length.toLocaleString()} characters</span>
+                  <span>{chapter.text.length.toLocaleString()} 字符</span>
                 </div>
-                <em>{itemProgress?.status ?? "pending"}</em>
+                <em>{chapterStatusLabels[itemProgress?.status ?? "pending"]}</em>
               </div>
             );
           })}
         </div>
       ) : (
-        <p className="muted">Import an EPUB to inspect its spine order.</p>
+        <p className="muted">导入电子书后，将在这里显示 spine 顺序中的章节。</p>
       )}
     </section>
   );

@@ -109,6 +109,14 @@
 - Add clean `dist/` build step, packaged path regression tests, ErrorBoundary, and white screen troubleshooting documentation.
 - Recommend superseding the `v0.2.9-public-alpha-conditional` Windows package for testers who encounter a blank renderer window.
 
+## Phase 2.14 Chinese Localization and Modern UI Redesign
+
+- Status: current target `v0.2.14-chinese-ui-redesign`.
+- Localize visible renderer copy to Chinese-first wording while preserving technical terms such as EPUB, API, EPUBCheck, OpenAI-compatible, JSON, and Markdown.
+- Rework the translation workbench into a clearer import, configure, translate, and export flow.
+- Modernize visual styling with CSS variables, light panels, restrained tabs, softer shadows, responsive max width, and cleaner empty states.
+- Keep EPUB import, translation, validation, retry/resume, and export behavior unchanged.
+
 ## Phase 3 Local Library Management
 
 - Multi-book local library.

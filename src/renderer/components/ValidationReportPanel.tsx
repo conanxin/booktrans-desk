@@ -1,6 +1,7 @@
 import type { ExternalEpubCheckReport, ValidationReport } from "../../shared/types.js";
 import { groupEpubCheckIssues } from "../../shared/epubCheckIssues.js";
 import { validationReportToMarkdown } from "../../shared/validationReport.js";
+import { formatExternalValidationLabel, formatValidationLabel } from "../uiText.js";
 
 interface ValidationReportPanelProps {
   report: ValidationReport | null;
@@ -10,23 +11,23 @@ interface ValidationReportPanelProps {
 }
 
 const diagnosticBundleNotice =
-  "Diagnostic bundles are redacted and do not include original EPUB files, exported EPUB files, API keys, Authorization headers, or full book text.";
+  "诊断包会自动脱敏，不包含原始 EPUB、导出的 EPUB、API 密钥、Authorization Header 或完整书籍正文。";
 
 export function ValidationReportPanel({ report, externalReport, title, onMessage }: ValidationReportPanelProps) {
   async function exportDiagnosticBundle() {
     const result = await window.bookTrans.createDiagnosticBundle(report, externalReport);
-    onMessage(result.ok ? (result.data ? `Saved diagnostic bundle: ${result.data}` : "Diagnostic export cancelled.") : result.error ?? "Diagnostic export failed.");
+    onMessage(result.ok ? (result.data ? `已保存诊断包：${result.data}` : "已取消导出诊断包。") : result.error ?? "导出诊断包失败。");
   }
 
   if (!report) {
     return (
       <section className="panel validation-panel">
         <div className="panel-title-row">
-          <h2>Validation Report</h2>
-          <button onClick={exportDiagnosticBundle}>Export Diagnostic Bundle</button>
+          <h2>EPUB 验证报告</h2>
+          <button onClick={exportDiagnosticBundle}>导出诊断包</button>
         </div>
         <DiagnosticBundleSummary />
-        <p className="muted">Export an EPUB to see the detailed validation report.</p>
+        <p className="muted">导出 EPUB 后，这里会显示详细验证报告。</p>
       </section>
     );
   }
@@ -37,7 +38,7 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
       return;
     }
     await navigator.clipboard.writeText(validationReportToMarkdown(report, externalReport, `${title} Validation Report`));
-    onMessage("Validation report copied as Markdown.");
+    onMessage("验证报告已复制为 Markdown。");
   }
 
   async function saveMarkdown() {
@@ -45,66 +46,67 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
       return;
     }
     const result = await window.bookTrans.saveValidationMarkdown(report, externalReport, title);
-    onMessage(result.ok ? (result.data ? `Saved report: ${result.data}` : "Save report cancelled.") : result.error ?? "Save report failed.");
+    onMessage(result.ok ? (result.data ? `已保存报告：${result.data}` : "已取消保存报告。") : result.error ?? "保存报告失败。");
   }
 
   return (
     <section className="panel validation-panel">
       <div className="panel-title-row">
-        <h2>Validation Report</h2>
+        <h2>EPUB 验证报告</h2>
         <div className="inline-actions">
-          <button onClick={copyMarkdown}>Copy Markdown</button>
-          <button onClick={saveMarkdown}>Save .md</button>
-          <button onClick={exportDiagnosticBundle}>Export Diagnostic Bundle</button>
+          <button onClick={copyMarkdown}>复制 Markdown 报告</button>
+          <button onClick={saveMarkdown}>保存报告</button>
+          <button onClick={exportDiagnosticBundle}>导出诊断包</button>
         </div>
       </div>
       <DiagnosticBundleSummary />
       <div className={`validation-result ${report.status}`}>
-        <strong>{report.status.toUpperCase()}</strong>
+        <strong>{formatValidationLabel(report.status)}</strong>
         <span>{report.summary}</span>
       </div>
       <dl className="report-stats">
         <div>
-          <dt>OPF path</dt>
-          <dd>{report.opfPath ?? "Unknown"}</dd>
+          <dt>OPF 路径</dt>
+          <dd>{report.opfPath ?? "未知"}</dd>
         </div>
         <div>
-          <dt>Manifest items</dt>
+          <dt>Manifest 项</dt>
           <dd>{report.manifestItemCount ?? 0}</dd>
         </div>
         <div>
-          <dt>Spine items</dt>
+          <dt>Spine 项</dt>
           <dd>{report.spineItemCount ?? 0}</dd>
         </div>
         <div>
-          <dt>XHTML checked</dt>
+          <dt>XHTML 检查数</dt>
           <dd>{report.xhtmlCheckedCount ?? 0}</dd>
         </div>
       </dl>
-      <ReportList title="Errors" items={report.errors} tone="error" />
-      <ReportList title="Warnings" items={report.warnings} tone="warning" />
-      <ReportList title="Checked Files" items={report.checkedFiles} tone="neutral" />
+      <ReportList title="错误" items={report.errors} tone="error" />
+      <ReportList title="警告" items={report.warnings} tone="warning" />
+      <ReportList title="已检查文件" items={report.checkedFiles} tone="neutral" />
       {externalReport ? (
         <div className={`external-report ${externalReport.status}`}>
-          <h3>External EPUBCheck</h3>
+          <h3>外部 EPUBCheck</h3>
           <p>{externalReport.summary}</p>
-          <span>Exit code: {externalReport.exitCode ?? "N/A"}</span>
+          <span>状态：{formatExternalValidationLabel(externalReport.status)}</span>
+          <span>退出码：{externalReport.exitCode ?? "N/A"}</span>
           <span>
-            Issues: {countIssues(externalReport, "error")} errors, {countIssues(externalReport, "warning")} warnings,{" "}
-            {countIssues(externalReport, "info")} info
+            问题：{countIssues(externalReport, "error")} 个错误，{countIssues(externalReport, "warning")} 个警告，{" "}
+            {countIssues(externalReport, "info")} 条信息
           </span>
           {groupedExternal ? (
             <div className="external-grouped">
-              <h4>Grouped issues</h4>
+              <h4>问题分组</h4>
               <p>
-                Top codes:{" "}
+                主要代码：{" "}
                 {groupedExternal.summary.topCodes.length
                   ? groupedExternal.summary.topCodes.map((item) => `${item.code} (${item.count})`).join(", ")
-                  : "None"}
+                  : "无"}
               </p>
               <p>
-                Affected files:{" "}
-                {groupedExternal.summary.affectedFiles.length ? groupedExternal.summary.affectedFiles.join(", ") : "None"}
+                受影响文件：{" "}
+                {groupedExternal.summary.affectedFiles.length ? groupedExternal.summary.affectedFiles.join(", ") : "无"}
               </p>
               <ul className="external-issues">
                 {groupedExternal.groups.map((group) => (
@@ -132,7 +134,7 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
           ) : null}
           {externalReport.rawOutput ? (
             <details>
-              <summary>Raw output</summary>
+              <summary>原始输出</summary>
               <pre>{externalReport.rawOutput}</pre>
             </details>
           ) : null}
@@ -148,20 +150,20 @@ function DiagnosticBundleSummary() {
       <p>{diagnosticBundleNotice}</p>
       <dl>
         <div>
-          <dt>Included</dt>
-          <dd>Validation report, EPUBCheck summary, job summary, export history summary, redacted app log.</dd>
+          <dt>包含</dt>
+          <dd>验证报告、EPUBCheck 摘要、任务摘要、导出历史摘要、已脱敏应用日志。</dd>
         </div>
         <div>
-          <dt>Redacted</dt>
-          <dd>Paths, provider tokens, API key patterns, Authorization headers, provider error snippets.</dd>
+          <dt>已脱敏</dt>
+          <dd>本地路径、provider token、API key 形态、Authorization Header、provider 错误片段。</dd>
         </div>
         <div>
-          <dt>Excluded</dt>
-          <dd>Original EPUB files, exported EPUB files, API keys, Authorization headers, full book text.</dd>
+          <dt>不包含</dt>
+          <dd>原始 EPUB、导出的 EPUB、API 密钥、Authorization Header、完整书籍正文。</dd>
         </div>
         <div>
-          <dt>Output path</dt>
-          <dd>Selected when the diagnostic bundle is exported.</dd>
+          <dt>输出路径</dt>
+          <dd>导出诊断包时由用户选择。</dd>
         </div>
       </dl>
     </div>
@@ -183,7 +185,7 @@ function ReportList({ title, items, tone }: { title: string; items: string[]; to
           ))}
         </ul>
       ) : (
-        <p className="muted">None</p>
+        <p className="muted">无</p>
       )}
     </div>
   );
