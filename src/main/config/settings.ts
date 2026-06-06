@@ -7,7 +7,8 @@ const defaults: Required<TranslationSettings> = {
   model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
   useMock: false,
   glossary: "",
-  style: "faithful"
+  style: "faithful",
+  epubCheckCommand: ""
 };
 
 const store = new Store<TranslationSettings>({
@@ -22,7 +23,8 @@ export function getSettings(): TranslationSettings {
     model: store.get("model", defaults.model),
     useMock: store.get("useMock", defaults.useMock ?? false),
     glossary: store.get("glossary", defaults.glossary),
-    style: store.get("style", defaults.style)
+    style: store.get("style", defaults.style),
+    epubCheckCommand: store.get("epubCheckCommand", defaults.epubCheckCommand)
   };
 }
 
@@ -33,6 +35,7 @@ export function saveSettings(settings: TranslationSettings): TranslationSettings
   store.set("useMock", Boolean(settings.useMock));
   store.set("glossary", settings.glossary ?? "");
   store.set("style", settings.style ?? "faithful");
+  store.set("epubCheckCommand", settings.epubCheckCommand ?? "");
   return getSettings();
 }
 

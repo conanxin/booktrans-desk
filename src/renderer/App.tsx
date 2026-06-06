@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ImportedBook, TranslationProgress, TranslationSettings, ValidationReport } from "../shared/types.js";
+import type { ExternalEpubCheckReport, ImportedBook, TranslationProgress, TranslationSettings, ValidationReport } from "../shared/types.js";
 import { BookInfoCard } from "./components/BookInfoCard.js";
 import { ChapterList } from "./components/ChapterList.js";
 import { ImportPanel } from "./components/ImportPanel.js";
+import { JobManagerPanel } from "./components/JobManagerPanel.js";
 import { ProgressPanel } from "./components/ProgressPanel.js";
 import { TranslationSettingsPanel } from "./components/TranslationSettings.js";
+import { ValidationReportPanel } from "./components/ValidationReportPanel.js";
 
 const emptyProgress: TranslationProgress = {
   translatedChunks: 0,
@@ -27,8 +29,10 @@ export function App() {
   const [progress, setProgress] = useState<TranslationProgress>(emptyProgress);
   const [message, setMessage] = useState("");
   const [validation, setValidation] = useState<ValidationReport | null>(null);
+  const [externalValidation, setExternalValidation] = useState<ExternalEpubCheckReport | undefined>();
   const [busy, setBusy] = useState(false);
   const [canExport, setCanExport] = useState(false);
+  const [activeTab, setActiveTab] = useState<"translate" | "jobs" | "settings">("translate");
 
   useEffect(() => {
     void window.bookTrans.getSettings().then(setSettings);
@@ -56,6 +60,7 @@ export function App() {
       setProgress(emptyProgress);
       setCanExport(false);
       setValidation(null);
+      setExternalValidation(undefined);
       setMessage(`Imported ${imported.metadata.title}`);
     }
   }
@@ -74,6 +79,7 @@ export function App() {
     setBusy(true);
     setCanExport(false);
     setValidation(null);
+    setExternalValidation(undefined);
     setMessage("Translation started.");
     try {
       await window.bookTrans.startTranslation(settings);
@@ -96,6 +102,7 @@ export function App() {
       const result = await window.bookTrans.exportEpub();
       if (result) {
         setValidation(result.validation);
+        setExternalValidation(result.externalValidation);
         setMessage(`Exported: ${result.outputPath}`);
       }
     } catch (error) {
@@ -107,7 +114,14 @@ export function App() {
     await window.bookTrans.clearJobCache();
     setCanExport(false);
     setValidation(null);
+    setExternalValidation(undefined);
     setMessage("Translation task cache cleared.");
+  }
+
+  function acceptExportResult(result: Awaited<ReturnType<typeof window.bookTrans.exportEpub>>) {
+    setValidation(result.validation);
+    setExternalValidation(result.externalValidation);
+    setCanExport(true);
   }
 
   return (
@@ -120,32 +134,60 @@ export function App() {
         <div className="status-pill">{progress.status}</div>
       </header>
 
-      <section className="workspace-grid">
-        <aside className="sidebar">
-          <ImportPanel onImport={importBook} busy={busy} />
-          <TranslationSettingsPanel settings={settings} onSave={saveSettings} busy={busy} />
-          <div className="actions">
-            <button className="primary" onClick={startTranslation} disabled={!book || busy}>
-              Start Translation
-            </button>
-            <button onClick={cancelTranslation} disabled={!busy}>
-              Cancel Task
-            </button>
-            <button onClick={exportBook} disabled={!canExport || busy}>
-              Export EPUB
-            </button>
-            <button onClick={clearJobCache} disabled={busy}>
-              Clear Task Cache
-            </button>
-          </div>
-        </aside>
+      <nav className="app-tabs" aria-label="Main sections">
+        <button className={activeTab === "translate" ? "active" : ""} onClick={() => setActiveTab("translate")}>
+          Translate
+        </button>
+        <button className={activeTab === "jobs" ? "active" : ""} onClick={() => setActiveTab("jobs")}>
+          Jobs
+        </button>
+        <button className={activeTab === "settings" ? "active" : ""} onClick={() => setActiveTab("settings")}>
+          Settings
+        </button>
+      </nav>
 
-        <section className="content">
-          <BookInfoCard book={book} />
-          <ChapterList chapters={book?.chapters ?? []} progress={progress.chapters} />
-          <ProgressPanel progress={progress} percent={percent} message={message} validation={validation} />
+      {activeTab === "translate" ? (
+        <section className="workspace-grid">
+          <aside className="sidebar">
+            <ImportPanel onImport={importBook} busy={busy} />
+            <div className="actions">
+              <button className="primary" onClick={startTranslation} disabled={!book || busy}>
+                Start Translation
+              </button>
+              <button onClick={cancelTranslation} disabled={!busy}>
+                Cancel Task
+              </button>
+              <button onClick={exportBook} disabled={!canExport || busy}>
+                Export EPUB
+              </button>
+              <button onClick={clearJobCache} disabled={busy}>
+                Clear Task Cache
+              </button>
+            </div>
+          </aside>
+
+          <section className="content">
+            <BookInfoCard book={book} />
+            <ChapterList chapters={book?.chapters ?? []} progress={progress.chapters} />
+            <ProgressPanel progress={progress} percent={percent} message={message} validation={validation} />
+            <ValidationReportPanel report={validation} externalReport={externalValidation} title={book?.metadata.title ?? "EPUB"} onMessage={setMessage} />
+          </section>
         </section>
-      </section>
+      ) : null}
+
+      {activeTab === "jobs" ? (
+        <section className="single-column">
+          <JobManagerPanel settings={settings} busy={busy} onBusy={setBusy} onMessage={setMessage} onExport={acceptExportResult} />
+          <ProgressPanel progress={progress} percent={percent} message={message} validation={validation} />
+          <ValidationReportPanel report={validation} externalReport={externalValidation} title={book?.metadata.title ?? "EPUB"} onMessage={setMessage} />
+        </section>
+      ) : null}
+
+      {activeTab === "settings" ? (
+        <section className="settings-layout">
+          <TranslationSettingsPanel settings={settings} onSave={saveSettings} busy={busy} />
+        </section>
+      ) : null}
     </main>
   );
 }

@@ -97,6 +97,26 @@ textarea {
   color: #eaf1f0;
 }
 
+.app-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #d9e0e7;
+  padding: 12px 18px 0;
+  background: #fff;
+}
+
+.app-tabs button {
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: #f7f9fb;
+}
+
+.app-tabs button.active {
+  border-color: #167568;
+  color: #fff;
+  background: #167568;
+}
+
 .workspace-grid {
   flex: 1;
   display: grid;
@@ -112,6 +132,17 @@ textarea {
   gap: 14px;
 }
 
+.single-column,
+.settings-layout {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.settings-layout {
+  max-width: 720px;
+}
+
 .panel {
   border: 1px solid #d9e0e7;
   border-radius: 8px;
@@ -122,6 +153,20 @@ textarea {
 .panel h2 {
   margin: 0 0 13px;
   font-size: 16px;
+}
+
+.panel-title-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.inline-actions,
+.job-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .book-info dl {
@@ -285,6 +330,189 @@ textarea {
   border-color: #d48b8b;
   color: #8a2828;
   background: #fff0f0;
+}
+
+.validation-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.report-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.report-stats div {
+  border: 1px solid #e3e8ed;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.report-stats dt {
+  color: #61707d;
+  font-size: 12px;
+}
+
+.report-stats dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  font-weight: 650;
+}
+
+.report-list h3,
+.external-report h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.report-list ul {
+  max-height: 180px;
+  overflow: auto;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.report-list.error li {
+  color: #9a2424;
+}
+
+.report-list.warning li {
+  color: #79570b;
+}
+
+.external-report {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #d9e0e7;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.external-report.pass {
+  border-color: #82b89b;
+}
+
+.external-report.warning,
+.external-report.unavailable {
+  border-color: #d6b35c;
+}
+
+.external-report.fail {
+  border-color: #d48b8b;
+}
+
+.job-manager-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.job-list {
+  display: grid;
+  gap: 12px;
+}
+
+.job-card {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #dfe6ec;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.job-card-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.job-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.job-card p {
+  margin: 4px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #60707d;
+  font-size: 12px;
+}
+
+.job-status {
+  border-radius: 999px;
+  padding: 5px 9px;
+  text-transform: capitalize;
+  color: #234;
+  background: #e9eef3;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.job-status.completed {
+  color: #155f38;
+  background: #edf8f2;
+}
+
+.job-status.failed {
+  color: #8a2828;
+  background: #fff0f0;
+}
+
+.job-status.running {
+  color: #155f5a;
+  background: #e5f6f3;
+}
+
+.job-status.cancelled {
+  color: #65605a;
+  background: #eeeae4;
+}
+
+.job-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  color: #526270;
+  font-size: 12px;
+}
+
+.chapter-detail-table {
+  display: grid;
+  overflow: auto;
+  border: 1px solid #e4e9ee;
+  border-radius: 6px;
+}
+
+.chapter-detail-head,
+.chapter-detail-row {
+  display: grid;
+  grid-template-columns: 46px minmax(180px, 1fr) 110px 90px 180px 150px;
+  gap: 8px;
+  align-items: center;
+  min-width: 860px;
+  padding: 8px 10px;
+}
+
+.chapter-detail-head {
+  color: #536373;
+  background: #f6f8fa;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.chapter-detail-row {
+  border-top: 1px solid #e8edf2;
+  font-size: 12px;
+}
+
+.chapter-detail-row > span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .log-box {

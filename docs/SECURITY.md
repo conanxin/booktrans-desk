@@ -10,6 +10,9 @@ BookTrans Desk is local-first.
 - Job cache files store source path, book fingerprint, chapter status, failed chunk metadata, and translated XHTML, but never API keys.
 - OpenAI-compatible errors redact Bearer tokens and do not expose the Authorization header.
 - Request cancellation uses `AbortSignal`; timeout and retry handling do not log secrets.
+- Job manager IPC returns structured `{ ok, data, error }` results and sanitizes Bearer/API key patterns from errors.
+- Renderer code never reads or writes job cache files directly.
+- External EPUBCheck is optional, runs through `spawn` with `shell: false`, and has a timeout.
 - Tests use `MockTranslator` and never call a real external API.
 - The app contains no telemetry, auto-update, cloud sync, login, online store, or account system.
 

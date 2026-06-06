@@ -1,5 +1,6 @@
 export type TranslationStatus = "pending" | "translating" | "completed" | "failed" | "cancelled";
 export type ValidationStatus = "pass" | "warning" | "fail";
+export type ExternalValidationStatus = ValidationStatus | "unavailable";
 export type TranslationStyle = "faithful" | "fluent" | "academic" | "popular";
 
 export interface BookMetadata {
@@ -34,6 +35,7 @@ export interface TranslationSettings {
   useMock?: boolean;
   glossary?: string;
   style?: TranslationStyle;
+  epubCheckCommand?: string;
 }
 
 export interface ChapterProgress {
@@ -76,9 +78,55 @@ export interface ValidationReport {
   warnings: string[];
   checkedFiles: string[];
   summary: string;
+  opfPath?: string;
+  manifestItemCount?: number;
+  spineItemCount?: number;
+  xhtmlCheckedCount?: number;
 }
 
 export interface ExportedEpubResult {
   outputPath: string;
   validation: ValidationReport;
+  externalValidation?: ExternalEpubCheckReport;
+}
+
+export interface ExternalEpubCheckReport {
+  status: ExternalValidationStatus;
+  summary: string;
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+  command?: string;
+}
+
+export interface IpcResult<T> {
+  ok: boolean;
+  data?: T;
+  error?: string;
+}
+
+export interface JobChapterDetail {
+  chapterId: string;
+  index: number;
+  title: string;
+  status: TranslationStatus;
+  completedChunks: number;
+  totalChunks: number;
+  failedReason?: string;
+  updatedAt: string;
+}
+
+export interface TranslationJobSummary {
+  jobId: string;
+  bookTitle: string;
+  sourceEpubPath: string;
+  targetLanguage: string;
+  createdAt: string;
+  updatedAt: string;
+  totalChapters: number;
+  completedChapters: number;
+  failedChapters: number;
+  pendingChapters: number;
+  status: "running" | "paused" | "completed" | "failed" | "cancelled";
+  chapters: JobChapterDetail[];
 }

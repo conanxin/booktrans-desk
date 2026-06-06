@@ -18,10 +18,17 @@
 
 - Explicit job picker for resume/retry workflows.
 - Optional full epubcheck integration.
+- Detailed validation report UI with Markdown copy/save.
+- Internal EPUB compatibility matrix.
+
+## Phase 2.1
+
 - More language targets and per-book translation profiles.
 - Export history without adding a full library database.
-- Reader compatibility test matrix.
+- Real-world reader compatibility fixtures.
 
-## Out of Scope for Phase 1
+## Current Format Scope
 
-- PDF, MOBI, AZW3, Calibre integration, batch translation, book library database, user login, cloud sync, online reader, paid systems, plugins, CI, and auto publishing.
+- Current target: reflowable EPUB.
+- Not supported: fixed-layout EPUB, DRM EPUB, PDF, MOBI, and AZW3.
+- Out of scope: Calibre integration, batch translation, book library database, user login, cloud sync, online reader, paid systems, plugins, CI, and auto publishing.

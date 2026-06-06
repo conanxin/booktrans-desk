@@ -22,6 +22,7 @@ export async function validateEpub(epubPath: string): Promise<ValidationReport> 
   const errors: string[] = [];
   const warnings: string[] = [];
   const checkedFiles: string[] = [];
+  let xhtmlCheckedCount = 0;
 
   let zip: AdmZip;
   try {
@@ -70,13 +71,13 @@ export async function validateEpub(epubPath: string): Promise<ValidationReport> 
   }
 
   if (!rootFilePath) {
-    return buildReport("fail", errors, warnings, checkedFiles);
+    return buildReport("fail", errors, warnings, checkedFiles, { opfPath: rootFilePath });
   }
 
   const opfEntry = zip.getEntry(rootFilePath);
   if (!opfEntry) {
     errors.push(`OPF rootfile not found: ${rootFilePath}.`);
-    return buildReport("fail", errors, warnings, checkedFiles);
+    return buildReport("fail", errors, warnings, checkedFiles, { opfPath: rootFilePath });
   }
   checkedFiles.push(rootFilePath);
 
@@ -128,6 +129,7 @@ export async function validateEpub(epubPath: string): Promise<ValidationReport> 
     }
     checkedFiles.push(entryPath);
     if (isXhtml(item.mediaType, item.href)) {
+      xhtmlCheckedCount += 1;
       try {
         await parseStringPromise(zip.getEntry(entryPath)?.getData().toString("utf8") ?? "");
       } catch (error) {
@@ -136,16 +138,28 @@ export async function validateEpub(epubPath: string): Promise<ValidationReport> 
     }
   }
 
-  return buildReport(errors.length ? "fail" : warnings.length ? "warning" : "pass", errors, warnings, checkedFiles);
+  return buildReport(errors.length ? "fail" : warnings.length ? "warning" : "pass", errors, warnings, checkedFiles, {
+    opfPath: rootFilePath,
+    manifestItemCount: manifest.length,
+    spineItemCount: spine.length,
+    xhtmlCheckedCount
+  });
 }
 
-function buildReport(status: ValidationStatus, errors: string[], warnings: string[], checkedFiles: string[]): ValidationReport {
+function buildReport(
+  status: ValidationStatus,
+  errors: string[],
+  warnings: string[],
+  checkedFiles: string[],
+  stats: Partial<Pick<ValidationReport, "opfPath" | "manifestItemCount" | "spineItemCount" | "xhtmlCheckedCount">> = {}
+): ValidationReport {
   return {
     status,
     errors,
     warnings,
     checkedFiles: [...new Set(checkedFiles)],
-    summary: `${status.toUpperCase()}: ${checkedFiles.length} files checked, ${errors.length} errors, ${warnings.length} warnings.`
+    summary: `${status.toUpperCase()}: ${checkedFiles.length} files checked, ${errors.length} errors, ${warnings.length} warnings.`,
+    ...stats
   };
 }
 

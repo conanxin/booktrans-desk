@@ -58,6 +58,15 @@ export function TranslationSettingsPanel({ settings, busy, onSave }: Translation
           placeholder={"world model => 世界模型\nagent => 智能体"}
         />
       </label>
+      <label>
+        <span>EPUBCheck command path</span>
+        <input
+          value={draft.epubCheckCommand ?? ""}
+          onChange={(event) => update("epubCheckCommand", event.target.value)}
+          disabled={busy}
+          placeholder="epubcheck or java -jar /path/to/epubcheck.jar"
+        />
+      </label>
       <label className="check-row">
         <input
           type="checkbox"

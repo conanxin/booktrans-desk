@@ -17,7 +17,9 @@ export type ProgressCallback = (progress: TranslationProgress) => void;
 export interface TranslateBookOptions {
   userDataDir?: string;
   jobStore?: TranslationJobStore;
+  jobId?: string;
   retryFailed?: boolean;
+  chapterIds?: string[];
 }
 
 export async function translateBook(
@@ -29,10 +31,11 @@ export async function translateBook(
 ): Promise<TranslationJobResult> {
   const translator = createTranslator(settings);
   const store = options.jobStore ?? createTranslationJobStore(options.userDataDir ?? path.join(os.tmpdir(), "booktrans-desk"));
-  let job = (await store.findResumableJob(book)) ?? (await store.createJob(book));
+  let job = options.jobId ? await store.readJob(options.jobId) : (await store.findResumableJob(book)) ?? (await store.createJob(book));
   if (options.retryFailed) {
     job = await store.retryFailedChapters(job.jobId);
   }
+  const requestedChapterIds = options.chapterIds ? new Set(options.chapterIds) : null;
 
   const chapterProgress: ChapterProgress[] = book.chapters.map((chapter) => {
     const stored = job.chapters.find((item) => item.chapterId === chapter.id);
@@ -75,11 +78,16 @@ export async function translateBook(
       emit("translating", chapter.title);
       continue;
     }
+    if (requestedChapterIds && !requestedChapterIds.has(chapter.id)) {
+      log.push(`Skipped chapter outside retry scope: ${chapter.title}`);
+      emit("translating", chapter.title);
+      continue;
+    }
 
     progress.status = "translating";
     progress.currentChunk = 0;
     progress.error = undefined;
-    job = await store.updateChapterStatus(job.jobId, chapter.id, "translating");
+    job = await store.updateChapterStatus(job.jobId, chapter.id, "translating", { totalChunks: progress.totalChunks });
     log.push(`Translating chapter: ${chapter.title}`);
     emit("translating", chapter.title);
 
