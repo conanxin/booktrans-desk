@@ -47,6 +47,7 @@ describe("releaseCheckCore", () => {
     const withoutChecksums = requiredDocs.filter((file: string) => file !== "docs/releases/RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md");
     const withoutFinalChecksums = requiredDocs.filter((file: string) => file !== "docs/releases/RELEASE_CHECKSUMS_v0.2.8-public-alpha.md");
     const withoutLaunchResults = requiredDocs.filter((file: string) => file !== "docs/releases/PACKED_APP_MANUAL_LAUNCH_RESULTS.md");
+    const withoutPublicationRecord = requiredDocs.filter((file: string) => file !== "docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md");
     const withoutPhaseReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_2_7_PUBLIC_ALPHA_DECISION_REPORT.md");
     const withoutFinalReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_2_8_FINAL_ALPHA_RELEASE_REPORT.md");
     const withoutBurnDownReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md");
@@ -54,6 +55,7 @@ describe("releaseCheckCore", () => {
     expect(check(withoutChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md"))).toBe(true);
     expect(check(withoutFinalChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.8-public-alpha.md"))).toBe(true);
     expect(check(withoutLaunchResults, {}).failures.some((failure: string) => failure.includes("PACKED_APP_MANUAL_LAUNCH_RESULTS.md"))).toBe(true);
+    expect(check(withoutPublicationRecord, {}).failures.some((failure: string) => failure.includes("PUBLIC_ALPHA_PUBLICATION_RECORD.md"))).toBe(true);
     expect(check(withoutPhaseReport, {}).failures.some((failure: string) => failure.includes("PHASE_2_7_PUBLIC_ALPHA_DECISION_REPORT.md"))).toBe(true);
     expect(check(withoutFinalReport, {}).failures.some((failure: string) => failure.includes("PHASE_2_8_FINAL_ALPHA_RELEASE_REPORT.md"))).toBe(true);
     expect(check(withoutBurnDownReport, {}).failures.some((failure: string) => failure.includes("PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md"))).toBe(true);
@@ -130,6 +132,9 @@ function defaultContent(file: string): string {
   }
   if (file === "docs/releases/MANUAL_READER_VALIDATION_RESULTS.md") {
     return "MANUAL_READER_VALIDATION_RESULT: PARTIAL\n";
+  }
+  if (file === "docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md") {
+    return "Release decision: CONDITIONAL_GO\n\nPrerelease status: Must be marked prerelease\n";
   }
   if (file === "docs/EPUB_COMPATIBILITY_MATRIX.md") {
     return "nested-sections split-text-inline entities-special-chars nav-landmarks duplicate-hrefs large-chapter-chunking";

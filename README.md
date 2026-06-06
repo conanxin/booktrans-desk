@@ -60,6 +60,8 @@ Phase 2.8 decision status: CONDITIONAL_GO. Automatic checks, packaging, dist art
 
 Phase 2.9 final validation status: CONDITIONAL_GO. App and portable processes start, Calibre reader process smoke opened a temporary validated minimal EPUB, but visual UI and visible reader text confirmation remain incomplete.
 
+Public alpha release package prepared; GitHub publication pending because no remote is configured in this environment and GitHub CLI is unavailable.
+
 ## Release Check
 
 ```bash
@@ -105,6 +107,7 @@ Unsupported formats: fixed-layout EPUB, DRM EPUB, PDF, MOBI, AZW3.
 - [Manual Reader Validation Results](docs/releases/MANUAL_READER_VALIDATION_RESULTS.md)
 - [Packed App Launch Results](docs/releases/PACKED_APP_MANUAL_LAUNCH_RESULTS.md)
 - [Phase 2.9 Final Validation Burn-down](docs/PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md)
+- [Public Alpha Publication Record](docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md)
 - [Windows Unsigned Warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md)
 - [RC Burn-down](docs/releases/RC_BURNDOWN.md)
 - [Roadmap](docs/ROADMAP.md)

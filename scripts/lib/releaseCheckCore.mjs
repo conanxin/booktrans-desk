@@ -34,6 +34,7 @@ export const requiredDocs = [
   "docs/releases/RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md",
   "docs/releases/RELEASE_CHECKSUMS_v0.2.8-public-alpha.md",
   "docs/releases/PACKED_APP_MANUAL_LAUNCH_RESULTS.md",
+  "docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md",
   "docs/releases/WINDOWS_UNSIGNED_WARNING.md",
   "docs/PHASE_2_7_PUBLIC_ALPHA_DECISION_REPORT.md",
   "docs/PHASE_2_8_FINAL_ALPHA_RELEASE_REPORT.md",
@@ -188,6 +189,20 @@ function runVersionAndReleaseChecks({ fileSet, readFile, failures }) {
   const readerResultsPath = "docs/releases/MANUAL_READER_VALIDATION_RESULTS.md";
   if (fileSet.has(readerResultsPath) && !safeRead(readFile, readerResultsPath).includes("MANUAL_READER_VALIDATION_RESULT")) {
     failures.push(`${readerResultsPath} must contain MANUAL_READER_VALIDATION_RESULT`);
+  }
+
+  const publicationRecordPath = "docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md";
+  if (fileSet.has(publicationRecordPath)) {
+    validatePublicationRecord(safeRead(readFile, publicationRecordPath), failures);
+  }
+}
+
+function validatePublicationRecord(content, failures) {
+  if (!content.includes("CONDITIONAL_GO")) {
+    failures.push("PUBLIC_ALPHA_PUBLICATION_RECORD.md must contain CONDITIONAL_GO");
+  }
+  if (!/prerelease/i.test(content)) {
+    failures.push("PUBLIC_ALPHA_PUBLICATION_RECORD.md must contain prerelease status");
   }
 }
 

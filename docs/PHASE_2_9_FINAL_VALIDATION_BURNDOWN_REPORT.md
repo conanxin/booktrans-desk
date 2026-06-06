@@ -51,6 +51,8 @@ The release can be published only with explicit conditional validation wording. 
 
 Recommend publishing only if the maintainer accepts the conditional validation language in `docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md`. For a full GO, first complete visual app UI validation and visible Calibre or Thorium baseline EPUB validation.
 
+Publication status after Phase 2.10 attempt: manual publication pending. No git remote is configured and GitHub CLI is unavailable in this environment.
+
 ## Release Steps
 
 1. Recompute checksums immediately before upload.

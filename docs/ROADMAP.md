@@ -93,6 +93,13 @@
 - Calibre reader process smoke opened a temporary validated minimal EPUB.
 - Visual UI and visible reader text confirmation remain incomplete.
 
+## Phase 2.10 Conditional Public Alpha Publication
+
+- Status: publication package prepared, GitHub publication pending.
+- Push blocked because no git remote is configured.
+- GitHub Release creation blocked because GitHub CLI is unavailable.
+- Manual publication steps recorded in `docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md`.
+
 ## Phase 3 Local Library Management
 
 - Multi-book local library.
