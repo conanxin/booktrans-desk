@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-lightgrey)](.github/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.2.4--alpha--stabilization-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.2.5--alpha--rc-orange)](CHANGELOG.md)
 
 BookTrans Desk is an open source desktop alpha for translating reflowable EPUB books into Simplified Chinese with an OpenAI-compatible API. It is local-first: no telemetry, no account system, no cloud sync, and no bundled commercial EPUB content.
 
@@ -33,6 +33,7 @@ Use Settings to configure a compatible API provider, or enable the mock translat
 - Save and auto-load per-book translation profiles.
 - Export privacy-safe diagnostic bundles for issue reports.
 - Run generated EPUB fixture regression tests.
+- Review reader compatibility notes for manual alpha checks.
 
 ## Development
 
@@ -84,9 +85,10 @@ Unsupported formats: fixed-layout EPUB, DRM EPUB, PDF, MOBI, AZW3.
 - [Test Plan](docs/alpha/TEST_PLAN.md)
 - [Triage Guide](docs/triage/TRIAGE_GUIDE.md)
 - [Compatibility Matrix](docs/EPUB_COMPATIBILITY_MATRIX.md)
+- [Reader Compatibility Notes](docs/READER_COMPATIBILITY_NOTES.md)
 - [Test Fixtures](docs/TEST_FIXTURES.md)
 - [Alpha Release Checklist](docs/releases/ALPHA_RELEASE_CHECKLIST.md)
-- [v0.2.4 Release Notes](docs/releases/v0.2.4-alpha-stabilization.md)
+- [v0.2.5 RC Release Notes](docs/releases/v0.2.5-alpha-rc.md)
 - [Roadmap](docs/ROADMAP.md)
 
 ## License

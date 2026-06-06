@@ -4,15 +4,18 @@ Use this checklist before publishing an alpha build.
 
 ## Version
 
-- `package.json` version is `0.2.4-alpha.0`.
-- `package-lock.json` root version matches `0.2.4-alpha.0`.
-- README, CHANGELOG, release notes, and phase report reference `v0.2.4-alpha-stabilization`.
+- `package.json` version is `0.2.5-alpha.0`.
+- `package-lock.json` root version matches `0.2.5-alpha.0`.
+- README, CHANGELOG, release notes, and phase report reference `v0.2.5-alpha-rc`.
 
 ## Privacy And Security
 
 - No `.env` files, API keys, Authorization headers, EPUB files, exported EPUBs, diagnostic zips, logs, or packaged binaries are tracked by git.
 - Diagnostic bundles state that original EPUB files, exported EPUB files, API keys, Authorization headers, and full book text are excluded.
 - Test fixtures remain synthetic and copyright-safe.
+- No commercial EPUB fixtures are committed.
+- No generated EPUB files are committed.
+- No release artifacts are committed.
 
 ## Verification
 
@@ -23,6 +26,14 @@ Use this checklist before publishing an alpha build.
 - `npm run labels:print`
 - `npm run pack`
 - `git diff --check`
+
+## RC Compatibility
+
+- Synthetic fixture suite PASS.
+- Compatibility matrix updated.
+- Reader compatibility notes updated.
+- Targeted fixtures cover nested sections, split inline text, entities/special chars, nav landmarks, duplicate resource paths, and large chapter chunking.
+- Manual packed app launch checked if possible.
 
 ## Packaging
 

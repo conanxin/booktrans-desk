@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased / v0.2.4-alpha-stabilization
+## Unreleased / v0.2.5-alpha-rc
+
+- Add targeted synthetic EPUB regression fixtures for nested sections, split inline text, special entities, nav landmarks, duplicate resource paths, and large chapter progress.
+- Skip EPUB nav and non-linear spine items during chapter import.
+- Decode manifest hrefs for import path resolution.
+- Add reader compatibility notes and release candidate notes.
+- Strengthen release checks for RC docs and compatibility matrix coverage.
+
+## v0.2.4-alpha-stabilization
 
 - Add alpha release readiness checklist and v0.2.4-alpha-stabilization release notes.
 - Add diagnostic bundle safety summary in the UI and exported bundle.

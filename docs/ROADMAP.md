@@ -45,11 +45,19 @@
 
 ## Phase 2.4 Alpha Stabilization
 
-- Status: current release target `v0.2.4-alpha-stabilization`.
+- Status: completed in `v0.2.4-alpha-stabilization`.
 - Add alpha release readiness checklist and release notes.
 - Improve diagnostic bundle UX with explicit included, redacted, excluded, and output path summary.
 - Add print-only GitHub label sync instructions.
 - Strengthen release checks for version consistency and required alpha release documents.
+
+## Phase 2.5 Targeted EPUB Compatibility RC
+
+- Status: current release target `v0.2.5-alpha-rc`.
+- Add targeted synthetic fixtures for common real-world EPUB structure boundaries.
+- Improve import handling for nav, non-linear spine entries, URL-encoded manifest hrefs, and path separators.
+- Add reader compatibility notes and release candidate documentation.
+- Strengthen release checks for RC docs and compatibility matrix fixture coverage.
 
 ## Phase 3 Local Library Management
 

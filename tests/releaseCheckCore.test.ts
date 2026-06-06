@@ -51,8 +51,8 @@ describe("releaseCheckCore", () => {
     expect(check([...requiredDocs], { "CHANGELOG.md": "# Changelog\n" }).failures.some((failure: string) => failure.includes("CHANGELOG.md"))).toBe(true);
     expect(check([...requiredDocs], { "README.md": "# Readme\n" }).failures.some((failure: string) => failure.includes("Alpha warning"))).toBe(true);
     expect(
-      check([...requiredDocs], { "docs/releases/v0.2.4-alpha-stabilization.md": "# Release\n" }).failures.some((failure: string) =>
-        failure.includes("v0.2.4-alpha-stabilization.md")
+      check([...requiredDocs], { "docs/releases/v0.2.5-alpha-rc.md": "# Release\n" }).failures.some((failure: string) =>
+        failure.includes("v0.2.5-alpha-rc.md")
       )
     ).toBe(true);
   });
@@ -60,6 +60,12 @@ describe("releaseCheckCore", () => {
   it("fails when label JSON is invalid", () => {
     const result = check([...requiredDocs], { "scripts/github-labels.json": "[{\"name\":\"type: bug\",\"color\":\"red\"}]" });
     expect(result.failures.some((failure: string) => failure.includes("scripts/github-labels.json"))).toBe(true);
+  });
+
+  it("fails when compatibility matrix omits targeted fixtures", () => {
+    const result = check([...requiredDocs], { "docs/EPUB_COMPATIBILITY_MATRIX.md": "minimal-epub3" });
+    expect(result.failures.some((failure: string) => failure.includes("nested-sections"))).toBe(true);
+    expect(result.failures.some((failure: string) => failure.includes("large-chapter-chunking"))).toBe(true);
   });
 
   it("passes normal repository state", () => {
@@ -77,16 +83,19 @@ function check(files: string[], content: Record<string, string>) {
 
 function defaultContent(file: string): string {
   if (file === "package.json") {
-    return JSON.stringify({ version: "0.2.4-alpha.0" });
+    return JSON.stringify({ version: "0.2.5-alpha.0" });
   }
   if (file === "package-lock.json") {
-    return JSON.stringify({ version: "0.2.4-alpha.0", packages: { "": { version: "0.2.4-alpha.0" } } });
+    return JSON.stringify({ version: "0.2.5-alpha.0", packages: { "": { version: "0.2.5-alpha.0" } } });
   }
   if (file === "README.md") {
-    return "# Readme\n\nAlpha warning\n\nv0.2.4-alpha-stabilization\n";
+    return "# Readme\n\nAlpha warning\n\nv0.2.5-alpha-rc\n";
   }
-  if (file === "CHANGELOG.md" || file === "docs/releases/v0.2.4-alpha-stabilization.md") {
-    return "# v0.2.4-alpha-stabilization\n";
+  if (file === "CHANGELOG.md" || file === "docs/releases/v0.2.5-alpha-rc.md") {
+    return "# v0.2.5-alpha-rc\n";
+  }
+  if (file === "docs/EPUB_COMPATIBILITY_MATRIX.md") {
+    return "nested-sections split-text-inline entities-special-chars nav-landmarks duplicate-hrefs large-chapter-chunking";
   }
   if (file === "scripts/github-labels.json") {
     return JSON.stringify([

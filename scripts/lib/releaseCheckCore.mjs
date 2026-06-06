@@ -10,6 +10,7 @@ export const requiredDocs = [
   "docs/SECURITY.md",
   "docs/ROADMAP.md",
   "docs/EPUB_COMPATIBILITY_MATRIX.md",
+  "docs/READER_COMPATIBILITY_NOTES.md",
   "docs/TEST_FIXTURES.md",
   ".github/ISSUE_TEMPLATE/bug_report.yml",
   ".github/ISSUE_TEMPLATE/epub_compatibility.yml",
@@ -23,12 +24,21 @@ export const requiredDocs = [
   "docs/triage/TRIAGE_GUIDE.md",
   "docs/triage/ALPHA_FEEDBACK_WORKFLOW.md",
   "docs/releases/ALPHA_RELEASE_CHECKLIST.md",
-  "docs/releases/v0.2.4-alpha-stabilization.md",
+  "docs/releases/v0.2.5-alpha-rc.md",
   "scripts/github-labels.json"
 ];
 
-export const currentPackageVersion = "0.2.4-alpha.0";
-export const currentReleaseVersion = "v0.2.4-alpha-stabilization";
+export const currentPackageVersion = "0.2.5-alpha.0";
+export const currentReleaseVersion = "v0.2.5-alpha-rc";
+
+const requiredCompatibilityFixtures = [
+  "nested-sections",
+  "split-text-inline",
+  "entities-special-chars",
+  "nav-landmarks",
+  "duplicate-hrefs",
+  "large-chapter-chunking"
+];
 
 const forbiddenPathRules = [
   { label: ".env", test: (file) => file === ".env" || (/^\.env\./.test(file) && file !== ".env.example") },
@@ -131,6 +141,15 @@ function runVersionAndReleaseChecks({ fileSet, readFile, failures }) {
 
   if (fileSet.has("scripts/github-labels.json")) {
     validateLabelsJson(safeRead(readFile, "scripts/github-labels.json"), failures);
+  }
+
+  if (fileSet.has("docs/EPUB_COMPATIBILITY_MATRIX.md")) {
+    const matrix = safeRead(readFile, "docs/EPUB_COMPATIBILITY_MATRIX.md");
+    for (const fixture of requiredCompatibilityFixtures) {
+      if (!matrix.includes(fixture)) {
+        failures.push(`docs/EPUB_COMPATIBILITY_MATRIX.md must mention ${fixture}`);
+      }
+    }
   }
 }
 

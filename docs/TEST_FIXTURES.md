@@ -14,6 +14,12 @@ The tests generate fixtures into a temporary directory at runtime. Large EPUB bi
 - `footnotes-inline.epub`: EPUB with footnote anchors and inline tags.
 - `cjk-source.epub`: EPUB with mixed Chinese, Japanese, and English text.
 - `malformed-missing-resource.epub`: invalid EPUB with a manifest href that is not present.
+- `nested-sections.epub`: multi-file EPUB with chapter, section, subsection headings and a non-linear appendix.
+- `split-text-inline.epub`: inline text split across `em`, `strong`, and linked note anchors.
+- `entities-special-chars.epub`: XML-sensitive characters, entity references, smart punctuation, and emoji.
+- `nav-landmarks.epub`: EPUB 3 nav with toc, landmarks, and page-list; nav is non-linear.
+- `duplicate-hrefs.epub`: same filenames in different subdirectories with relative CSS and image resources.
+- `large-chapter-chunking.epub`: long synthetic chapter with multiple translatable text-node groups for progress checks.
 
 ## Running Compatibility Tests
 

@@ -2,7 +2,7 @@
 
 BookTrans Desk is a local-first desktop alpha for AI-assisted translation of reflowable EPUB books into Simplified Chinese.
 
-Current alpha target: `v0.2.4-alpha-stabilization`.
+Current alpha target: `v0.2.5-alpha-rc`.
 
 ## Supported Today
 
@@ -12,6 +12,7 @@ Current alpha target: `v0.2.4-alpha-stabilization`.
 - Export translated EPUB files.
 - View internal validation reports and optional external EPUBCheck output.
 - Track export history and per-book translation profiles.
+- Validate targeted synthetic EPUB compatibility fixtures.
 
 ## Not Supported
 
@@ -53,6 +54,10 @@ Open Jobs to resume unfinished jobs, retry failed chapters, retry one failed cha
 ## EPUBCheck
 
 In Settings, configure `epubcheck` or `java -jar /path/to/epubcheck.jar`. External EPUBCheck is optional.
+
+## Reader Checks
+
+See `docs/READER_COMPATIBILITY_NOTES.md` for manual reader targets. Current CI does not launch desktop readers automatically.
 
 ## Feedback
 

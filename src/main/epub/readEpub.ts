@@ -15,8 +15,8 @@ interface ContainerXml {
 interface OpfPackage {
   package?: {
     metadata?: Array<Record<string, unknown>>;
-    manifest?: Array<{ item?: Array<{ $: { id: string; href: string; "media-type": string } }> }>;
-    spine?: Array<{ itemref?: Array<{ $: { idref: string } }> }>;
+    manifest?: Array<{ item?: Array<{ $: { id: string; href: string; "media-type": string; properties?: string } }> }>;
+    spine?: Array<{ itemref?: Array<{ $: { idref: string; linear?: string } }> }>;
   };
 }
 
@@ -37,23 +37,26 @@ export async function readEpub(filePath: string): Promise<ImportedBook> {
   const opfDir = path.posix.dirname(rootFilePath) === "." ? "" : path.posix.dirname(rootFilePath);
 
   const chapters: Chapter[] = [];
-  for (const [order, itemRef] of spine.entries()) {
+  for (const itemRef of spine) {
+    if (itemRef.$.linear === "no") {
+      continue;
+    }
     const item = manifest.find((entry) => entry.$.id === itemRef.$.idref);
-    if (!item || !isHtmlMediaType(item.$["media-type"])) {
+    if (!item || !isHtmlMediaType(item.$["media-type"]) || hasManifestProperty(item.$.properties, "nav")) {
       continue;
     }
 
-    const absolutePath = normalizeZipPath(path.posix.join(opfDir, item.$.href));
+    const absolutePath = normalizeZipPath(path.posix.join(opfDir, decodeHref(item.$.href)));
     const html = readZipText(zip, absolutePath);
     chapters.push({
       id: item.$.id,
       href: item.$.href,
       absolutePath,
-      title: extractChapterTitle(html, `Chapter ${order + 1}`),
+      title: extractChapterTitle(html, `Chapter ${chapters.length + 1}`),
       text: extractBodyText(html),
       html,
       mediaType: item.$["media-type"],
-      order
+      order: chapters.length
     });
   }
 
@@ -119,6 +122,18 @@ function firstMetadataValue(metadata: Record<string, unknown>, key: string): str
 
 function isHtmlMediaType(mediaType: string): boolean {
   return mediaType === "application/xhtml+xml" || mediaType === "text/html";
+}
+
+function hasManifestProperty(properties: string | undefined, property: string): boolean {
+  return properties?.split(/\s+/).includes(property) ?? false;
+}
+
+function decodeHref(href: string): string {
+  try {
+    return decodeURIComponent(href.split("#")[0]);
+  } catch {
+    return href.split("#")[0];
+  }
 }
 
 function normalizeZipPath(entryPath: string): string {

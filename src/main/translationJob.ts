@@ -102,6 +102,9 @@ export async function translateBook(
         }
       });
       translatedChapters.push({ chapterId: chapter.id, href: chapter.href, html: translatedHtml });
+      if (progress.currentChunk < progress.totalChunks) {
+        translatedChunks += progress.totalChunks - progress.currentChunk;
+      }
       job = await store.updateChapterStatus(job.jobId, chapter.id, "completed", {
         completedChunks: [{ index: 0, status: "completed", source: chapter.href, translated: "chapter-html" }],
         failedChunks: [],

@@ -10,6 +10,7 @@ Manual scenarios:
 
 - Minimal EPUB: import, translate with mock or real configured API, export, validate.
 - EPUB 2 NCX: import and validate compatibility.
+- Targeted fixtures: run nested sections, split inline text, entities/special chars, nav landmarks, duplicate href paths, and large chapter chunking tests.
 - Images and CSS: confirm exported EPUB still contains resources.
 - Footnotes and inline tags: confirm links, ids, classes, `epub:type`, strong/em/span/a survive.
 - CJK source: confirm import/export text is not garbled.
@@ -25,5 +26,6 @@ Manual scenarios:
 - API failure/timeout/cancel: confirm error messages do not leak credentials.
 - Security check: run `npm run release:check`.
 - Label print check: run `npm run labels:print` and confirm it prints instructions only.
+- Reader check: manually open exported synthetic EPUBs in at least one reader listed in `docs/READER_COMPATIBILITY_NOTES.md` when preparing a public RC.
 
 Do not commit commercial EPUB files or test outputs.
