@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a reproducible problem in BookTrans Desk.
+title: "[Bug]: "
+labels: ["type: bug", "status: needs-repro"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste API keys, Authorization headers, full copyrighted book text, or upload EPUB files unless they are safe minimal fixtures you have the right to share.
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      placeholder: v0.2.3-alpha-feedback
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: Windows 11 / Ubuntu / macOS
+  - type: dropdown
+    id: install-mode
+    attributes:
+      label: Install mode
+      options: ["dev", "packed", "unknown"]
+  - type: input
+    id: node-version
+    attributes:
+      label: Node version, if applicable
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Import...\n2. Start translation...\n3. Export..."
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation report
+  - type: textarea
+    id: epubcheck
+    attributes:
+      label: External EPUBCheck output
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Redact API keys and Authorization headers.
+  - type: dropdown
+    id: fixture
+    attributes:
+      label: Can you provide a safe minimal reproduction EPUB fixture?
+      options: ["yes", "no", "not sure"]

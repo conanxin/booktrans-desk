@@ -39,11 +39,18 @@ const api = {
   getExport: (id: string): Promise<IpcResult<ExportHistoryItem | null>> => ipcRenderer.invoke("exports:get", id),
   deleteExport: (id: string): Promise<IpcResult<{ deleted: true }>> => ipcRenderer.invoke("exports:delete", id),
   clearExports: (): Promise<IpcResult<{ cleared: true }>> => ipcRenderer.invoke("exports:clear"),
+  refreshExport: (id: string): Promise<IpcResult<ExportHistoryItem | null>> => ipcRenderer.invoke("exports:refresh", id),
+  refreshAllExports: (): Promise<IpcResult<ExportHistoryItem[]>> => ipcRenderer.invoke("exports:refreshAll"),
+  removeMissingExports: (): Promise<IpcResult<{ removed: number }>> => ipcRenderer.invoke("exports:removeMissing"),
   openExportFolder: (outputPath: string): Promise<IpcResult<{ opened: true }>> => ipcRenderer.invoke("exports:openFolder", outputPath),
   getProfileByFingerprint: (bookFingerprint: string): Promise<IpcResult<TranslationProfile | null>> =>
     ipcRenderer.invoke("profiles:getByFingerprint", bookFingerprint),
   saveCurrentProfile: (settings: TranslationSettings): Promise<IpcResult<TranslationProfile>> => ipcRenderer.invoke("profiles:save", settings),
   deleteCurrentProfile: (): Promise<IpcResult<{ deleted: true }>> => ipcRenderer.invoke("profiles:delete"),
+  createDiagnosticBundle: (
+    report: ValidationReport | null,
+    externalValidation: ExternalEpubCheckReport | undefined
+  ): Promise<IpcResult<string | null>> => ipcRenderer.invoke("diagnostics:createBundle", report, externalValidation),
   onProgress: (callback: (progress: TranslationProgress) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, progress: TranslationProgress) => callback(progress);
     ipcRenderer.on("translation:progress", listener);

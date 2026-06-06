@@ -1,4 +1,5 @@
 import type { ExternalEpubCheckReport, ValidationReport } from "../../shared/types.js";
+import { groupEpubCheckIssues } from "../../shared/epubCheckIssues.js";
 import { validationReportToMarkdown } from "../../shared/validationReport.js";
 
 interface ValidationReportPanelProps {
@@ -9,14 +10,23 @@ interface ValidationReportPanelProps {
 }
 
 export function ValidationReportPanel({ report, externalReport, title, onMessage }: ValidationReportPanelProps) {
+  async function exportDiagnosticBundle() {
+    const result = await window.bookTrans.createDiagnosticBundle(report, externalReport);
+    onMessage(result.ok ? (result.data ? `Saved diagnostic bundle: ${result.data}` : "Diagnostic export cancelled.") : result.error ?? "Diagnostic export failed.");
+  }
+
   if (!report) {
     return (
       <section className="panel validation-panel">
-        <h2>Validation Report</h2>
+        <div className="panel-title-row">
+          <h2>Validation Report</h2>
+          <button onClick={exportDiagnosticBundle}>Export Diagnostic Bundle</button>
+        </div>
         <p className="muted">Export an EPUB to see the detailed validation report.</p>
       </section>
     );
   }
+  const groupedExternal = externalReport?.issues?.length ? groupEpubCheckIssues(externalReport.issues) : null;
 
   async function copyMarkdown() {
     if (!report) {
@@ -41,6 +51,7 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
         <div className="inline-actions">
           <button onClick={copyMarkdown}>Copy Markdown</button>
           <button onClick={saveMarkdown}>Save .md</button>
+          <button onClick={exportDiagnosticBundle}>Export Diagnostic Bundle</button>
         </div>
       </div>
       <div className={`validation-result ${report.status}`}>
@@ -77,6 +88,31 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
             Issues: {countIssues(externalReport, "error")} errors, {countIssues(externalReport, "warning")} warnings,{" "}
             {countIssues(externalReport, "info")} info
           </span>
+          {groupedExternal ? (
+            <div className="external-grouped">
+              <h4>Grouped issues</h4>
+              <p>
+                Top codes:{" "}
+                {groupedExternal.summary.topCodes.length
+                  ? groupedExternal.summary.topCodes.map((item) => `${item.code} (${item.count})`).join(", ")
+                  : "None"}
+              </p>
+              <p>
+                Affected files:{" "}
+                {groupedExternal.summary.affectedFiles.length ? groupedExternal.summary.affectedFiles.join(", ") : "None"}
+              </p>
+              <ul className="external-issues">
+                {groupedExternal.groups.map((group) => (
+                  <li className={group.severity} key={group.key}>
+                    <strong>{group.severity.toUpperCase()}</strong>
+                    {group.code ? `(${group.code}) ` : " "}
+                    {group.file ? `${group.file}: ` : ""}
+                    {group.count}x {group.messages[0]}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {externalReport.issues?.length ? (
             <ul className="external-issues">
               {externalReport.issues.map((issue, index) => (

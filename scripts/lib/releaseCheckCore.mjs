@@ -7,12 +7,28 @@ export const requiredDocs = [
   "docs/SECURITY.md",
   "docs/ROADMAP.md",
   "docs/EPUB_COMPATIBILITY_MATRIX.md",
-  "docs/TEST_FIXTURES.md"
+  "docs/TEST_FIXTURES.md",
+  ".github/ISSUE_TEMPLATE/bug_report.yml",
+  ".github/ISSUE_TEMPLATE/epub_compatibility.yml",
+  ".github/ISSUE_TEMPLATE/feature_request.yml",
+  ".github/ISSUE_TEMPLATE/config.yml",
+  "docs/alpha/ALPHA_TESTER_GUIDE.md",
+  "docs/alpha/TEST_PLAN.md",
+  "docs/alpha/BUG_REPORT_TEMPLATE.md",
+  "docs/alpha/PRIVACY_NOTICE.md",
+  "docs/triage/LABELS.md",
+  "docs/triage/TRIAGE_GUIDE.md",
+  "docs/triage/ALPHA_FEEDBACK_WORKFLOW.md"
 ];
 
 const forbiddenPathRules = [
   { label: ".env", test: (file) => file === ".env" || (/^\.env\./.test(file) && file !== ".env.example") },
   { label: "*.epub", test: (file) => file.toLowerCase().endsWith(".epub") },
+  { label: "*.zip", test: (file) => file.toLowerCase().endsWith(".zip") },
+  { label: "*.exe", test: (file) => file.toLowerCase().endsWith(".exe") },
+  { label: "*.dmg", test: (file) => file.toLowerCase().endsWith(".dmg") },
+  { label: "*.AppImage", test: (file) => file.endsWith(".AppImage") },
+  { label: "*.log", test: (file) => file.toLowerCase().endsWith(".log") },
   { label: "release/", test: (file) => file === "release" || file.startsWith("release/") },
   { label: "dist/", test: (file) => file === "dist" || file.startsWith("dist/") },
   { label: "node_modules/", test: (file) => file === "node_modules" || file.startsWith("node_modules/") }
@@ -66,7 +82,7 @@ export function runReleaseFileChecks({ files, readFile, required = requiredDocs 
 }
 
 export function getTrackedFiles(repoRoot, execFileSync) {
-  return execFileSync("git", ["ls-files"], { cwd: repoRoot, encoding: "utf8" })
+  return execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { cwd: repoRoot, encoding: "utf8" })
     .split(/\r?\n/)
     .map((file) => file.trim())
     .filter(Boolean);

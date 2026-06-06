@@ -54,4 +54,22 @@ In Settings, configure `epubcheck` or `java -jar /path/to/epubcheck.jar`. Extern
 
 ## Feedback
 
-Use `docs/alpha/BUG_REPORT_TEMPLATE.md`. Do not paste API keys, full copyrighted book text, or private model-provider credentials.
+Use the GitHub issue templates or `docs/alpha/BUG_REPORT_TEMPLATE.md`.
+
+You may share:
+
+- Internal validation report Markdown.
+- External EPUBCheck output.
+- Diagnostic bundle exported by the app.
+- A minimal synthetic EPUB fixture you created and have the right to share.
+
+Do not share:
+
+- API keys or Authorization headers.
+- Commercial EPUB files.
+- Full book text.
+- Exported translated EPUB files containing copyrighted content.
+
+## Diagnostic Bundle
+
+Use Export Diagnostic Bundle from the validation area. The bundle is designed to include summaries, redacted logs, validation reports, job status counts, and export history filenames without original EPUB files or full book text.

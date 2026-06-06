@@ -159,6 +159,9 @@ export interface ExportHistoryItem {
   model?: string;
   glossaryHash?: string;
   style?: string;
+  fileExists?: boolean | "unknown";
+  fileSize?: number;
+  lastModified?: string;
 }
 
 export interface TranslationProfile {

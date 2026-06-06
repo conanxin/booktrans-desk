@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased / v0.2.2-alpha-packaging
+## Unreleased / v0.2.3-alpha-feedback
+
+- Add GitHub issue templates and triage docs.
+- Add EPUBCheck issue grouping.
+- Add export history path refresh and missing-record cleanup.
+- Add privacy-safe diagnostic bundle export.
+- Strengthen release safety checks.
+
+## v0.2.2-alpha-packaging
 
 - Add electron-builder packaging configuration.
 - Add GitHub Actions CI.

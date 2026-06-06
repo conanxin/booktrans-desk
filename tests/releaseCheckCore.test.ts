@@ -24,9 +24,22 @@ describe("releaseCheckCore", () => {
     expect(result.failures.some((failure: string) => failure.includes("*.epub"))).toBe(true);
   });
 
+  it("fails on diagnostic zip and packed release files", () => {
+    expect(check([...requiredDocs, "diagnostics.zip"], {}).failures.some((failure: string) => failure.includes("*.zip"))).toBe(true);
+    expect(check([...requiredDocs, "BookTrans.exe"], {}).failures.some((failure: string) => failure.includes("*.exe"))).toBe(true);
+    expect(check([...requiredDocs, "debug.log"], {}).failures.some((failure: string) => failure.includes("*.log"))).toBe(true);
+  });
+
   it("fails when required docs are missing", () => {
     const result = check(["README.md"], {});
     expect(result.failures.some((failure: string) => failure.includes("docs/SECURITY.md"))).toBe(true);
+  });
+
+  it("fails when issue templates or triage docs are missing", () => {
+    const withoutIssueTemplate = requiredDocs.filter((file: string) => file !== ".github/ISSUE_TEMPLATE/bug_report.yml");
+    const withoutTriage = requiredDocs.filter((file: string) => file !== "docs/triage/TRIAGE_GUIDE.md");
+    expect(check(withoutIssueTemplate, {}).failures.some((failure: string) => failure.includes("bug_report.yml"))).toBe(true);
+    expect(check(withoutTriage, {}).failures.some((failure: string) => failure.includes("TRIAGE_GUIDE.md"))).toBe(true);
   });
 
   it("passes normal repository state", () => {

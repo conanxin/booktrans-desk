@@ -46,6 +46,33 @@ export class ExportHistoryStore {
     await this.writeFile({ items: [] });
   }
 
+  async refresh(id: string): Promise<ExportHistoryItem | null> {
+    const file = await this.readFile();
+    const index = file.items.findIndex((item) => item.id === id);
+    if (index < 0) {
+      return null;
+    }
+    file.items[index] = await refreshItem(file.items[index]);
+    await this.writeFile(file);
+    return file.items[index];
+  }
+
+  async refreshAll(): Promise<ExportHistoryItem[]> {
+    const file = await this.readFile();
+    file.items = await Promise.all(file.items.map(refreshItem));
+    await this.writeFile(file);
+    return file.items;
+  }
+
+  async removeMissing(): Promise<number> {
+    const file = await this.readFile();
+    const refreshed = await Promise.all(file.items.map(refreshItem));
+    const kept = refreshed.filter((item) => item.fileExists !== false);
+    const removed = refreshed.length - kept.length;
+    await this.writeFile({ items: kept });
+    return removed;
+  }
+
   private async readFile(): Promise<ExportHistoryFile> {
     try {
       return JSON.parse(await fs.readFile(this.filePath, "utf8")) as ExportHistoryFile;
@@ -75,4 +102,23 @@ export function normalizeExternalStatus(status?: ExternalValidationStatus): Exte
 
 function hash(value: string): string {
   return crypto.createHash("sha256").update(value).digest("hex");
+}
+
+async function refreshItem(item: ExportHistoryItem): Promise<ExportHistoryItem> {
+  try {
+    const stat = await fs.stat(item.outputEpubPath);
+    return {
+      ...item,
+      fileExists: true,
+      fileSize: stat.size,
+      lastModified: stat.mtime.toISOString()
+    };
+  } catch {
+    return {
+      ...item,
+      fileExists: false,
+      fileSize: undefined,
+      lastModified: undefined
+    };
+  }
 }

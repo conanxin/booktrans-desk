@@ -41,6 +41,13 @@
 - Add issue labels and templates.
 - Add export history file existence checks and cleanup.
 - Improve EPUBCheck issue grouping and filters.
+- Add privacy-safe diagnostic bundle export.
+
+## Phase 2.4 Alpha Stabilization
+
+- Use feedback to add targeted regression fixtures.
+- Improve diagnostic bundle UX.
+- Add issue template refinements and maintainer automation.
 
 ## Phase 3 Local Library Management
 

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Alpha tester guide
+    url: https://github.com/
+    about: Read docs/alpha/ALPHA_TESTER_GUIDE.md in the repository before filing feedback.
+  - name: Privacy notice
+    url: https://github.com/
+    about: Read docs/alpha/PRIVACY_NOTICE.md before sharing logs or diagnostics.

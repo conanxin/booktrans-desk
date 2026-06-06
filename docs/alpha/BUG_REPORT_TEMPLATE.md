@@ -30,6 +30,10 @@
 
 Paste the internal validation report Markdown if available.
 
+## Diagnostic Bundle
+
+Attach a diagnostic bundle if it does not contain private content. Do not attach original EPUB files or exported translated EPUBs.
+
 ## External EPUBCheck Output
 
 Paste output if configured.

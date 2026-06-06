@@ -18,6 +18,9 @@ Manual scenarios:
 - Export history: export, copy path, open folder, delete item, clear history.
 - Per-book profile: save profile, reimport same book, confirm profile loads.
 - External EPUBCheck: configure local command and review issue list.
+- EPUBCheck grouping: confirm top codes, affected files, and grouped issue list are readable.
+- Export history cleanup: move/delete an exported file, refresh status, remove missing records.
+- Diagnostic bundle: export bundle and confirm it contains no EPUB files, API keys, or full book text.
 - API failure/timeout/cancel: confirm error messages do not leak credentials.
 - Security check: run `npm run release:check`.
 

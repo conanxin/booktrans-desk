@@ -15,6 +15,7 @@ import type {
 import { validationReportToMarkdown } from "../shared/validationReport.js";
 import { getSettings, saveSettings } from "./config/settings.js";
 import { createExportHistoryStore, normalizeExternalStatus, normalizeValidationStatus } from "./export/exportHistoryStore.js";
+import { createDiagnosticBundle, defaultDiagnosticBundleName } from "./diagnostics/createDiagnosticBundle.js";
 import { readEpub } from "./epub/readEpub.js";
 import { runExternalEpubCheck } from "./epub/runExternalEpubCheck.js";
 import { validateEpub } from "./epub/validateEpub.js";
@@ -256,8 +257,30 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       return { ok: false, error: sanitizeError(error) };
     }
   });
+  ipcMain.handle("exports:refresh", async (_event, id: string): Promise<IpcResult<ExportHistoryItem | null>> => {
+    try {
+      return { ok: true, data: await exportHistory().refresh(id) };
+    } catch (error) {
+      return { ok: false, error: sanitizeError(error) };
+    }
+  });
+  ipcMain.handle("exports:refreshAll", async (): Promise<IpcResult<ExportHistoryItem[]>> => {
+    try {
+      return { ok: true, data: await exportHistory().refreshAll() };
+    } catch (error) {
+      return { ok: false, error: sanitizeError(error) };
+    }
+  });
+  ipcMain.handle("exports:removeMissing", async (): Promise<IpcResult<{ removed: number }>> => {
+    try {
+      return { ok: true, data: { removed: await exportHistory().removeMissing() } };
+    } catch (error) {
+      return { ok: false, error: sanitizeError(error) };
+    }
+  });
   ipcMain.handle("exports:openFolder", async (_event, outputPath: string): Promise<IpcResult<{ opened: true }>> => {
     try {
+      await fs.stat(outputPath);
       await shell.openPath(path.dirname(outputPath));
       return { ok: true, data: { opened: true } };
     } catch (error) {
@@ -297,4 +320,34 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       return { ok: false, error: sanitizeError(error) };
     }
   });
+
+  ipcMain.handle(
+    "diagnostics:createBundle",
+    async (_event, report: ValidationReport | null, externalValidation: ExternalEpubCheckReport | undefined): Promise<IpcResult<string | null>> => {
+      try {
+        const result = await dialog.showSaveDialog(mainWindow, {
+          title: "Export diagnostic bundle",
+          defaultPath: defaultDiagnosticBundleName(),
+          filters: [{ name: "Diagnostic bundle", extensions: ["zip"] }]
+        });
+        if (result.canceled || !result.filePath) {
+          return { ok: true, data: null };
+        }
+        const jobSummary = lastResult?.jobId ? (await manager().get(lastResult.jobId)).data ?? null : null;
+        await createDiagnosticBundle({
+          outputPath: result.filePath,
+          appVersion: app.getVersion(),
+          validationReport: report,
+          externalReport: externalValidation,
+          jobSummary,
+          exportHistory: await exportHistory().list(),
+          appLog: "Renderer logs are not collected automatically.",
+          redactPaths: true
+        });
+        return { ok: true, data: result.filePath };
+      } catch (error) {
+        return { ok: false, error: sanitizeError(error) };
+      }
+    }
+  );
 }

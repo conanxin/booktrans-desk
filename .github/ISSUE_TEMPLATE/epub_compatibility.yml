@@ -1,0 +1,70 @@
+name: EPUB compatibility
+description: Report import, translation, validation, or reader compatibility for an EPUB.
+title: "[EPUB]: "
+labels: ["area: validation", "status: needs-repro"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not upload commercial EPUBs or paste full book text. A small synthetic fixture is best.
+  - type: dropdown
+    id: epub-type
+    attributes:
+      label: EPUB type
+      options: ["EPUB2", "EPUB3", "unknown"]
+  - type: dropdown
+    id: layout
+    attributes:
+      label: Reflowable or fixed layout
+      options: ["reflowable", "fixed layout", "unknown"]
+  - type: dropdown
+    id: drm
+    attributes:
+      label: DRM status
+      options: ["no DRM", "DRM protected", "unknown"]
+  - type: dropdown
+    id: images
+    attributes:
+      label: Has images
+      options: ["yes", "no", "unknown"]
+  - type: dropdown
+    id: footnotes
+    attributes:
+      label: Has footnotes
+      options: ["yes", "no", "unknown"]
+  - type: dropdown
+    id: inline
+    attributes:
+      label: Has complex inline tags
+      options: ["yes", "no", "unknown"]
+  - type: input
+    id: source-language
+    attributes:
+      label: Source language
+  - type: input
+    id: target-language
+    attributes:
+      label: Target language
+      placeholder: zh-CN
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation report
+  - type: textarea
+    id: epubcheck
+    attributes:
+      label: External EPUBCheck output
+  - type: input
+    id: reader
+    attributes:
+      label: Reader tested
+      placeholder: Calibre / Apple Books / Kindle Previewer / Thorium / other
+  - type: textarea
+    id: result
+    attributes:
+      label: Result after export
+  - type: dropdown
+    id: fixture
+    attributes:
+      label: Can you provide a copyright-safe minimal fixture?
+      options: ["yes", "no", "not sure"]
