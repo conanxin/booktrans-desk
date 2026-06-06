@@ -56,6 +56,18 @@ CONDITIONAL_GO
 
 Automatic verification passed and the packed process starts, but public alpha publishing still requires manual reader validation, visible UI verification, and final upload artifact checksum generation.
 
+## Phase 2.8 Final Public Alpha Status
+
+| Item | Result | Notes |
+| --- | --- | --- |
+| Automatic checks | PASS | build/test/audit/release:check passed |
+| Dist artifact generation | PASS | NSIS installer and portable exe generated |
+| Checksums | GENERATED_FOR_WINDOWS_ARTIFACTS | SHA256 recorded for installer, portable exe, and blockmap |
+| Manual launch | PARTIAL_PROCESS_STARTED_UI_NOT_VERIFIED | Unpacked and portable processes started; visual UI not verified |
+| Manual reader validation | NOT_RUN_ENVIRONMENT_LIMITED | Calibre/Thorium/SumatraPDF not run |
+
+Final decision remains CONDITIONAL_GO. This is not a full GO until visual UI and reader validation are completed or explicitly accepted as release limitations.
+
 ## Decision Rule
 
 `v0.2.5-alpha-rc` can proceed to public alpha if:

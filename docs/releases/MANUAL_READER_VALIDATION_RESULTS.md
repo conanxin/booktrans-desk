@@ -5,8 +5,8 @@
 | Field | Value |
 | --- | --- |
 | Date | 2026-06-06 |
-| App version | 0.2.6-alpha.0 |
-| Release prep tag | v0.2.6-public-alpha-prep |
+| App version | 0.2.8-alpha.0 |
+| Release prep tag | v0.2.8-public-alpha |
 | Install mode | packed smoke check |
 | Environment | Windows PowerShell automation without interactive reader validation |
 

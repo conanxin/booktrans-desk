@@ -1,7 +1,12 @@
 # Changelog
 
-## Unreleased / v0.2.6-public-alpha-prep
+## Unreleased / v0.2.8-public-alpha
 
+- Prepare `v0.2.8-public-alpha` with CONDITIONAL_GO final release decision.
+- Generate Windows NSIS and portable artifacts with SHA256 checksum records.
+- Add packed app manual launch results.
+- Add v0.2.8 GitHub Release draft.
+- Keep reader validation as NOT_RUN_ENVIRONMENT_LIMITED and document that no reader PASS is claimed.
 - Record Phase 2.7 public alpha decision as CONDITIONAL_GO.
 - Add manual reader validation results documenting environment-limited reader checks.
 - Add release checksum traceability notes for unpacked output.

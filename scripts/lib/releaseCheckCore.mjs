@@ -29,15 +29,19 @@ export const requiredDocs = [
   "docs/releases/MANUAL_READER_VALIDATION_RESULTS.md",
   "docs/releases/RC_BURNDOWN.md",
   "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md",
+  "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md",
   "docs/releases/INSTALLER_CHECKSUMS.md",
   "docs/releases/RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md",
+  "docs/releases/RELEASE_CHECKSUMS_v0.2.8-public-alpha.md",
+  "docs/releases/PACKED_APP_MANUAL_LAUNCH_RESULTS.md",
   "docs/releases/WINDOWS_UNSIGNED_WARNING.md",
   "docs/PHASE_2_7_PUBLIC_ALPHA_DECISION_REPORT.md",
+  "docs/PHASE_2_8_FINAL_ALPHA_RELEASE_REPORT.md",
   "scripts/github-labels.json"
 ];
 
-export const currentPackageVersion = "0.2.6-alpha.0";
-export const currentReleaseVersion = "v0.2.6-public-alpha-prep";
+export const currentPackageVersion = "0.2.8-alpha.0";
+export const currentReleaseVersion = "v0.2.8-public-alpha";
 
 const requiredCompatibilityFixtures = [
   "nested-sections",
@@ -163,9 +167,16 @@ function runVersionAndReleaseChecks({ fileSet, readFile, failures }) {
     }
   }
 
-  const releaseDraftPath = "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md";
+  const releaseDraftPath = "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md";
   if (fileSet.has(releaseDraftPath)) {
     validateReleaseDraft(safeRead(readFile, releaseDraftPath), failures);
+  }
+
+  if (fileSet.has("docs/releases/RC_BURNDOWN.md")) {
+    const burnDown = safeRead(readFile, "docs/releases/RC_BURNDOWN.md");
+    if (!/final decision/i.test(burnDown)) {
+      failures.push("RC_BURNDOWN.md must contain final decision");
+    }
   }
 }
 

@@ -2,7 +2,7 @@
 
 BookTrans Desk does not launch desktop readers in CI. Use these readers for manual checks of exported EPUB files during alpha testing.
 
-Manual reader validation status for `v0.2.6-public-alpha-prep`: required before publishing public alpha release artifacts. Record results with `docs/releases/MANUAL_READER_VALIDATION_CHECKLIST.md`.
+Manual reader validation status for `v0.2.8-public-alpha`: still required before treating the public alpha as fully verified. Record results with `docs/releases/MANUAL_READER_VALIDATION_CHECKLIST.md`.
 
 | Reader | Platform | Status | Notes |
 | --- | --- | --- | --- |

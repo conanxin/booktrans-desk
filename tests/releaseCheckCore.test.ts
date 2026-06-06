@@ -45,10 +45,16 @@ describe("releaseCheckCore", () => {
   it("fails when public alpha decision docs are missing", () => {
     const withoutReaderResults = requiredDocs.filter((file: string) => file !== "docs/releases/MANUAL_READER_VALIDATION_RESULTS.md");
     const withoutChecksums = requiredDocs.filter((file: string) => file !== "docs/releases/RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md");
+    const withoutFinalChecksums = requiredDocs.filter((file: string) => file !== "docs/releases/RELEASE_CHECKSUMS_v0.2.8-public-alpha.md");
+    const withoutLaunchResults = requiredDocs.filter((file: string) => file !== "docs/releases/PACKED_APP_MANUAL_LAUNCH_RESULTS.md");
     const withoutPhaseReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_2_7_PUBLIC_ALPHA_DECISION_REPORT.md");
+    const withoutFinalReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_2_8_FINAL_ALPHA_RELEASE_REPORT.md");
     expect(check(withoutReaderResults, {}).failures.some((failure: string) => failure.includes("MANUAL_READER_VALIDATION_RESULTS.md"))).toBe(true);
     expect(check(withoutChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md"))).toBe(true);
+    expect(check(withoutFinalChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.8-public-alpha.md"))).toBe(true);
+    expect(check(withoutLaunchResults, {}).failures.some((failure: string) => failure.includes("PACKED_APP_MANUAL_LAUNCH_RESULTS.md"))).toBe(true);
     expect(check(withoutPhaseReport, {}).failures.some((failure: string) => failure.includes("PHASE_2_7_PUBLIC_ALPHA_DECISION_REPORT.md"))).toBe(true);
+    expect(check(withoutFinalReport, {}).failures.some((failure: string) => failure.includes("PHASE_2_8_FINAL_ALPHA_RELEASE_REPORT.md"))).toBe(true);
   });
 
 
@@ -61,7 +67,7 @@ describe("releaseCheckCore", () => {
     expect(check([...requiredDocs], { "CHANGELOG.md": "# Changelog\n" }).failures.some((failure: string) => failure.includes("CHANGELOG.md"))).toBe(true);
     expect(check([...requiredDocs], { "README.md": "# Readme\n" }).failures.some((failure: string) => failure.includes("Alpha warning"))).toBe(true);
     expect(
-      check([...requiredDocs], { "README.md": "# Readme\n\nAlpha warning\n\nv0.2.6-public-alpha-prep\n" }).failures.some((failure: string) =>
+      check([...requiredDocs], { "README.md": "# Readme\n\nAlpha warning\n\nv0.2.8-public-alpha\n" }).failures.some((failure: string) =>
         failure.includes("unsigned warning")
       )
     ).toBe(true);
@@ -79,7 +85,7 @@ describe("releaseCheckCore", () => {
   });
 
   it("fails when release draft omits public alpha safety sections", () => {
-    const result = check([...requiredDocs], { "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md": "# Draft\n" });
+    const result = check([...requiredDocs], { "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md": "# Draft\n" });
     expect(result.failures.some((failure: string) => failure.includes("privacy model"))).toBe(true);
     expect(result.failures.some((failure: string) => failure.includes("checksum placeholder"))).toBe(true);
     expect(result.failures.some((failure: string) => failure.includes("copyrighted EPUBs or API keys"))).toBe(true);
@@ -100,19 +106,22 @@ function check(files: string[], content: Record<string, string>) {
 
 function defaultContent(file: string): string {
   if (file === "package.json") {
-    return JSON.stringify({ version: "0.2.6-alpha.0" });
+    return JSON.stringify({ version: "0.2.8-alpha.0" });
   }
   if (file === "package-lock.json") {
-    return JSON.stringify({ version: "0.2.6-alpha.0", packages: { "": { version: "0.2.6-alpha.0" } } });
+    return JSON.stringify({ version: "0.2.8-alpha.0", packages: { "": { version: "0.2.8-alpha.0" } } });
   }
   if (file === "README.md") {
-    return "# Readme\n\nAlpha warning\n\nWindows unsigned warning\n\nv0.2.6-public-alpha-prep\n";
+    return "# Readme\n\nAlpha warning\n\nWindows unsigned warning\n\nv0.2.8-public-alpha\n";
   }
   if (file === "CHANGELOG.md") {
-    return "# v0.2.6-public-alpha-prep\n";
+    return "# v0.2.8-public-alpha\n";
   }
-  if (file === "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md") {
-    return "# v0.2.6-public-alpha-prep\n\n## Privacy Model\n\n## Checksums\nSHA256_PLACEHOLDER\n\nDo not upload copyrighted EPUBs or API keys.\n";
+  if (file === "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md") {
+    return "# v0.2.8-public-alpha\n\n## Privacy Model\n\n## Checksums\nSHA256_PLACEHOLDER\n\nDo not upload copyrighted EPUBs or API keys.\n";
+  }
+  if (file === "docs/releases/RC_BURNDOWN.md") {
+    return "# RC Burn-down\n\nFinal decision: CONDITIONAL_GO\n";
   }
   if (file === "docs/EPUB_COMPATIBILITY_MATRIX.md") {
     return "nested-sections split-text-inline entities-special-chars nav-landmarks duplicate-hrefs large-chapter-chunking";

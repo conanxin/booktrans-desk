@@ -76,6 +76,14 @@
 - Manual reader validation was not run in the current environment.
 - No installer artifact was generated; unpacked executable checksums were recorded for traceability.
 
+## Phase 2.8 Final Public Alpha Release
+
+- Status: completed as `CONDITIONAL_GO`.
+- Windows NSIS installer and portable artifacts generated.
+- SHA256 checksums recorded for generated artifacts.
+- Packed process smoke launch completed for unpacked and portable executables.
+- Visual UI verification and reader validation remain pending.
+
 ## Phase 3 Local Library Management
 
 - Multi-book local library.

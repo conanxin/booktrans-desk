@@ -2,7 +2,7 @@
 
 BookTrans Desk is a local-first desktop alpha for AI-assisted translation of reflowable EPUB books into Simplified Chinese.
 
-Current alpha target: `v0.2.6-public-alpha-prep`.
+Current alpha target: `v0.2.8-public-alpha`.
 
 ## Supported Today
 

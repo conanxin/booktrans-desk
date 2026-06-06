@@ -9,7 +9,7 @@ Record one row per fixture and reader combination.
 | Field | Value |
 | --- | --- |
 | OS |  |
-| App version | 0.2.6-alpha.0 |
+| App version | 0.2.8-alpha.0 |
 | Install mode | dev / packed |
 | Reader name |  |
 | Reader version |  |

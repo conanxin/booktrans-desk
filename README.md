@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-lightgrey)](.github/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.2.6--public--alpha--prep-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.2.8--public--alpha-orange)](CHANGELOG.md)
 
 BookTrans Desk is an open source desktop alpha for translating reflowable EPUB books into Simplified Chinese with an OpenAI-compatible API. It is local-first: no telemetry, no account system, no cloud sync, and no bundled commercial EPUB content.
 
@@ -56,7 +56,7 @@ Packaging uses electron-builder. Artifacts are written to `release/`, which is i
 
 Before publishing a public alpha, follow the [manual reader validation checklist](docs/releases/MANUAL_READER_VALIDATION_CHECKLIST.md), [RC burn-down](docs/releases/RC_BURNDOWN.md), [checksum instructions](docs/releases/INSTALLER_CHECKSUMS.md), and [Windows unsigned warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md).
 
-Phase 2.7 decision status: CONDITIONAL_GO. Automatic checks and packaging passed, the packed process started during a smoke check, but visible UI verification and manual reader validation still need to be completed before treating the public alpha as fully verified.
+Phase 2.8 decision status: CONDITIONAL_GO. Automatic checks, packaging, dist artifact generation, and checksum recording passed, but visible UI verification and real reader validation still need to be completed before treating the public alpha as fully verified.
 
 ## Release Check
 
@@ -96,9 +96,12 @@ Unsupported formats: fixed-layout EPUB, DRM EPUB, PDF, MOBI, AZW3.
 - [Alpha Release Checklist](docs/releases/ALPHA_RELEASE_CHECKLIST.md)
 - [v0.2.5 RC Release Notes](docs/releases/v0.2.5-alpha-rc.md)
 - [GitHub Release Draft](docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md)
+- [v0.2.8 GitHub Release Draft](docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md)
 - [Installer Checksums](docs/releases/INSTALLER_CHECKSUMS.md)
+- [v0.2.8 Release Checksums](docs/releases/RELEASE_CHECKSUMS_v0.2.8-public-alpha.md)
 - [Release Checksum Results](docs/releases/RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md)
 - [Manual Reader Validation Results](docs/releases/MANUAL_READER_VALIDATION_RESULTS.md)
+- [Packed App Launch Results](docs/releases/PACKED_APP_MANUAL_LAUNCH_RESULTS.md)
 - [Windows Unsigned Warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md)
 - [RC Burn-down](docs/releases/RC_BURNDOWN.md)
 - [Roadmap](docs/ROADMAP.md)
