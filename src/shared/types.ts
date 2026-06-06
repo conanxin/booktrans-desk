@@ -26,6 +26,8 @@ export interface ImportedBook {
   opfDir: string;
   metadata: BookMetadata;
   chapters: Chapter[];
+  bookFingerprint?: string;
+  loadedProfile?: TranslationProfile;
 }
 
 export interface TranslationSettings {
@@ -97,6 +99,19 @@ export interface ExternalEpubCheckReport {
   stderr: string;
   exitCode: number | null;
   command?: string;
+  issues?: ExternalEpubCheckIssue[];
+  rawOutput?: string;
+  durationMs?: number;
+  commandDisplay?: string;
+}
+
+export interface ExternalEpubCheckIssue {
+  severity: "error" | "warning" | "info";
+  code?: string;
+  message: string;
+  file?: string;
+  line?: number;
+  column?: number;
 }
 
 export interface IpcResult<T> {
@@ -129,4 +144,32 @@ export interface TranslationJobSummary {
   pendingChapters: number;
   status: "running" | "paused" | "completed" | "failed" | "cancelled";
   chapters: JobChapterDetail[];
+}
+
+export interface ExportHistoryItem {
+  id: string;
+  jobId?: string;
+  sourceBookTitle?: string;
+  sourceEpubPath?: string;
+  outputEpubPath: string;
+  createdAt: string;
+  validationStatus: ValidationStatus | "unknown";
+  externalValidationStatus?: ExternalValidationStatus;
+  targetLanguage: string;
+  model?: string;
+  glossaryHash?: string;
+  style?: string;
+}
+
+export interface TranslationProfile {
+  id: string;
+  bookFingerprint: string;
+  bookTitle?: string;
+  sourceLanguage?: string;
+  targetLanguage: string;
+  style: TranslationStyle;
+  glossary: string;
+  model?: string;
+  baseUrl?: string;
+  updatedAt: string;
 }

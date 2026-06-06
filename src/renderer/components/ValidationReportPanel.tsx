@@ -73,10 +73,36 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
           <h3>External EPUBCheck</h3>
           <p>{externalReport.summary}</p>
           <span>Exit code: {externalReport.exitCode ?? "N/A"}</span>
+          <span>
+            Issues: {countIssues(externalReport, "error")} errors, {countIssues(externalReport, "warning")} warnings,{" "}
+            {countIssues(externalReport, "info")} info
+          </span>
+          {externalReport.issues?.length ? (
+            <ul className="external-issues">
+              {externalReport.issues.map((issue, index) => (
+                <li className={issue.severity} key={`${issue.severity}-${issue.code}-${index}`}>
+                  <strong>{issue.severity.toUpperCase()}</strong>
+                  {issue.code ? `(${issue.code}) ` : " "}
+                  {issue.file ? `${issue.file}${issue.line ? `:${issue.line}:${issue.column ?? 0}` : ""}: ` : ""}
+                  {issue.message}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {externalReport.rawOutput ? (
+            <details>
+              <summary>Raw output</summary>
+              <pre>{externalReport.rawOutput}</pre>
+            </details>
+          ) : null}
         </div>
       ) : null}
     </section>
   );
+}
+
+function countIssues(report: ExternalEpubCheckReport, severity: "error" | "warning" | "info"): number {
+  return report.issues?.filter((issue) => issue.severity === severity).length ?? 0;
 }
 
 function ReportList({ title, items, tone }: { title: string; items: string[]; tone: "error" | "warning" | "neutral" }) {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ExternalEpubCheckReport, ImportedBook, TranslationProgress, TranslationSettings, ValidationReport } from "../shared/types.js";
 import { BookInfoCard } from "./components/BookInfoCard.js";
 import { ChapterList } from "./components/ChapterList.js";
+import { ExportHistoryPanel } from "./components/ExportHistoryPanel.js";
 import { ImportPanel } from "./components/ImportPanel.js";
 import { JobManagerPanel } from "./components/JobManagerPanel.js";
 import { ProgressPanel } from "./components/ProgressPanel.js";
@@ -32,7 +33,7 @@ export function App() {
   const [externalValidation, setExternalValidation] = useState<ExternalEpubCheckReport | undefined>();
   const [busy, setBusy] = useState(false);
   const [canExport, setCanExport] = useState(false);
-  const [activeTab, setActiveTab] = useState<"translate" | "jobs" | "settings">("translate");
+  const [activeTab, setActiveTab] = useState<"translate" | "jobs" | "exports" | "settings">("translate");
 
   useEffect(() => {
     void window.bookTrans.getSettings().then(setSettings);
@@ -61,7 +62,13 @@ export function App() {
       setCanExport(false);
       setValidation(null);
       setExternalValidation(undefined);
-      setMessage(`Imported ${imported.metadata.title}`);
+      if (imported.loadedProfile) {
+        const saved = await window.bookTrans.getSettings();
+        setSettings(saved);
+        setMessage(`Imported ${imported.metadata.title}. Loaded profile for this book.`);
+      } else {
+        setMessage(`Imported ${imported.metadata.title}`);
+      }
     }
   }
 
@@ -118,6 +125,16 @@ export function App() {
     setMessage("Translation task cache cleared.");
   }
 
+  async function saveProfile() {
+    const result = await window.bookTrans.saveCurrentProfile(settings);
+    setMessage(result.ok ? "Saved profile for this book." : result.error ?? "Save profile failed.");
+  }
+
+  async function resetProfile() {
+    const result = await window.bookTrans.deleteCurrentProfile();
+    setMessage(result.ok ? "Reset profile for this book." : result.error ?? "Reset profile failed.");
+  }
+
   function acceptExportResult(result: Awaited<ReturnType<typeof window.bookTrans.exportEpub>>) {
     setValidation(result.validation);
     setExternalValidation(result.externalValidation);
@@ -141,6 +158,9 @@ export function App() {
         <button className={activeTab === "jobs" ? "active" : ""} onClick={() => setActiveTab("jobs")}>
           Jobs
         </button>
+        <button className={activeTab === "exports" ? "active" : ""} onClick={() => setActiveTab("exports")}>
+          Exports
+        </button>
         <button className={activeTab === "settings" ? "active" : ""} onClick={() => setActiveTab("settings")}>
           Settings
         </button>
@@ -150,6 +170,7 @@ export function App() {
         <section className="workspace-grid">
           <aside className="sidebar">
             <ImportPanel onImport={importBook} busy={busy} />
+            <TranslationSettingsPanel settings={settings} onSave={saveSettings} busy={busy} />
             <div className="actions">
               <button className="primary" onClick={startTranslation} disabled={!book || busy}>
                 Start Translation
@@ -162,6 +183,12 @@ export function App() {
               </button>
               <button onClick={clearJobCache} disabled={busy}>
                 Clear Task Cache
+              </button>
+              <button onClick={saveProfile} disabled={!book || busy}>
+                Save Book Profile
+              </button>
+              <button onClick={resetProfile} disabled={!book || busy}>
+                Reset Book Profile
               </button>
             </div>
           </aside>
@@ -183,9 +210,23 @@ export function App() {
         </section>
       ) : null}
 
+      {activeTab === "exports" ? (
+        <section className="single-column">
+          <ExportHistoryPanel onMessage={setMessage} />
+          <ValidationReportPanel report={validation} externalReport={externalValidation} title={book?.metadata.title ?? "EPUB"} onMessage={setMessage} />
+        </section>
+      ) : null}
+
       {activeTab === "settings" ? (
         <section className="settings-layout">
           <TranslationSettingsPanel settings={settings} onSave={saveSettings} busy={busy} />
+          <section className="panel">
+            <h2>Security Notes</h2>
+            <p className="muted">
+              API keys are kept in local settings and are not stored in jobs, export history, or translation profiles. External EPUBCheck
+              runs without shell execution and should point to a trusted local command.
+            </p>
+          </section>
         </section>
       ) : null}
     </main>

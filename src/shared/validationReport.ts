@@ -33,8 +33,20 @@ export function validationReportToMarkdown(
       `- Status: ${external.status.toUpperCase()}`,
       `- Summary: ${external.summary}`,
       `- Exit code: ${external.exitCode ?? "N/A"}`,
+      `- Duration: ${external.durationMs ?? 0} ms`,
       ""
     );
+    if (external.issues?.length) {
+      lines.push("### Issues", "");
+      for (const issue of external.issues) {
+        lines.push(
+          `- ${issue.severity.toUpperCase()}${issue.code ? `(${issue.code})` : ""}: ${
+            issue.file ? `${issue.file}${issue.line ? `:${issue.line}:${issue.column ?? 0}` : ""}: ` : ""
+          }${issue.message}`
+        );
+      }
+      lines.push("");
+    }
     if (external.stdout.trim()) {
       lines.push("### stdout", "", "```text", external.stdout.trim(), "```", "");
     }

@@ -14,6 +14,9 @@ BookTrans Desk is an open source desktop app for translating reflowable EPUB boo
 - Validate exported EPUB files and show PASS/WARNING/FAIL in the UI.
 - View, copy, and save detailed validation reports as Markdown.
 - Optionally run an external EPUBCheck command after export.
+- Review export history from the Exports tab.
+- Save and auto-load per-book translation profiles.
+- Run generated EPUB fixture regression tests for alpha compatibility baselines.
 - Mock translator for local tests and dry runs.
 - Export translated EPUB files named `OriginalTitle.zh.epub`.
 
@@ -58,6 +61,12 @@ Do not commit `.env` files. Use `.env.example` only as a template.
 
 Open the Jobs tab to view local translation jobs. Each job shows source path, target language, created and updated time, chapter counts, and status. Use Resume to continue an unfinished job, Retry Failed to rerun failed chapters, Retry This Chapter from details to rerun one chapter, Export to rebuild an EPUB from cached translated chapters, and Delete Cache to remove a job.
 
+## Export History and Profiles
+
+The Exports tab records each export with time, book title, output path, validation status, model, and style. You can copy the path, open the containing folder, delete one history item, or clear history.
+
+When a book is imported, BookTrans computes a local fingerprint and loads a saved translation profile if one exists. Use Save Book Profile to store the current model, base URL, glossary, and style for the imported book. API keys are not stored in profiles.
+
 ## Validation Reports
 
 After export, the validation panel shows internal EPUB checks, checked file counts, OPF path, manifest count, spine count, XHTML count, errors, warnings, and optional external EPUBCheck output. Use Copy Markdown or Save .md to keep the report.
@@ -68,6 +77,7 @@ After export, the validation panel shows internal EPUB checks, checked file coun
 - EPUB files stay local unless the user starts translation with API settings.
 - The API key is never hard-coded and is not printed in task logs.
 - Translation job files are stored under the app user data directory and do not include API keys.
+- Export history and translation profiles are stored under the app user data directory and do not include API keys.
 - OpenAI-compatible requests use timeout, cancellation, retry, and redacted errors.
 - External EPUBCheck runs without shell execution and has a timeout.
 - Tests use the mock translator and do not call external APIs.
@@ -85,6 +95,7 @@ After export, the validation panel shows internal EPUB checks, checked file coun
 ## Roadmap
 
 - Add real-world EPUB fixture coverage for NCX, footnotes, CJK source text, and image-heavy books.
+- Add release packaging and CI.
 - Improve external EPUBCheck parsing into richer issue categories.
 - Add optional local-only history of exported files.
 

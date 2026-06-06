@@ -1,9 +1,11 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type {
+  ExportHistoryItem,
   ExportedEpubResult,
   ExternalEpubCheckReport,
   ImportedBook,
   IpcResult,
+  TranslationProfile,
   TranslationJobSummary,
   TranslationProgress,
   TranslationSettings,
@@ -33,6 +35,15 @@ const api = {
   exportJob: (jobId: string): Promise<IpcResult<ExportedEpubResult>> => ipcRenderer.invoke("jobs:export", jobId),
   deleteJob: (jobId: string): Promise<IpcResult<{ deleted: true }>> => ipcRenderer.invoke("jobs:delete", jobId),
   clearCompletedJobs: (): Promise<IpcResult<{ deleted: number }>> => ipcRenderer.invoke("jobs:clearCompleted"),
+  listExports: (): Promise<IpcResult<ExportHistoryItem[]>> => ipcRenderer.invoke("exports:list"),
+  getExport: (id: string): Promise<IpcResult<ExportHistoryItem | null>> => ipcRenderer.invoke("exports:get", id),
+  deleteExport: (id: string): Promise<IpcResult<{ deleted: true }>> => ipcRenderer.invoke("exports:delete", id),
+  clearExports: (): Promise<IpcResult<{ cleared: true }>> => ipcRenderer.invoke("exports:clear"),
+  openExportFolder: (outputPath: string): Promise<IpcResult<{ opened: true }>> => ipcRenderer.invoke("exports:openFolder", outputPath),
+  getProfileByFingerprint: (bookFingerprint: string): Promise<IpcResult<TranslationProfile | null>> =>
+    ipcRenderer.invoke("profiles:getByFingerprint", bookFingerprint),
+  saveCurrentProfile: (settings: TranslationSettings): Promise<IpcResult<TranslationProfile>> => ipcRenderer.invoke("profiles:save", settings),
+  deleteCurrentProfile: (): Promise<IpcResult<{ deleted: true }>> => ipcRenderer.invoke("profiles:delete"),
   onProgress: (callback: (progress: TranslationProgress) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, progress: TranslationProgress) => callback(progress);
     ipcRenderer.on("translation:progress", listener);

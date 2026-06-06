@@ -390,6 +390,32 @@ textarea {
   padding: 10px;
 }
 
+.external-issues {
+  max-height: 180px;
+  overflow: auto;
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.external-issues .error {
+  color: #9a2424;
+}
+
+.external-issues .warning {
+  color: #79570b;
+}
+
+.external-report pre {
+  max-height: 180px;
+  overflow: auto;
+  border: 1px solid #e2e8ee;
+  border-radius: 6px;
+  padding: 8px;
+  white-space: pre-wrap;
+  background: #f8fafb;
+  font-size: 12px;
+}
+
 .external-report.pass {
   border-color: #82b89b;
 }
@@ -513,6 +539,35 @@ textarea {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.export-history-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.export-list {
+  display: grid;
+  gap: 10px;
+}
+
+.export-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 150px 92px 120px 110px 90px auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #e1e7ed;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+}
+
+.export-row p {
+  margin: 4px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #60707d;
 }
 
 .log-box {

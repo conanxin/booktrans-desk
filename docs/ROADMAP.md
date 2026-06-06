@@ -23,9 +23,17 @@
 
 ## Phase 2.1
 
-- More language targets and per-book translation profiles.
+- Generated EPUB fixture pack and alpha compatibility baseline.
+- Enhanced external EPUBCheck output parsing.
 - Export history without adding a full library database.
-- Real-world reader compatibility fixtures.
+- Per-book translation profiles.
+
+## Phase 2.2
+
+- Release packaging and GitHub Actions.
+- More language targets and richer per-book translation profiles.
+- Real-world reader compatibility fixture expansion.
+- Export history file existence checks and cleanup.
 
 ## Current Format Scope
 

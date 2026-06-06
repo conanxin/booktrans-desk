@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
-import type { ExternalEpubCheckReport } from "../../shared/types.js";
+import type { ExternalEpubCheckIssue, ExternalEpubCheckReport } from "../../shared/types.js";
 
 export interface RunExternalEpubCheckOptions {
   timeoutMs?: number;
@@ -18,7 +18,10 @@ export async function runExternalEpubCheck(
       summary: "External EPUBCheck not configured.",
       stdout: "",
       stderr: "",
-      exitCode: null
+      exitCode: null,
+      issues: [],
+      rawOutput: "",
+      durationMs: 0
     };
   }
 
@@ -29,12 +32,17 @@ export async function runExternalEpubCheck(
       summary: "External EPUBCheck command could not be parsed.",
       stdout: "",
       stderr: "",
-      exitCode: null
+      exitCode: null,
+      issues: [],
+      rawOutput: "",
+      durationMs: 0
     };
   }
 
   const timeoutMs = options.timeoutMs ?? 30_000;
   const spawnFn = options.spawnFn ?? spawn;
+  const startedAt = Date.now();
+  const commandDisplay = sanitize([parsed.command, ...parsed.args, "<epub>"].join(" "));
 
   return new Promise((resolve) => {
     const child = spawnFn(parsed.command, [...parsed.args, epubPath], {
@@ -54,7 +62,11 @@ export async function runExternalEpubCheck(
         stdout: sanitize(stdout),
         stderr: sanitize(stderr),
         exitCode: null,
-        command: parsed.command
+        command: parsed.command,
+        commandDisplay,
+        issues: parseExternalEpubCheckIssues(`${stdout}\n${stderr}`),
+        rawOutput: sanitize(`${stdout}\n${stderr}`.trim()),
+        durationMs: Date.now() - startedAt
       });
     }, timeoutMs);
 
@@ -76,7 +88,11 @@ export async function runExternalEpubCheck(
         stdout: sanitize(stdout),
         stderr: sanitize(stderr),
         exitCode: null,
-        command: parsed.command
+        command: parsed.command,
+        commandDisplay,
+        issues: parseExternalEpubCheckIssues(`${stdout}\n${stderr}`),
+        rawOutput: sanitize(`${stdout}\n${stderr}`.trim()),
+        durationMs: Date.now() - startedAt
       });
     });
     child.on("close", (exitCode) => {
@@ -87,16 +103,48 @@ export async function runExternalEpubCheck(
       clearTimeout(timeout);
       const cleanStdout = sanitize(stdout);
       const cleanStderr = sanitize(stderr);
+      const rawOutput = sanitize(`${stdout}\n${stderr}`.trim());
+      const issues = parseExternalEpubCheckIssues(rawOutput);
+      const hasErrors = issues.some((issue) => issue.severity === "error");
+      const hasWarnings = issues.some((issue) => issue.severity === "warning");
       resolve({
-        status: exitCode === 0 ? "pass" : "fail",
+        status: exitCode === 0 && hasWarnings ? "warning" : exitCode === 0 && !hasErrors ? "pass" : "fail",
         summary: exitCode === 0 ? "External EPUBCheck passed." : `External EPUBCheck failed with exit code ${exitCode}.`,
         stdout: cleanStdout,
         stderr: cleanStderr,
         exitCode,
-        command: parsed.command
+        command: parsed.command,
+        commandDisplay,
+        issues,
+        rawOutput,
+        durationMs: Date.now() - startedAt
       });
     });
   });
+}
+
+export function parseExternalEpubCheckIssues(output: string): ExternalEpubCheckIssue[] {
+  return output
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map(parseIssueLine)
+    .filter((issue): issue is ExternalEpubCheckIssue => Boolean(issue));
+}
+
+function parseIssueLine(line: string): ExternalEpubCheckIssue | null {
+  const match = /^(ERROR|WARNING|INFO)(?:\(([^)]+)\))?\s+at\s+([^:(]+)(?:\((\d+),(\d+)\))?:\s*(.+)$/i.exec(line);
+  if (!match) {
+    return null;
+  }
+  return {
+    severity: match[1].toLowerCase() as ExternalEpubCheckIssue["severity"],
+    code: match[2],
+    file: match[3],
+    line: match[4] ? Number(match[4]) : undefined,
+    column: match[5] ? Number(match[5]) : undefined,
+    message: sanitize(match[6])
+  };
 }
 
 export function parseCommandLine(commandLine: string): { command: string; args: string[] } | null {
