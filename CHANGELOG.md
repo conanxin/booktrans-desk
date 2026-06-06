@@ -2,6 +2,10 @@
 
 ## Unreleased / v0.2.8-public-alpha
 
+- Record Phase 2.9 final validation burn-down as CONDITIONAL_GO.
+- Add Calibre reader process smoke result for a temporary exported synthetic minimal EPUB.
+- Update manual launch result to BLOCKED_BY_ENVIRONMENT because visual UI verification remains unavailable.
+- Update GitHub Release draft with final conditional validation wording.
 - Prepare `v0.2.8-public-alpha` with CONDITIONAL_GO final release decision.
 - Generate Windows NSIS and portable artifacts with SHA256 checksum records.
 - Add packed app manual launch results.

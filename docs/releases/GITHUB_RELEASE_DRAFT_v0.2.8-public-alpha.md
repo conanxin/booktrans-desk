@@ -12,7 +12,9 @@ BookTrans Desk v0.2.8 Public Alpha
 
 CONDITIONAL_GO
 
-Automatic checks passed and Windows release artifacts were generated with checksums. This is not a full GO because visual UI validation and real reader validation with Calibre or Thorium Reader were not completed in this environment.
+This alpha is released with conditional validation: automated checks and packaging passed, but full manual reader coverage is limited.
+
+Automatic checks passed and Windows release artifacts were generated with checksums. This is not a full GO because visual UI validation was blocked by the current environment and real reader validation is only partial: Calibre `ebook-viewer` process smoke succeeded with a temporary exported minimal EPUB, but visible chapter text was not confirmed.
 
 ## What This Alpha Can Do
 
@@ -44,10 +46,10 @@ Upload artifacts must be attached by the release publisher in GitHub Releases. T
 
 ```text
 BookTrans Desk Setup 0.2.8-alpha.0.exe
-SHA256: 4F9B464036A767D159F6CAA70DD8E3B9AE86DCEA006EF864786ACA160E9988A0
+SHA256: 0C8C4C78E4F94F429385EF3C0EF0C740E6AC6B68540C2A99D73C9DFDCF1EF6AB
 
 BookTrans Desk 0.2.8-alpha.0.exe
-SHA256: 2FF232BDB6B041E34802DD78716A0547745602634A0196078E101CAC86BC2092
+SHA256: 9E6EC374C5BCEFF0DA1C417BB38A6E4D04C323A81B9147E984882F2E631F14EE
 ```
 
 ## Windows Unsigned Warning
@@ -61,6 +63,8 @@ The Windows package is unsigned. Windows SmartScreen may show an unknown publish
 - API keys are stored locally in Electron settings.
 - Diagnostic bundles are redacted and do not include original EPUB files, exported EPUB files, API keys, Authorization headers, or full book text.
 - Users should review their provider privacy terms before translating private or copyrighted content.
+
+Privacy warning: AI translation can send selected book text to the user-configured provider. Do not process private or copyrighted content unless you understand the provider policy and have the right to process that content.
 
 ## AI Provider Text Transmission Warning
 
@@ -86,8 +90,8 @@ Unsupported: fixed-layout EPUB, DRM EPUB, PDF, MOBI, AZW3.
 - Automatic checks: PASS.
 - Artifact generation: PASS.
 - Checksums: GENERATED_FOR_WINDOWS_ARTIFACTS.
-- Packed process smoke launch: PARTIAL_PROCESS_STARTED_UI_NOT_VERIFIED.
-- Reader validation: NOT_RUN_ENVIRONMENT_LIMITED.
+- Manual launch result: BLOCKED_BY_ENVIRONMENT. App processes started, but visible UI verification was not available.
+- Manual reader validation result: PARTIAL. Calibre process smoke opened a temporary exported minimal EPUB, but visual text confirmation was not available.
 
 ## How To Report Issues
 

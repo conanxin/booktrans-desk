@@ -84,6 +84,15 @@
 - Packed process smoke launch completed for unpacked and portable executables.
 - Visual UI verification and reader validation remain pending.
 
+## Phase 2.9 Final Validation Burn-down
+
+- Status: completed as `CONDITIONAL_GO`.
+- Automatic checks, pack, and dist passed.
+- Windows artifacts and checksums are ready outside git.
+- App and portable process smoke checks passed.
+- Calibre reader process smoke opened a temporary validated minimal EPUB.
+- Visual UI and visible reader text confirmation remain incomplete.
+
 ## Phase 3 Local Library Management
 
 - Multi-book local library.

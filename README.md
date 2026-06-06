@@ -58,6 +58,8 @@ Before publishing a public alpha, follow the [manual reader validation checklist
 
 Phase 2.8 decision status: CONDITIONAL_GO. Automatic checks, packaging, dist artifact generation, and checksum recording passed, but visible UI verification and real reader validation still need to be completed before treating the public alpha as fully verified.
 
+Phase 2.9 final validation status: CONDITIONAL_GO. App and portable processes start, Calibre reader process smoke opened a temporary validated minimal EPUB, but visual UI and visible reader text confirmation remain incomplete.
+
 ## Release Check
 
 ```bash
@@ -102,6 +104,7 @@ Unsupported formats: fixed-layout EPUB, DRM EPUB, PDF, MOBI, AZW3.
 - [Release Checksum Results](docs/releases/RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md)
 - [Manual Reader Validation Results](docs/releases/MANUAL_READER_VALIDATION_RESULTS.md)
 - [Packed App Launch Results](docs/releases/PACKED_APP_MANUAL_LAUNCH_RESULTS.md)
+- [Phase 2.9 Final Validation Burn-down](docs/PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md)
 - [Windows Unsigned Warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md)
 - [RC Burn-down](docs/releases/RC_BURNDOWN.md)
 - [Roadmap](docs/ROADMAP.md)

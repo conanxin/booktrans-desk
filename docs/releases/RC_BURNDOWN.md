@@ -68,6 +68,21 @@ Automatic verification passed and the packed process starts, but public alpha pu
 
 Final decision remains CONDITIONAL_GO. This is not a full GO until visual UI and reader validation are completed or explicitly accepted as release limitations.
 
+## Phase 2.9 Final Validation Burn-down
+
+| Item | Result | Notes |
+| --- | --- | --- |
+| Automatic checks | PASS | build/test/audit/release:check passed |
+| Pack/dist | PASS | Windows unpacked, NSIS installer, portable exe, and blockmap generated |
+| Checksums | GENERATED_FOR_WINDOWS_ARTIFACTS | SHA256 recorded for final generated artifacts |
+| Manual launch | BLOCKED_BY_ENVIRONMENT | App and portable processes started, but visual UI could not be verified |
+| Manual reader validation | PARTIAL | Calibre ebook-viewer process opened a temporary exported minimal EPUB; visual content was not verified |
+| Security | PASS | No tracked release artifacts or secret patterns |
+
+FINAL_DECISION: CONDITIONAL_GO
+
+The GitHub Release can be published only with explicit conditional validation wording. Upgrade to GO requires visual app UI verification plus at least one baseline exported EPUB visibly opening in Calibre or Thorium.
+
 ## Decision Rule
 
 `v0.2.5-alpha-rc` can proceed to public alpha if:

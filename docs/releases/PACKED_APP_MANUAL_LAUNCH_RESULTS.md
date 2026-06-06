@@ -12,7 +12,7 @@
 
 ## Results
 
-MANUAL_LAUNCH_RESULT: PARTIAL_PROCESS_STARTED_UI_NOT_VERIFIED
+MANUAL_LAUNCH_RESULT: BLOCKED_BY_ENVIRONMENT
 
 | Artifact tested | Launch result | UI result | Notes |
 | --- | --- | --- | --- |
@@ -31,3 +31,5 @@ The following checks remain pending because this environment did not provide int
 - Translate shows Import EPUB, Translation Settings, and Start Translation.
 - Exports shows Export History.
 - Jobs shows Job Manager.
+
+Because these visual checks could not be completed in the current automation environment, the launch result remains `BLOCKED_BY_ENVIRONMENT` despite successful process smoke checks.

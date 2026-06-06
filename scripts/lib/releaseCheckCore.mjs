@@ -37,6 +37,7 @@ export const requiredDocs = [
   "docs/releases/WINDOWS_UNSIGNED_WARNING.md",
   "docs/PHASE_2_7_PUBLIC_ALPHA_DECISION_REPORT.md",
   "docs/PHASE_2_8_FINAL_ALPHA_RELEASE_REPORT.md",
+  "docs/PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md",
   "scripts/github-labels.json"
 ];
 
@@ -174,9 +175,19 @@ function runVersionAndReleaseChecks({ fileSet, readFile, failures }) {
 
   if (fileSet.has("docs/releases/RC_BURNDOWN.md")) {
     const burnDown = safeRead(readFile, "docs/releases/RC_BURNDOWN.md");
-    if (!/final decision/i.test(burnDown)) {
-      failures.push("RC_BURNDOWN.md must contain final decision");
+    if (!burnDown.includes("FINAL_DECISION")) {
+      failures.push("RC_BURNDOWN.md must contain FINAL_DECISION");
     }
+  }
+
+  const launchResultsPath = "docs/releases/PACKED_APP_MANUAL_LAUNCH_RESULTS.md";
+  if (fileSet.has(launchResultsPath) && !safeRead(readFile, launchResultsPath).includes("MANUAL_LAUNCH_RESULT")) {
+    failures.push(`${launchResultsPath} must contain MANUAL_LAUNCH_RESULT`);
+  }
+
+  const readerResultsPath = "docs/releases/MANUAL_READER_VALIDATION_RESULTS.md";
+  if (fileSet.has(readerResultsPath) && !safeRead(readFile, readerResultsPath).includes("MANUAL_READER_VALIDATION_RESULT")) {
+    failures.push(`${readerResultsPath} must contain MANUAL_READER_VALIDATION_RESULT`);
   }
 }
 
@@ -184,6 +195,15 @@ function validateReleaseDraft(content, failures) {
   const lower = content.toLowerCase();
   if (!lower.includes("privacy model")) {
     failures.push("GitHub release draft must contain privacy model");
+  }
+  if (!lower.includes("privacy warning")) {
+    failures.push("GitHub release draft must contain privacy warning");
+  }
+  if (!lower.includes("final decision")) {
+    failures.push("GitHub release draft must contain final decision");
+  }
+  if (!lower.includes("windows unsigned warning")) {
+    failures.push("GitHub release draft must contain Windows unsigned warning");
   }
   if (!lower.includes("sha256_placeholder") && !lower.includes("checksum")) {
     failures.push("GitHub release draft must contain checksum placeholder");

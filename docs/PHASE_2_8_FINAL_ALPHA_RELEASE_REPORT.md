@@ -30,15 +30,15 @@ Checksums are recorded in `docs/releases/RELEASE_CHECKSUMS_v0.2.8-public-alpha.m
 
 ## Manual Launch Result
 
-MANUAL_LAUNCH_RESULT: PARTIAL_PROCESS_STARTED_UI_NOT_VERIFIED
+MANUAL_LAUNCH_RESULT: BLOCKED_BY_ENVIRONMENT
 
-Unpacked and portable executables started and stayed alive during short process smoke checks. Visual UI checks were not completed.
+Unpacked and portable executables started and stayed alive during short process smoke checks. Visual UI checks were blocked by the current automation environment.
 
 ## Reader Validation Result
 
-MANUAL_READER_VALIDATION_RESULT: NOT_RUN_ENVIRONMENT_LIMITED
+MANUAL_READER_VALIDATION_RESULT: PARTIAL
 
-Calibre, Thorium Reader, and SumatraPDF validation were not completed in this environment. No reader PASS is claimed.
+Calibre `ebook-viewer` process smoke opened a temporary exported minimal EPUB that passed internal validation. Visual chapter text confirmation was not available, so no reader PASS is claimed.
 
 ## RC Burn-down Status
 
