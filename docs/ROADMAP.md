@@ -45,9 +45,11 @@
 
 ## Phase 2.4 Alpha Stabilization
 
-- Use feedback to add targeted regression fixtures.
-- Improve diagnostic bundle UX.
-- Add issue template refinements and maintainer automation.
+- Status: current release target `v0.2.4-alpha-stabilization`.
+- Add alpha release readiness checklist and release notes.
+- Improve diagnostic bundle UX with explicit included, redacted, excluded, and output path summary.
+- Add print-only GitHub label sync instructions.
+- Strengthen release checks for version consistency and required alpha release documents.
 
 ## Phase 3 Local Library Management
 

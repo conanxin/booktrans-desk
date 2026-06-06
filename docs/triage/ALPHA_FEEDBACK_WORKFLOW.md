@@ -9,3 +9,5 @@
 7. Release a patch alpha when the fix is verified.
 
 Keep reports local-first and privacy-safe: no uploaded user files, no API keys, no full book text.
+
+For `v0.2.4-alpha-stabilization`, run `npm run labels:print` to print optional GitHub label sync instructions. The script is print-only and does not call the GitHub API or read tokens.

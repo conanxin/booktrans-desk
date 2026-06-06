@@ -42,6 +42,26 @@ describe("releaseCheckCore", () => {
     expect(check(withoutTriage, {}).failures.some((failure: string) => failure.includes("TRIAGE_GUIDE.md"))).toBe(true);
   });
 
+  it("fails when package version is not current", () => {
+    const result = check([...requiredDocs], { "package.json": JSON.stringify({ version: "0.0.0" }) });
+    expect(result.failures.some((failure: string) => failure.includes("package.json version must be"))).toBe(true);
+  });
+
+  it("fails when changelog, readme, or release notes omit current release", () => {
+    expect(check([...requiredDocs], { "CHANGELOG.md": "# Changelog\n" }).failures.some((failure: string) => failure.includes("CHANGELOG.md"))).toBe(true);
+    expect(check([...requiredDocs], { "README.md": "# Readme\n" }).failures.some((failure: string) => failure.includes("Alpha warning"))).toBe(true);
+    expect(
+      check([...requiredDocs], { "docs/releases/v0.2.4-alpha-stabilization.md": "# Release\n" }).failures.some((failure: string) =>
+        failure.includes("v0.2.4-alpha-stabilization.md")
+      )
+    ).toBe(true);
+  });
+
+  it("fails when label JSON is invalid", () => {
+    const result = check([...requiredDocs], { "scripts/github-labels.json": "[{\"name\":\"type: bug\",\"color\":\"red\"}]" });
+    expect(result.failures.some((failure: string) => failure.includes("scripts/github-labels.json"))).toBe(true);
+  });
+
   it("passes normal repository state", () => {
     const result = check([...requiredDocs, "src/index.ts"], { "src/index.ts": "console.log('ok');" });
     expect(result.ok).toBe(true);
@@ -51,6 +71,31 @@ describe("releaseCheckCore", () => {
 function check(files: string[], content: Record<string, string>) {
   return runReleaseFileChecks({
     files,
-    readFile: (file: string) => content[file] ?? ""
+    readFile: (file: string) => content[file] ?? defaultContent(file)
   });
+}
+
+function defaultContent(file: string): string {
+  if (file === "package.json") {
+    return JSON.stringify({ version: "0.2.4-alpha.0" });
+  }
+  if (file === "package-lock.json") {
+    return JSON.stringify({ version: "0.2.4-alpha.0", packages: { "": { version: "0.2.4-alpha.0" } } });
+  }
+  if (file === "README.md") {
+    return "# Readme\n\nAlpha warning\n\nv0.2.4-alpha-stabilization\n";
+  }
+  if (file === "CHANGELOG.md" || file === "docs/releases/v0.2.4-alpha-stabilization.md") {
+    return "# v0.2.4-alpha-stabilization\n";
+  }
+  if (file === "scripts/github-labels.json") {
+    return JSON.stringify([
+      { name: "type: bug", color: "d73a4a", description: "Bug" },
+      { name: "type: feature", color: "a2eeef", description: "Feature" },
+      { name: "area: validation", color: "c5def5", description: "Validation" },
+      { name: "priority: p0", color: "b60205", description: "Priority" },
+      { name: "status: needs-repro", color: "fef2c0", description: "Needs reproduction" }
+    ]);
+  }
+  return "";
 }

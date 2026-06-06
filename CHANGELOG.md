@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased / v0.2.3-alpha-feedback
+## Unreleased / v0.2.4-alpha-stabilization
+
+- Add alpha release readiness checklist and v0.2.4-alpha-stabilization release notes.
+- Add diagnostic bundle safety summary in the UI and exported bundle.
+- Add optional GitHub label sync instruction printer.
+- Strengthen release checks for package version, docs, release notes, alpha warning, and label JSON.
+- Update alpha docs, security notes, compatibility guidance, and roadmap.
+
+## v0.2.3-alpha-feedback
 
 - Add GitHub issue templates and triage docs.
 - Add EPUBCheck issue grouping.

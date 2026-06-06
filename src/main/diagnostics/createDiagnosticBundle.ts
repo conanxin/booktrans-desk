@@ -20,10 +20,18 @@ interface SafeJobSummary {
   [key: string]: unknown;
 }
 
+export interface DiagnosticSafetySummary {
+  includedFiles: string[];
+  redactedFields: string[];
+  excludedSensitiveContent: string[];
+  outputPath?: string;
+}
+
 export async function createDiagnosticBundle(input: DiagnosticBundleInput): Promise<string> {
   const createdAt = new Date().toISOString();
   const exportHistory = (input.exportHistory ?? []).map((item) => sanitizeExportHistory(item, input.redactPaths !== false));
   const jobSummary = sanitizeJobSummary(input.jobSummary ?? null);
+  const safetySummary = createDiagnosticSafetySummary(input.outputPath);
   const entries: ZipOutputEntry[] = [
     jsonEntry("diagnostics.json", {
       createdAt,
@@ -37,11 +45,52 @@ export async function createDiagnosticBundle(input: DiagnosticBundleInput): Prom
     textEntry("external-epubcheck-summary.md", externalSummary(input.externalReport)),
     jsonEntry("job-summary.json", jobSummary ?? {}),
     jsonEntry("export-history-summary.json", exportHistory),
+    textEntry("diagnostic-summary.md", diagnosticSafetySummaryToMarkdown(safetySummary)),
     textEntry("app-log-redacted.txt", safeLogSummary(input.appLog))
   ];
   await fs.mkdir(path.dirname(input.outputPath), { recursive: true });
   await fs.writeFile(input.outputPath, buildZip(entries));
   return input.outputPath;
+}
+
+export function createDiagnosticSafetySummary(outputPath?: string): DiagnosticSafetySummary {
+  return {
+    includedFiles: [
+      "diagnostics.json",
+      "validation-report.md",
+      "external-epubcheck-summary.md",
+      "job-summary.json",
+      "export-history-summary.json",
+      "app-log-redacted.txt"
+    ],
+    redactedFields: ["file system paths", "provider tokens", "API key patterns", "Authorization headers", "provider error snippets"],
+    excludedSensitiveContent: [
+      "Original EPUB files excluded",
+      "Exported EPUB files excluded",
+      "API keys excluded",
+      "Authorization headers excluded",
+      "Full book text excluded"
+    ],
+    outputPath
+  };
+}
+
+export function diagnosticSafetySummaryToMarkdown(summary: DiagnosticSafetySummary): string {
+  return [
+    "# Diagnostic Bundle Safety Summary",
+    "",
+    "## Included Files",
+    ...summary.includedFiles.map((file) => `- ${file}`),
+    "",
+    "## Redacted Fields",
+    ...summary.redactedFields.map((field) => `- ${field}`),
+    "",
+    "## Excluded Sensitive Content",
+    ...summary.excludedSensitiveContent.map((item) => `- ${item}`),
+    "",
+    "## Output Path",
+    summary.outputPath ? redact(summary.outputPath) : "Selected after export."
+  ].join("\n");
 }
 
 export function defaultDiagnosticBundleName(date = new Date()): string {

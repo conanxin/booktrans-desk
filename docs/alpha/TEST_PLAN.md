@@ -21,7 +21,9 @@ Manual scenarios:
 - EPUBCheck grouping: confirm top codes, affected files, and grouped issue list are readable.
 - Export history cleanup: move/delete an exported file, refresh status, remove missing records.
 - Diagnostic bundle: export bundle and confirm it contains no EPUB files, API keys, or full book text.
+- Diagnostic summary: confirm UI and `diagnostic-summary.md` state original EPUB files, exported EPUB files, API keys, Authorization headers, and full book text are excluded.
 - API failure/timeout/cancel: confirm error messages do not leak credentials.
 - Security check: run `npm run release:check`.
+- Label print check: run `npm run labels:print` and confirm it prints instructions only.
 
 Do not commit commercial EPUB files or test outputs.

@@ -2,7 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 
 export const requiredDocs = [
+  "package.json",
+  "package-lock.json",
   "README.md",
+  "CHANGELOG.md",
   "LICENSE",
   "docs/SECURITY.md",
   "docs/ROADMAP.md",
@@ -18,8 +21,14 @@ export const requiredDocs = [
   "docs/alpha/PRIVACY_NOTICE.md",
   "docs/triage/LABELS.md",
   "docs/triage/TRIAGE_GUIDE.md",
-  "docs/triage/ALPHA_FEEDBACK_WORKFLOW.md"
+  "docs/triage/ALPHA_FEEDBACK_WORKFLOW.md",
+  "docs/releases/ALPHA_RELEASE_CHECKLIST.md",
+  "docs/releases/v0.2.4-alpha-stabilization.md",
+  "scripts/github-labels.json"
 ];
+
+export const currentPackageVersion = "0.2.4-alpha.0";
+export const currentReleaseVersion = "v0.2.4-alpha-stabilization";
 
 const forbiddenPathRules = [
   { label: ".env", test: (file) => file === ".env" || (/^\.env\./.test(file) && file !== ".env.example") },
@@ -51,6 +60,8 @@ export function runReleaseFileChecks({ files, readFile, required = requiredDocs 
     }
   }
 
+  runVersionAndReleaseChecks({ fileSet, readFile, failures });
+
   for (const file of normalized) {
     for (const rule of forbiddenPathRules) {
       if (rule.test(file)) {
@@ -63,7 +74,7 @@ export function runReleaseFileChecks({ files, readFile, required = requiredDocs 
     if (shouldSkipContentScan(file)) {
       continue;
     }
-    const content = readFile(file);
+    const content = safeRead(readFile, file);
     const lines = content.split(/\r?\n/);
     lines.forEach((line, index) => {
       const cleanLine = stripAllowedExamples(line);
@@ -79,6 +90,93 @@ export function runReleaseFileChecks({ files, readFile, required = requiredDocs 
     ok: failures.length === 0,
     failures
   };
+}
+
+function runVersionAndReleaseChecks({ fileSet, readFile, failures }) {
+  if (fileSet.has("package.json")) {
+    const packageJson = parseJson(safeRead(readFile, "package.json"), "package.json", failures);
+    if (!packageJson?.version) {
+      failures.push("package.json is missing version");
+    } else if (packageJson.version !== currentPackageVersion) {
+      failures.push(`package.json version must be ${currentPackageVersion}, found ${packageJson.version}`);
+    }
+  }
+
+  if (fileSet.has("package-lock.json")) {
+    const lockJson = parseJson(safeRead(readFile, "package-lock.json"), "package-lock.json", failures);
+    const lockVersion = lockJson?.packages?.[""]?.version ?? lockJson?.version;
+    if (lockVersion && lockVersion !== currentPackageVersion) {
+      failures.push(`package-lock.json root version must be ${currentPackageVersion}, found ${lockVersion}`);
+    }
+  }
+
+  if (fileSet.has("CHANGELOG.md") && !safeRead(readFile, "CHANGELOG.md").includes(currentReleaseVersion)) {
+    failures.push(`CHANGELOG.md must mention ${currentReleaseVersion}`);
+  }
+
+  if (fileSet.has("README.md")) {
+    const readme = safeRead(readFile, "README.md");
+    if (!readme.includes("Alpha warning")) {
+      failures.push("README.md must contain Alpha warning");
+    }
+    if (!readme.includes(currentReleaseVersion)) {
+      failures.push(`README.md must mention ${currentReleaseVersion}`);
+    }
+  }
+
+  const releaseNotesPath = `docs/releases/${currentReleaseVersion}.md`;
+  if (fileSet.has(releaseNotesPath) && !safeRead(readFile, releaseNotesPath).includes(currentReleaseVersion)) {
+    failures.push(`${releaseNotesPath} must mention ${currentReleaseVersion}`);
+  }
+
+  if (fileSet.has("scripts/github-labels.json")) {
+    validateLabelsJson(safeRead(readFile, "scripts/github-labels.json"), failures);
+  }
+}
+
+function validateLabelsJson(content, failures) {
+  const labels = parseJson(content, "scripts/github-labels.json", failures);
+  if (!Array.isArray(labels)) {
+    failures.push("scripts/github-labels.json must contain an array");
+    return;
+  }
+  const names = new Set();
+  const requiredLabels = ["type: bug", "type: feature", "area: validation", "priority: p0", "status: needs-repro"];
+  labels.forEach((label, index) => {
+    if (!label?.name || !label?.color || !label?.description) {
+      failures.push(`scripts/github-labels.json label ${index + 1} must include name, color, and description`);
+      return;
+    }
+    if (names.has(label.name)) {
+      failures.push(`Duplicate GitHub label: ${label.name}`);
+    }
+    names.add(label.name);
+    if (!/^[0-9a-fA-F]{6}$/.test(label.color)) {
+      failures.push(`GitHub label ${label.name} color must be 6 hex characters`);
+    }
+  });
+  for (const label of requiredLabels) {
+    if (!names.has(label)) {
+      failures.push(`Missing required GitHub label: ${label}`);
+    }
+  }
+}
+
+function parseJson(content, file, failures) {
+  try {
+    return JSON.parse(content);
+  } catch (error) {
+    failures.push(`Invalid JSON in ${file}: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+}
+
+function safeRead(readFile, file) {
+  try {
+    return readFile(file) ?? "";
+  } catch {
+    return "";
+  }
 }
 
 export function getTrackedFiles(repoRoot, execFileSync) {

@@ -1,6 +1,6 @@
 {
   "name": "booktrans-desk",
-  "version": "0.2.3-alpha.0",
+  "version": "0.2.4-alpha.0",
   "description": "Open source desktop EPUB AI translation alpha.",
   "main": "dist/main/index.js",
   "type": "module",
@@ -11,7 +11,8 @@
     "start": "electron .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "release:check": "node scripts/release-check.mjs"
+    "release:check": "node scripts/release-check.mjs",
+    "labels:print": "node scripts/print-label-sync-instructions.mjs"
   },
   "keywords": [
     "electron",

@@ -2,6 +2,8 @@
 
 BookTrans Desk is a local-first desktop alpha for AI-assisted translation of reflowable EPUB books into Simplified Chinese.
 
+Current alpha target: `v0.2.4-alpha-stabilization`.
+
 ## Supported Today
 
 - Import reflowable EPUB files.
@@ -72,4 +74,6 @@ Do not share:
 
 ## Diagnostic Bundle
 
-Use Export Diagnostic Bundle from the validation area. The bundle is designed to include summaries, redacted logs, validation reports, job status counts, and export history filenames without original EPUB files or full book text.
+Use Export Diagnostic Bundle from the validation area. Diagnostic bundles are redacted and do not include original EPUB files, exported EPUB files, API keys, Authorization headers, or full book text.
+
+The validation panel shows a diagnostic summary before export. The exported zip also includes `diagnostic-summary.md` with included files, redacted fields, excluded sensitive content, and output path.

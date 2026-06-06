@@ -337,6 +337,35 @@ textarea {
   gap: 12px;
 }
 
+.diagnostic-summary {
+  border: 1px solid #d7e2ec;
+  border-radius: 6px;
+  background: #f7fafc;
+  padding: 10px;
+  color: #314252;
+}
+
+.diagnostic-summary p {
+  margin: 0 0 8px;
+}
+
+.diagnostic-summary dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.diagnostic-summary dt {
+  color: #61707d;
+  font-size: 12px;
+}
+
+.diagnostic-summary dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
 .report-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

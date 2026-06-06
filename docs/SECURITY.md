@@ -16,7 +16,9 @@ BookTrans Desk is local-first.
 - Renderer code never reads or writes job cache files directly.
 - External EPUBCheck is optional, runs through `spawn` with `shell: false`, and has a timeout.
 - Generated test fixtures are synthetic and contain no commercial book content.
-- Diagnostic bundles omit original EPUBs, exported EPUBs, API keys, Authorization headers, and full book text.
+- Diagnostic bundles omit original EPUBs, exported EPUBs, API keys, Authorization headers, and full book text, and include `diagnostic-summary.md` so testers can verify those exclusions before sharing.
+- `npm run labels:print` is print-only; it does not call GitHub APIs and does not read tokens.
+- `npm run release:check` verifies `v0.2.4-alpha-stabilization` release documents, package version consistency, alpha warning copy, and label JSON validity.
 - Tests use `MockTranslator` and never call a real external API.
 - The app contains no telemetry, auto-update, cloud sync, login, online store, or account system.
 

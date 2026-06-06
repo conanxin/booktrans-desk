@@ -9,6 +9,9 @@ interface ValidationReportPanelProps {
   onMessage: (message: string) => void;
 }
 
+const diagnosticBundleNotice =
+  "Diagnostic bundles are redacted and do not include original EPUB files, exported EPUB files, API keys, Authorization headers, or full book text.";
+
 export function ValidationReportPanel({ report, externalReport, title, onMessage }: ValidationReportPanelProps) {
   async function exportDiagnosticBundle() {
     const result = await window.bookTrans.createDiagnosticBundle(report, externalReport);
@@ -22,6 +25,7 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
           <h2>Validation Report</h2>
           <button onClick={exportDiagnosticBundle}>Export Diagnostic Bundle</button>
         </div>
+        <DiagnosticBundleSummary />
         <p className="muted">Export an EPUB to see the detailed validation report.</p>
       </section>
     );
@@ -54,6 +58,7 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
           <button onClick={exportDiagnosticBundle}>Export Diagnostic Bundle</button>
         </div>
       </div>
+      <DiagnosticBundleSummary />
       <div className={`validation-result ${report.status}`}>
         <strong>{report.status.toUpperCase()}</strong>
         <span>{report.summary}</span>
@@ -134,6 +139,32 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
         </div>
       ) : null}
     </section>
+  );
+}
+
+function DiagnosticBundleSummary() {
+  return (
+    <div className="diagnostic-summary">
+      <p>{diagnosticBundleNotice}</p>
+      <dl>
+        <div>
+          <dt>Included</dt>
+          <dd>Validation report, EPUBCheck summary, job summary, export history summary, redacted app log.</dd>
+        </div>
+        <div>
+          <dt>Redacted</dt>
+          <dd>Paths, provider tokens, API key patterns, Authorization headers, provider error snippets.</dd>
+        </div>
+        <div>
+          <dt>Excluded</dt>
+          <dd>Original EPUB files, exported EPUB files, API keys, Authorization headers, full book text.</dd>
+        </div>
+        <div>
+          <dt>Output path</dt>
+          <dd>Selected when the diagnostic bundle is exported.</dd>
+        </div>
+      </dl>
+    </div>
   );
 }
 

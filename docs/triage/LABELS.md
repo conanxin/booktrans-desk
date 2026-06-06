@@ -28,3 +28,5 @@ Recommended labels for alpha feedback:
 - `status: confirmed`
 - `status: wontfix`
 - `good first issue`
+
+For `v0.2.4-alpha-stabilization`, the same label set is stored in `scripts/github-labels.json`. Run `npm run labels:print` to print manual sync instructions and optional `gh label create` commands. The script does not call GitHub APIs or read tokens.

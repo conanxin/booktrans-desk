@@ -75,6 +75,7 @@ describe("createDiagnosticBundle", () => {
         "external-epubcheck-summary.md",
         "job-summary.json",
         "export-history-summary.json",
+        "diagnostic-summary.md",
         "app-log-redacted.txt"
       ])
     );
@@ -83,6 +84,11 @@ describe("createDiagnosticBundle", () => {
     expect(combined).not.toContain(`${"apiKey"}=secret-value`);
     expect(combined).not.toContain("full body text should not appear");
     expect(combined).not.toContain("/private/exported.epub");
+    expect(combined).toContain("Original EPUB files excluded");
+    expect(combined).toContain("Exported EPUB files excluded");
+    expect(combined).toContain("API keys excluded");
+    expect(combined).toContain("Authorization headers excluded");
+    expect(combined).toContain("Full book text excluded");
     expect(names.some((name) => name.endsWith(".epub"))).toBe(false);
   });
 });
