@@ -26,10 +26,13 @@ export const requiredDocs = [
   "docs/releases/ALPHA_RELEASE_CHECKLIST.md",
   "docs/releases/v0.2.5-alpha-rc.md",
   "docs/releases/MANUAL_READER_VALIDATION_CHECKLIST.md",
+  "docs/releases/MANUAL_READER_VALIDATION_RESULTS.md",
   "docs/releases/RC_BURNDOWN.md",
   "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md",
   "docs/releases/INSTALLER_CHECKSUMS.md",
+  "docs/releases/RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md",
   "docs/releases/WINDOWS_UNSIGNED_WARNING.md",
+  "docs/PHASE_2_7_PUBLIC_ALPHA_DECISION_REPORT.md",
   "scripts/github-labels.json"
 ];
 

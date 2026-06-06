@@ -42,6 +42,16 @@ describe("releaseCheckCore", () => {
     expect(check(withoutTriage, {}).failures.some((failure: string) => failure.includes("TRIAGE_GUIDE.md"))).toBe(true);
   });
 
+  it("fails when public alpha decision docs are missing", () => {
+    const withoutReaderResults = requiredDocs.filter((file: string) => file !== "docs/releases/MANUAL_READER_VALIDATION_RESULTS.md");
+    const withoutChecksums = requiredDocs.filter((file: string) => file !== "docs/releases/RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md");
+    const withoutPhaseReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_2_7_PUBLIC_ALPHA_DECISION_REPORT.md");
+    expect(check(withoutReaderResults, {}).failures.some((failure: string) => failure.includes("MANUAL_READER_VALIDATION_RESULTS.md"))).toBe(true);
+    expect(check(withoutChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md"))).toBe(true);
+    expect(check(withoutPhaseReport, {}).failures.some((failure: string) => failure.includes("PHASE_2_7_PUBLIC_ALPHA_DECISION_REPORT.md"))).toBe(true);
+  });
+
+
   it("fails when package version is not current", () => {
     const result = check([...requiredDocs], { "package.json": JSON.stringify({ version: "0.0.0" }) });
     expect(result.failures.some((failure: string) => failure.includes("package.json version must be"))).toBe(true);

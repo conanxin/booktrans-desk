@@ -34,6 +34,28 @@
 - P1: none known.
 - P2: known limitations documented.
 
+## Phase 2.7 Validation Results
+
+| Item | Result | Notes |
+| --- | --- | --- |
+| Automatic checks | PASS | build/test/audit/release:check passed |
+| Pack | PASS | Generated `release/win-unpacked/` |
+| Manual launch | PARTIAL_PROCESS_STARTED_UI_NOT_VERIFIED | Process started and stayed alive during smoke check; visible UI not verified |
+| Manual reader validation | NOT_RUN_ENVIRONMENT_LIMITED | Calibre/Thorium/SumatraPDF not run in this environment |
+| Checksum | NO_INSTALLER_ARTIFACT_GENERATED | Unpacked exe hashes recorded; no installer artifact generated |
+
+## Phase 2.7 Open Issues
+
+- P0 issues: none known from automated checks.
+- P1 issues: none known from automated checks.
+- P2 known limitations: Windows unsigned warning, manual reader validation pending, visible UI verification pending, no installer artifact generated, macOS packaging not configured.
+
+## Final Decision
+
+CONDITIONAL_GO
+
+Automatic verification passed and the packed process starts, but public alpha publishing still requires manual reader validation, visible UI verification, and final upload artifact checksum generation.
+
 ## Decision Rule
 
 `v0.2.5-alpha-rc` can proceed to public alpha if:

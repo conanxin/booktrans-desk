@@ -56,6 +56,8 @@ Packaging uses electron-builder. Artifacts are written to `release/`, which is i
 
 Before publishing a public alpha, follow the [manual reader validation checklist](docs/releases/MANUAL_READER_VALIDATION_CHECKLIST.md), [RC burn-down](docs/releases/RC_BURNDOWN.md), [checksum instructions](docs/releases/INSTALLER_CHECKSUMS.md), and [Windows unsigned warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md).
 
+Phase 2.7 decision status: CONDITIONAL_GO. Automatic checks and packaging passed, the packed process started during a smoke check, but visible UI verification and manual reader validation still need to be completed before treating the public alpha as fully verified.
+
 ## Release Check
 
 ```bash
@@ -95,6 +97,8 @@ Unsupported formats: fixed-layout EPUB, DRM EPUB, PDF, MOBI, AZW3.
 - [v0.2.5 RC Release Notes](docs/releases/v0.2.5-alpha-rc.md)
 - [GitHub Release Draft](docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md)
 - [Installer Checksums](docs/releases/INSTALLER_CHECKSUMS.md)
+- [Release Checksum Results](docs/releases/RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md)
+- [Manual Reader Validation Results](docs/releases/MANUAL_READER_VALIDATION_RESULTS.md)
 - [Windows Unsigned Warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md)
 - [RC Burn-down](docs/releases/RC_BURNDOWN.md)
 - [Roadmap](docs/ROADMAP.md)

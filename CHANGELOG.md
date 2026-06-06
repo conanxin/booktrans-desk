@@ -2,6 +2,10 @@
 
 ## Unreleased / v0.2.6-public-alpha-prep
 
+- Record Phase 2.7 public alpha decision as CONDITIONAL_GO.
+- Add manual reader validation results documenting environment-limited reader checks.
+- Add release checksum traceability notes for unpacked output.
+- Update RC burn-down and GitHub Release draft with launch, reader, checksum, and decision status.
 - Add manual reader validation checklist for public alpha release prep.
 - Add RC burn-down criteria and decision rule.
 - Add GitHub Release draft for `v0.2.6-public-alpha-prep`.

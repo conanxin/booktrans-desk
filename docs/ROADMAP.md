@@ -68,6 +68,14 @@
 - Keep manual reader validation and checksum generation outside git artifacts.
 - Strengthen release checks for public alpha release prep documents.
 
+## Phase 2.7 Public Alpha Decision
+
+- Status: completed as `CONDITIONAL_GO` documentation.
+- Automatic checks passed.
+- Packed app process smoke check passed, but visible UI verification remains manual.
+- Manual reader validation was not run in the current environment.
+- No installer artifact was generated; unpacked executable checksums were recorded for traceability.
+
 ## Phase 3 Local Library Management
 
 - Multi-book local library.

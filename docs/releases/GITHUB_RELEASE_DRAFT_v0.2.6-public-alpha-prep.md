@@ -12,6 +12,10 @@ BookTrans Desk v0.2.6 Public Alpha Prep
 
 BookTrans Desk is an open source desktop alpha for translating reflowable EPUB books into Simplified Chinese with an OpenAI-compatible provider. This release prepares the project for public alpha testing with manual reader validation guidance, RC burn-down criteria, checksum instructions, and clearer unsigned Windows package messaging.
 
+Final decision: CONDITIONAL_GO.
+
+This is not a full GO because manual reader validation and visible UI verification were not completed in the current automation environment.
+
 ## What This Alpha Can Do
 
 - Import reflowable EPUB files.
@@ -34,6 +38,7 @@ BookTrans Desk is an open source desktop alpha for translating reflowable EPUB b
 ## Download/Install Notes
 
 - Download packages only from the project GitHub Release page.
+- Release artifacts must be uploaded by the publisher to GitHub Releases; they are not stored in the git repository.
 - Windows package is unsigned.
 - Keep backups of original EPUB files.
 - Users may build from source if they prefer not to run a prebuilt alpha package.
@@ -81,7 +86,9 @@ Do not upload copyrighted EPUBs or API keys. Also do not upload commercial EPUB 
 
 ## Checksums
 
-SHA256 checksums will be added by the release publisher after local package generation.
+Checksum status for this prep run: NO_INSTALLER_ARTIFACT_GENERATED.
+
+SHA256 checksums must be added by the release publisher after generating the actual upload artifacts.
 
 ```text
 BookTrans-Desk-Setup.exe: SHA256_PLACEHOLDER
@@ -90,7 +97,15 @@ BookTrans-Desk.AppImage: SHA256_PLACEHOLDER
 
 ## Manual Reader Validation
 
+Manual validation status: NOT_RUN_ENVIRONMENT_LIMITED.
+
 Manual reader validation should follow `docs/releases/MANUAL_READER_VALIDATION_CHECKLIST.md`. Calibre and Thorium Reader are recommended baseline readers for public alpha prep.
+
+Known launch/reader validation limitations:
+
+- Packed app process smoke check started successfully, but visible UI and tab switching were not verified in this environment.
+- Calibre, Thorium Reader, and SumatraPDF validation were not run.
+- Final GitHub Release should remain conditional until those checks are completed or explicitly accepted as a documented limitation.
 
 ## Links
 

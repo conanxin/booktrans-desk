@@ -38,11 +38,15 @@ Use this checklist before publishing an alpha build.
 ## Public Alpha Prep
 
 - Manual reader validation checklist exists.
+- Manual reader validation results are recorded.
 - RC burn-down is current and has no P0/P1 known blockers.
 - GitHub Release draft exists.
 - Installer checksum instructions exist.
+- Release checksum result document exists.
 - Windows unsigned warning copy exists.
-- Manual reader validation status is recorded before publishing.
+- Manual reader validation status is recorded before publishing. Current Phase 2.7 status is NOT_RUN_ENVIRONMENT_LIMITED.
+- Manual launch status is recorded. Current Phase 2.7 status is PARTIAL_PROCESS_STARTED_UI_NOT_VERIFIED.
+- Release decision is recorded. Current Phase 2.7 decision is CONDITIONAL_GO.
 - Checksums are generated locally by the publisher and pasted into the GitHub Release.
 
 ## Packaging
