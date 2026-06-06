@@ -188,9 +188,15 @@ export class TranslationJobStore {
     const jobs = await Promise.all(
       files
         .filter((file) => file.endsWith(".json"))
-        .map(async (file) => JSON.parse(await fs.readFile(path.join(this.jobsDir, file), "utf8")) as StoredTranslationJob)
+        .map(async (file) => {
+          try {
+            return JSON.parse(await fs.readFile(path.join(this.jobsDir, file), "utf8")) as StoredTranslationJob;
+          } catch {
+            return null;
+          }
+        })
     );
-    return jobs;
+    return jobs.filter((job): job is StoredTranslationJob => Boolean(job));
   }
 
   private async ensureDir(): Promise<void> {

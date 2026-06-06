@@ -31,12 +31,41 @@
 ## Phase 2.2
 
 - Release packaging and GitHub Actions.
+- Release safety checks.
+- Alpha tester kit.
+- Open source governance files.
+
+## Phase 2.3 Alpha Feedback Loop
+
+- Triage alpha tester feedback.
+- Add issue labels and templates.
+- Add export history file existence checks and cleanup.
+- Improve EPUBCheck issue grouping and filters.
+
+## Phase 3 Local Library Management
+
+- Multi-book local library.
+- Cover thumbnails.
+- Search.
+- Tags.
+- Translation versions.
+- Batch import.
+
+## Phase 4 Plugin / Provider Profiles
+
+- Provider presets.
+- Safer model configuration profiles.
+- Optional plugin/provider extension points.
+
+## Phase 5 Multi-format Support
+
+- Explore PDF, MOBI, and AZW3 import paths.
+- Keep DRM-protected content out of scope unless legal processing is clearly supported.
 - More language targets and richer per-book translation profiles.
 - Real-world reader compatibility fixture expansion.
-- Export history file existence checks and cleanup.
 
 ## Current Format Scope
 
 - Current target: reflowable EPUB.
 - Not supported: fixed-layout EPUB, DRM EPUB, PDF, MOBI, and AZW3.
-- Out of scope: Calibre integration, batch translation, book library database, user login, cloud sync, online reader, paid systems, plugins, CI, and auto publishing.
+- Out of current scope: Calibre integration, batch translation, book library database, user login, cloud sync, online reader, paid systems, plugins, and auto publishing.

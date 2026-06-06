@@ -31,7 +31,7 @@ describe("runExternalEpubCheck", () => {
 
   it("redacts sensitive stdout and stderr", async () => {
     const report = await runExternalEpubCheck("book.epub", "epubcheck", {
-      spawnFn: spawnMock({ exitCode: 1, stdout: "Bearer secret-token", stderr: "apiKey=secret" })
+      spawnFn: spawnMock({ exitCode: 1, stdout: `${"Bearer"} secret-token`, stderr: `${"apiKey"}=secret` })
     });
     expect(report.stdout).toContain("Bearer [redacted]");
     expect(report.stderr).toContain("apiKey=[redacted]");

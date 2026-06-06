@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import type {
@@ -30,7 +31,7 @@ export async function translateBook(
   options: TranslateBookOptions = {}
 ): Promise<TranslationJobResult> {
   const translator = createTranslator(settings);
-  const store = options.jobStore ?? createTranslationJobStore(options.userDataDir ?? path.join(os.tmpdir(), "booktrans-desk"));
+  const store = options.jobStore ?? createTranslationJobStore(options.userDataDir ?? path.join(os.tmpdir(), "booktrans-desk", crypto.randomUUID()));
   let job = options.jobId ? await store.readJob(options.jobId) : (await store.findResumableJob(book)) ?? (await store.createJob(book));
   if (options.retryFailed) {
     job = await store.retryFailedChapters(job.jobId);

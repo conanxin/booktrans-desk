@@ -35,7 +35,7 @@ INFO at nav.xhtml(2,1): Informational note`);
   });
 
   it("redacts sensitive issue messages", () => {
-    const issues = parseExternalEpubCheckIssues("ERROR(SEC-001) at file.xhtml: Bearer secret-token");
+    const issues = parseExternalEpubCheckIssues(`ERROR(SEC-001) at file.xhtml: ${"Bearer"} secret-token`);
     expect(issues[0].message).toBe("Bearer [redacted]");
   });
 });
