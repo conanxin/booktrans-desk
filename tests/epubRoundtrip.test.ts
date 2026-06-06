@@ -28,7 +28,7 @@ describe("EPUB roundtrip", () => {
 
     const reread = await readEpub(output);
     expect(reread.metadata.language).toBe("zh-CN");
-    expect(reread.chapters[0].text).toContain("【中文】Hello world.");
+    expect(reread.chapters[0].text).toContain("[zh]Hello world.");
 
     const zip = new AdmZip(output);
     expect(zip.getEntries()[0].entryName).toBe("mimetype");

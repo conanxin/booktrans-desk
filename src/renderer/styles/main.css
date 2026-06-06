@@ -15,7 +15,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -43,13 +45,19 @@ button.full {
   width: 100%;
 }
 
-input {
+input,
+select,
+textarea {
   width: 100%;
   border: 1px solid #c7d0d9;
   border-radius: 6px;
   padding: 9px 10px;
   color: #1d2630;
   background: #fff;
+}
+
+textarea {
+  resize: vertical;
 }
 
 .app-shell {
@@ -249,6 +257,34 @@ input {
 .message {
   margin: 12px 0 0;
   color: #1d4f49;
+}
+
+.validation-result {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  border: 1px solid;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.validation-result.pass {
+  border-color: #82b89b;
+  color: #155f38;
+  background: #edf8f2;
+}
+
+.validation-result.warning {
+  border-color: #d6b35c;
+  color: #735510;
+  background: #fff8df;
+}
+
+.validation-result.fail {
+  border-color: #d48b8b;
+  color: #8a2828;
+  background: #fff0f0;
 }
 
 .log-box {

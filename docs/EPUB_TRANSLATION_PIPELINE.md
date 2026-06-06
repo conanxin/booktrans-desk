@@ -4,10 +4,16 @@
 2. Locate the OPF rootfile.
 3. Parse metadata, manifest, and spine.
 4. Read XHTML or HTML items referenced by the spine.
-5. Extract body text from headings, paragraphs, list items, block quotes, and captions.
-6. Split extracted text into chunks.
-7. Translate chunks with either the mock translator or configured OpenAI-compatible API.
-8. Join translated chunks and replace text inside the original XHTML structure.
-9. Preserve all other ZIP entries.
-10. Update metadata to `zh-CN` and append `（中文翻译版）` to the title.
-11. Write a new `.zh.epub`.
+5. Create or resume a local translation job in the app user data directory.
+6. Parse each chapter as XHTML DOM.
+7. Traverse body text nodes under headings, paragraphs, list items, block quotes, definitions, and captions.
+8. Skip text inside `script`, `style`, `svg`, `math`, `code`, `pre`, and `noscript`.
+9. Translate eligible text nodes, merging short adjacent runs only when they can be mapped back safely.
+10. Preserve original tags, attributes, ids, classes, links, images, anchors, comments, and inline formatting.
+11. Persist completed chapter XHTML and failed chunk metadata for retry/resume.
+12. Preserve all non-chapter ZIP entries.
+13. Update metadata language to `zh-CN` and append a Chinese translation title suffix.
+14. Write a new `.zh.epub` with `mimetype` as the first uncompressed ZIP entry.
+15. Validate the exported EPUB and return a structured PASS/WARNING/FAIL report to the UI.
+
+The validator checks basic EPUB structure, OPF manifest and spine consistency, manifest file presence, and XHTML XML parseability. It is intentionally local and lightweight; it does not replace a full EPUB conformance suite.

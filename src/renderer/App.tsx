@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ImportedBook, TranslationProgress, TranslationSettings } from "../shared/types.js";
+import type { ImportedBook, TranslationProgress, TranslationSettings, ValidationReport } from "../shared/types.js";
 import { BookInfoCard } from "./components/BookInfoCard.js";
 import { ChapterList } from "./components/ChapterList.js";
 import { ImportPanel } from "./components/ImportPanel.js";
@@ -20,10 +20,13 @@ export function App() {
     baseUrl: "https://api.openai.com/v1",
     apiKey: "",
     model: "gpt-4o-mini",
-    useMock: false
+    useMock: false,
+    glossary: "",
+    style: "faithful"
   });
   const [progress, setProgress] = useState<TranslationProgress>(emptyProgress);
   const [message, setMessage] = useState("");
+  const [validation, setValidation] = useState<ValidationReport | null>(null);
   const [busy, setBusy] = useState(false);
   const [canExport, setCanExport] = useState(false);
 
@@ -52,6 +55,7 @@ export function App() {
       setBook(imported);
       setProgress(emptyProgress);
       setCanExport(false);
+      setValidation(null);
       setMessage(`Imported ${imported.metadata.title}`);
     }
   }
@@ -69,6 +73,7 @@ export function App() {
     }
     setBusy(true);
     setCanExport(false);
+    setValidation(null);
     setMessage("Translation started.");
     try {
       await window.bookTrans.startTranslation(settings);
@@ -88,13 +93,21 @@ export function App() {
 
   async function exportBook() {
     try {
-      const output = await window.bookTrans.exportEpub();
-      if (output) {
-        setMessage(`Exported: ${output}`);
+      const result = await window.bookTrans.exportEpub();
+      if (result) {
+        setValidation(result.validation);
+        setMessage(`Exported: ${result.outputPath}`);
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Export failed.");
     }
+  }
+
+  async function clearJobCache() {
+    await window.bookTrans.clearJobCache();
+    setCanExport(false);
+    setValidation(null);
+    setMessage("Translation task cache cleared.");
   }
 
   return (
@@ -121,13 +134,16 @@ export function App() {
             <button onClick={exportBook} disabled={!canExport || busy}>
               Export EPUB
             </button>
+            <button onClick={clearJobCache} disabled={busy}>
+              Clear Task Cache
+            </button>
           </div>
         </aside>
 
         <section className="content">
           <BookInfoCard book={book} />
           <ChapterList chapters={book?.chapters ?? []} progress={progress.chapters} />
-          <ProgressPanel progress={progress} percent={percent} message={message} />
+          <ProgressPanel progress={progress} percent={percent} message={message} validation={validation} />
         </section>
       </section>
     </main>

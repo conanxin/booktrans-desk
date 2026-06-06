@@ -4,7 +4,7 @@ import { OpenAICompatibleTranslator } from "./openaiCompatibleTranslator.js";
 
 export function createTranslator(settings: TranslationSettings): Translator {
   if (settings.useMock) {
-    return new MockTranslator();
+    return new MockTranslator(settings);
   }
   return new OpenAICompatibleTranslator(settings);
 }

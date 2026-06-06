@@ -103,7 +103,7 @@ function defaultOutputPath(filePath: string, title: string): string {
   return path.join(path.dirname(filePath), `${safeTitle}.zh.epub`);
 }
 
-interface ZipOutputEntry {
+export interface ZipOutputEntry {
   name: string;
   data: Buffer;
   method: 0 | 8;
@@ -118,7 +118,7 @@ interface CentralDirectoryEntry {
   offset: number;
 }
 
-function buildZip(entries: ZipOutputEntry[]): Buffer {
+export function buildZip(entries: ZipOutputEntry[]): Buffer {
   const fileParts: Buffer[] = [];
   const centralEntries: CentralDirectoryEntry[] = [];
   let offset = 0;

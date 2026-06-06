@@ -1,12 +1,13 @@
-import type { TranslationProgress } from "../../shared/types.js";
+import type { TranslationProgress, ValidationReport } from "../../shared/types.js";
 
 interface ProgressPanelProps {
   progress: TranslationProgress;
   percent: number;
   message: string;
+  validation: ValidationReport | null;
 }
 
-export function ProgressPanel({ progress, percent, message }: ProgressPanelProps) {
+export function ProgressPanel({ progress, percent, message, validation }: ProgressPanelProps) {
   return (
     <section className="panel progress-panel">
       <div className="progress-header">
@@ -23,6 +24,13 @@ export function ProgressPanel({ progress, percent, message }: ProgressPanelProps
         </span>
       </div>
       {message ? <p className="message">{message}</p> : null}
+      {validation ? (
+        <div className={`validation-result ${validation.status}`}>
+          <strong>EPUB validation: {validation.status.toUpperCase()}</strong>
+          <span>{validation.summary}</span>
+          {validation.status === "fail" ? <span>This file was kept, but it may not open in some readers.</span> : null}
+        </div>
+      ) : null}
       <div className="log-box">
         {(progress.log.length ? progress.log : ["Waiting for task."]).map((line, index) => (
           <p key={`${line}-${index}`}>{line}</p>

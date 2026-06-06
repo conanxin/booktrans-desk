@@ -1,4 +1,6 @@
 export type TranslationStatus = "pending" | "translating" | "completed" | "failed" | "cancelled";
+export type ValidationStatus = "pass" | "warning" | "fail";
+export type TranslationStyle = "faithful" | "fluent" | "academic" | "popular";
 
 export interface BookMetadata {
   title: string;
@@ -30,6 +32,8 @@ export interface TranslationSettings {
   apiKey: string;
   model: string;
   useMock?: boolean;
+  glossary?: string;
+  style?: TranslationStyle;
 }
 
 export interface ChapterProgress {
@@ -59,8 +63,22 @@ export interface TranslatedChapter {
 export interface TranslationJobResult {
   book: ImportedBook;
   translatedChapters: TranslatedChapter[];
+  jobId: string;
 }
 
 export interface Translator {
   translate(text: string, signal?: AbortSignal): Promise<string>;
+}
+
+export interface ValidationReport {
+  status: ValidationStatus;
+  errors: string[];
+  warnings: string[];
+  checkedFiles: string[];
+  summary: string;
+}
+
+export interface ExportedEpubResult {
+  outputPath: string;
+  validation: ValidationReport;
 }

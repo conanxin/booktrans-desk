@@ -39,6 +39,25 @@ export function TranslationSettingsPanel({ settings, busy, onSave }: Translation
         <span>Model</span>
         <input value={draft.model} onChange={(event) => update("model", event.target.value)} disabled={busy} />
       </label>
+      <label>
+        <span>Style</span>
+        <select value={draft.style ?? "faithful"} onChange={(event) => update("style", event.target.value as TranslationSettings["style"])} disabled={busy}>
+          <option value="faithful">faithful - accurate</option>
+          <option value="fluent">fluent - natural</option>
+          <option value="academic">academic - formal</option>
+          <option value="popular">popular - accessible</option>
+        </select>
+      </label>
+      <label>
+        <span>Glossary</span>
+        <textarea
+          value={draft.glossary ?? ""}
+          onChange={(event) => update("glossary", event.target.value)}
+          disabled={busy}
+          rows={5}
+          placeholder={"world model => 世界模型\nagent => 智能体"}
+        />
+      </label>
       <label className="check-row">
         <input
           type="checkbox"

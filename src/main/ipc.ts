@@ -1,9 +1,11 @@
-import { BrowserWindow, dialog, ipcMain } from "electron";
-import type { ImportedBook, TranslationJobResult, TranslationSettings } from "../shared/types.js";
+import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import type { ExportedEpubResult, ImportedBook, TranslationJobResult, TranslationSettings } from "../shared/types.js";
 import { getSettings, saveSettings } from "./config/settings.js";
 import { readEpub } from "./epub/readEpub.js";
+import { validateEpub } from "./epub/validateEpub.js";
 import { writeTranslatedEpub } from "./epub/writeTranslatedEpub.js";
 import { translateBook } from "./translationJob.js";
+import { createTranslationJobStore } from "./translate/translationJobStore.js";
 
 let currentBook: ImportedBook | null = null;
 let lastResult: TranslationJobResult | null = null;
@@ -36,9 +38,15 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     }
     activeController = new AbortController();
     try {
-      lastResult = await translateBook(currentBook, settings, activeController.signal, (progress) => {
-        mainWindow.webContents.send("translation:progress", progress);
-      });
+      lastResult = await translateBook(
+        currentBook,
+        settings,
+        activeController.signal,
+        (progress) => {
+          mainWindow.webContents.send("translation:progress", progress);
+        },
+        { userDataDir: app.getPath("userData") }
+      );
     } catch (error) {
       mainWindow.webContents.send("translation:progress", {
         translatedChunks: 0,
@@ -57,11 +65,17 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     activeController?.abort();
   });
 
-  ipcMain.handle("book:export", async () => {
+  ipcMain.handle("translation:clear-cache", async () => {
+    await createTranslationJobStore(app.getPath("userData")).clearAll();
+    lastResult = null;
+  });
+
+  ipcMain.handle("book:export", async (): Promise<ExportedEpubResult> => {
     if (!lastResult) {
       throw new Error("Translate the book before exporting.");
     }
     const outputPath = await writeTranslatedEpub(lastResult.book, lastResult.translatedChapters);
-    return outputPath;
+    const validation = await validateEpub(outputPath);
+    return { outputPath, validation };
   });
 }

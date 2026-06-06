@@ -1,3 +1,5 @@
+import os from "node:os";
+import path from "node:path";
 import type {
   ChapterProgress,
   ImportedBook,
@@ -6,31 +8,47 @@ import type {
   TranslationSettings,
   TranslatedChapter
 } from "../shared/types.js";
-import { applyTranslatedTextToHtml } from "./epub/writeTranslatedEpub.js";
-import { chunkText } from "./translate/chunkText.js";
+import { countTranslatableTextNodeGroups, translateXhtmlTextNodes } from "./epub/translateXhtmlTextNodes.js";
 import { createTranslator } from "./translate/translator.js";
+import { createTranslationJobStore, TranslationJobStore } from "./translate/translationJobStore.js";
 
 export type ProgressCallback = (progress: TranslationProgress) => void;
+
+export interface TranslateBookOptions {
+  userDataDir?: string;
+  jobStore?: TranslationJobStore;
+  retryFailed?: boolean;
+}
 
 export async function translateBook(
   book: ImportedBook,
   settings: TranslationSettings,
   signal: AbortSignal,
-  onProgress: ProgressCallback
+  onProgress: ProgressCallback,
+  options: TranslateBookOptions = {}
 ): Promise<TranslationJobResult> {
   const translator = createTranslator(settings);
-  const chapterChunks = book.chapters.map((chapter) => ({ chapter, chunks: chunkText(chapter.text) }));
-  const totalChunks = chapterChunks.reduce((sum, item) => sum + item.chunks.length, 0);
-  const chapterProgress: ChapterProgress[] = book.chapters.map((chapter) => ({
-    chapterId: chapter.id,
-    chapterTitle: chapter.title,
-    currentChunk: 0,
-    totalChunks: chunkText(chapter.text).length,
-    status: "pending"
-  }));
-  const log: string[] = ["Translation task created."];
-  const translatedChapters: TranslatedChapter[] = [];
-  let translatedChunks = 0;
+  const store = options.jobStore ?? createTranslationJobStore(options.userDataDir ?? path.join(os.tmpdir(), "booktrans-desk"));
+  let job = (await store.findResumableJob(book)) ?? (await store.createJob(book));
+  if (options.retryFailed) {
+    job = await store.retryFailedChapters(job.jobId);
+  }
+
+  const chapterProgress: ChapterProgress[] = book.chapters.map((chapter) => {
+    const stored = job.chapters.find((item) => item.chapterId === chapter.id);
+    return {
+      chapterId: chapter.id,
+      chapterTitle: chapter.title,
+      currentChunk: stored?.completedChunks.length ?? 0,
+      totalChunks: Math.max(countTranslatableTextNodeGroups(chapter.html), 1),
+      status: stored?.status ?? "pending",
+      error: stored?.error
+    };
+  });
+  const totalChunks = chapterProgress.reduce((sum, item) => sum + item.totalChunks, 0);
+  const translatedChapters: TranslatedChapter[] = await store.toTranslatedChapters(job);
+  let translatedChunks = chapterProgress.reduce((sum, item) => sum + (item.status === "completed" ? item.totalChunks : item.currentChunk), 0);
+  const log: string[] = [`Translation job ${job.jobId} ready.`];
 
   const emit = (status: TranslationProgress["status"], currentChapter?: string) => {
     onProgress({
@@ -38,48 +56,65 @@ export async function translateBook(
       translatedChunks,
       totalChunks,
       status,
-      chapters: [...chapterProgress],
+      chapters: chapterProgress.map((item) => ({ ...item })),
       log: [...log]
     });
   };
 
-  emit("pending");
+  emit(job.status === "pending" ? "pending" : "translating");
 
-  for (const [chapterIndex, item] of chapterChunks.entries()) {
+  for (const [chapterIndex, chapter] of book.chapters.entries()) {
     if (signal.aborted) {
       throw new Error("Translation cancelled.");
     }
 
     const progress = chapterProgress[chapterIndex];
-    progress.status = "translating";
-    log.push(`Translating chapter: ${item.chapter.title}`);
-    emit("translating", item.chapter.title);
-
-    const translatedParts: string[] = [];
-    for (const chunk of item.chunks) {
-      if (signal.aborted) {
-        progress.status = "cancelled";
-        emit("cancelled", item.chapter.title);
-        throw new Error("Translation cancelled.");
-      }
-      const translated = await translator.translate(chunk.text, signal);
-      translatedParts.push(translated);
-      progress.currentChunk = chunk.index + 1;
-      translatedChunks += 1;
-      emit("translating", item.chapter.title);
+    const storedChapter = job.chapters.find((item) => item.chapterId === chapter.id);
+    if (storedChapter?.status === "completed" && storedChapter.translatedHtml) {
+      log.push(`Resumed completed chapter: ${chapter.title}`);
+      emit("translating", chapter.title);
+      continue;
     }
 
-    const translatedText = translatedParts.join("\n\n");
-    translatedChapters.push({
-      chapterId: item.chapter.id,
-      href: item.chapter.href,
-      html: applyTranslatedTextToHtml(item.chapter.html, translatedText)
-    });
-    progress.status = "completed";
-    emit("translating", item.chapter.title);
+    progress.status = "translating";
+    progress.currentChunk = 0;
+    progress.error = undefined;
+    job = await store.updateChapterStatus(job.jobId, chapter.id, "translating");
+    log.push(`Translating chapter: ${chapter.title}`);
+    emit("translating", chapter.title);
+
+    try {
+      const translatedHtml = await translateXhtmlTextNodes(chapter.html, translator, {
+        signal,
+        onNodeTranslated: () => {
+          progress.currentChunk += 1;
+          translatedChunks += 1;
+          emit("translating", chapter.title);
+        }
+      });
+      translatedChapters.push({ chapterId: chapter.id, href: chapter.href, html: translatedHtml });
+      job = await store.updateChapterStatus(job.jobId, chapter.id, "completed", {
+        completedChunks: [{ index: 0, status: "completed", source: chapter.href, translated: "chapter-html" }],
+        failedChunks: [],
+        translatedHtml
+      });
+      progress.status = "completed";
+      progress.currentChunk = progress.totalChunks;
+      emit("translating", chapter.title);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Translation failed.";
+      progress.status = signal.aborted ? "cancelled" : "failed";
+      progress.error = message;
+      await store.updateChapterStatus(job.jobId, chapter.id, progress.status, {
+        error: message,
+        failedChunks: [{ index: progress.currentChunk, status: "failed", source: chapter.href, error: message }]
+      });
+      emit(progress.status, chapter.title);
+      throw error;
+    }
   }
 
   log.push("Translation completed.");
   emit("completed");
-  return { book, translatedChapters };
+  return { book, translatedChapters, jobId: job.jobId };
 }

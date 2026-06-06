@@ -6,12 +6,21 @@
 - Local OpenAI-compatible settings.
 - Mock translator and roundtrip tests.
 
+## Phase 1.5
+
+- Structural EPUB validation after export.
+- XHTML DOM text-node translation with inline structure preservation.
+- Chapter-level retry/resume state persisted in user data.
+- Glossary and style prompt controls.
+- OpenAI-compatible timeout, retry, cancellation, and safer error handling.
+
 ## Phase 2
 
-- More robust XHTML inline mapping.
-- Chapter retry, resume, and cancellation recovery.
-- EPUB validation report before export.
-- Glossary and style prompt controls.
+- Explicit job picker for resume/retry workflows.
+- Optional full epubcheck integration.
+- More language targets and per-book translation profiles.
+- Export history without adding a full library database.
+- Reader compatibility test matrix.
 
 ## Out of Scope for Phase 1
 
