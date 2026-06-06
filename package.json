@@ -1,0 +1,44 @@
+{
+  "name": "booktrans-desk",
+  "version": "0.1.0",
+  "description": "Open source desktop EPUB translation MVP.",
+  "main": "dist/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"tsc -w -p tsconfig.json\" \"vite --host 127.0.0.1\" \"wait-on dist/main/index.js http://127.0.0.1:5173 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .\"",
+    "build": "tsc -p tsconfig.json && vite build",
+    "test": "vitest run",
+    "start": "electron ."
+  },
+  "keywords": [
+    "electron",
+    "epub",
+    "translation",
+    "openai-compatible"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.5.0",
+    "adm-zip": "^0.5.16",
+    "cheerio": "^1.0.0",
+    "electron-store": "^10.1.0",
+    "vite": "^6.3.5",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^22.15.29",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "@types/xml2js": "^0.4.14",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^42.3.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.8",
+    "wait-on": "^8.0.3"
+  }
+}

@@ -1,0 +1,273 @@
+:root {
+  color: #1d2630;
+  background: #f4f6f8;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 900px;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 1px solid #c8d0d8;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #17202a;
+  background: #fff;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button.primary {
+  border-color: #166a5f;
+  color: #fff;
+  background: #167568;
+}
+
+button.full {
+  width: 100%;
+}
+
+input {
+  width: 100%;
+  border: 1px solid #c7d0d9;
+  border-radius: 6px;
+  padding: 9px 10px;
+  color: #1d2630;
+  background: #fff;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  color: #fff;
+  background: #24313f;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 25px;
+  line-height: 1.2;
+}
+
+.app-header p {
+  margin: 5px 0 0;
+  color: #d7dee6;
+}
+
+.status-pill {
+  min-width: 112px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  padding: 7px 12px;
+  text-align: center;
+  text-transform: capitalize;
+  color: #eaf1f0;
+}
+
+.workspace-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 18px;
+  padding: 18px;
+}
+
+.sidebar,
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel {
+  border: 1px solid #d9e0e7;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+
+.panel h2 {
+  margin: 0 0 13px;
+  font-size: 16px;
+}
+
+.book-info dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.book-info dt {
+  color: #61707d;
+  font-size: 12px;
+}
+
+.book-info dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  font-weight: 650;
+}
+
+.settings-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-panel label {
+  display: grid;
+  gap: 5px;
+  color: #566572;
+  font-size: 13px;
+}
+
+.settings-panel label span {
+  color: #3b4650;
+}
+
+.check-row {
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+}
+
+.check-row input {
+  width: auto;
+}
+
+.actions {
+  display: grid;
+  gap: 10px;
+}
+
+.chapter-panel {
+  flex: 1;
+  min-height: 280px;
+}
+
+.chapter-list {
+  display: grid;
+  gap: 8px;
+  max-height: 330px;
+  overflow: auto;
+}
+
+.chapter-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 108px;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #e3e8ed;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.chapter-order {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #24665e;
+  background: #e7f3f1;
+  font-weight: 700;
+}
+
+.chapter-row strong,
+.chapter-row span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chapter-row span {
+  margin-top: 3px;
+  color: #62717d;
+  font-size: 12px;
+}
+
+.chapter-row em {
+  color: #51616f;
+  font-size: 12px;
+  font-style: normal;
+  text-align: right;
+  text-transform: capitalize;
+}
+
+.progress-header,
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.progress-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e2e8ee;
+}
+
+.progress-track div {
+  height: 100%;
+  border-radius: inherit;
+  background: #167568;
+  transition: width 160ms ease;
+}
+
+.progress-meta {
+  margin-top: 9px;
+  color: #536373;
+  font-size: 13px;
+}
+
+.message {
+  margin: 12px 0 0;
+  color: #1d4f49;
+}
+
+.log-box {
+  height: 104px;
+  overflow: auto;
+  margin-top: 10px;
+  border: 1px solid #e2e8ee;
+  border-radius: 6px;
+  padding: 9px 10px;
+  color: #3d4b58;
+  background: #f8fafb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.log-box p {
+  margin: 0 0 4px;
+}
+
+.muted {
+  color: #6f7d8a;
+}
