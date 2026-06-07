@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { DocumentAnalysisRecord } from "../main/analysis/analysisService.js";
 import type { DocumentChatMessage } from "../main/chat/documentChatService.js";
 import type { AnalysisState, UnifiedDocument, UnifiedDocumentOutlineNode } from "../shared/documentModel.js";
+import { exportKindLabel, formatAnalysisStatus, formatChatSource, formatDocumentUpdatedAt, summarizeDocumentStatus } from "../shared/documentDisplayUtils.js";
 import { formatBoundingBox, getDocumentChapters, getDocumentPages, getUnitSourceHint, getUnitsForChapter, getUnitsForPage } from "../shared/documentReaderUtils.js";
 import type { ExternalEpubCheckReport, ImportedBook, ImportedDocument, ImportedPdfDocument, PdfValidationReport, TranslationProgress, TranslationSettings, ValidationReport } from "../shared/types.js";
 import { BookInfoCard } from "./components/BookInfoCard.js";
@@ -298,6 +299,9 @@ export function App() {
     if (!currentDocument) {
       return;
     }
+    if (!window.confirm("Clear persisted chat history for this document? This cannot be undone.")) {
+      return;
+    }
     const result = await window.bookTrans.clearDocumentChat(currentDocument.id);
     if (result.ok) {
       setChatMessages([]);
@@ -326,7 +330,7 @@ export function App() {
           : kind === "chat"
             ? await window.bookTrans.exportChatMarkdown(currentDocument.id)
             : await window.bookTrans.exportAnalysisMarkdown(currentDocument.id);
-    const exportLabel = kind === "markdown" ? "Markdown" : kind === "json" ? "JSON" : kind === "chat" ? "Chat Markdown" : "Analysis Markdown";
+    const exportLabel = exportKindLabel(kind);
     const nextMessage = result.ok ? (result.data ? `已导出 ${exportLabel}：${result.data}` : `已取消导出 ${exportLabel}。`) : formatIpcError(result);
     setExportStatus(nextMessage);
     setMessage(nextMessage);
@@ -510,6 +514,28 @@ function DocumentLibraryPanel({
   );
 }
 
+function DocumentStatusCards({ document }: { document: UnifiedDocument }) {
+  const summary = summarizeDocumentStatus(document);
+  const items = [
+    ["Format", summary.sourceFormat],
+    ["Kind", summary.documentKind],
+    ["Analysis", summary.analysisStatus],
+    ["Chat", `${summary.chatCount} messages`],
+    ["Updated", summary.updatedAt],
+    summary.pdfTranslationStatus ? ["PDF translation", summary.pdfTranslationStatus] : undefined
+  ].filter(Boolean) as [string, string][];
+  return (
+    <dl className="document-status-cards">
+      {items.map(([label, value]) => (
+        <div className={label === "PDF translation" ? "warning" : ""} key={label}>
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 function DocumentOverview({
   document,
   selectedChapterId,
@@ -550,6 +576,7 @@ function DocumentOverview({
         </div>
         <span className="source-format">{document.sourceFormat.toUpperCase()}</span>
       </div>
+      <DocumentStatusCards document={document} />
       <dl className="structure-grid">
         <div>
           <dt>文档类型</dt>
@@ -633,6 +660,7 @@ function PdfDocumentReader({ document, selectedPageNumber, onSelectPage }: { doc
         </div>
         <span className="source-format">PDF</span>
       </div>
+      <DocumentStatusCards document={document} />
       <dl className="structure-grid">
         <div>
           <dt>文档类型</dt>
@@ -713,10 +741,13 @@ function PdfDocumentReader({ document, selectedPageNumber, onSelectPage }: { doc
                   <em className="role-badge">{unit.role}</em>
                 </div>
                 <p>{unit.text}</p>
-                <small className="source-meta">
+                <details className="source-meta-details">
+                  <summary>Source metadata</summary>
+                  <small className="source-meta">
                   unit {unit.id}
                   {bbox ? ` · bbox ${bbox}` : ""}
-                </small>
+                  </small>
+                </details>
               </article>
             );
           })
@@ -853,7 +884,7 @@ function ChatPanel({
                 <div className="chat-sources">
                   <span>Sources</span>
                   {message.sources.map((source) => (
-                    <small key={`${message.id}-${source.unitId}`}>
+                    <small className="source-card" key={`${message.id}-${source.unitId}`} title={formatChatSource(source)}>
                       {source.sourceHint || source.chapterTitle || source.unitId} · {source.chapterTitle ?? "chapter unknown"} · {source.unitId}
                     </small>
                   ))}
@@ -888,10 +919,10 @@ function ExportPanel({
       <h2>知识导出</h2>
       <div className="inline-actions">
         <button onClick={() => onExport("markdown")} disabled={disabled}>
-          Markdown
+          Document Markdown
         </button>
         <button onClick={() => onExport("json")} disabled={disabled}>
-          JSON
+          Document JSON
         </button>
         <button onClick={() => onExport("chat")} disabled={disabled || !hasChat}>
           Chat Markdown
@@ -942,11 +973,7 @@ function analysisStateLabel(state: AnalysisState | undefined): string {
 }
 
 function formatDateTime(value: string | undefined): string {
-  if (!value) {
-    return "unknown";
-  }
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  return formatDocumentUpdatedAt(value);
 }
 
 function getTopStatus({

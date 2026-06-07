@@ -323,6 +323,38 @@ small {
   margin: 0;
 }
 
+.document-status-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.document-status-cards div {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: #fff;
+}
+
+.document-status-cards div.warning {
+  border-color: rgba(181, 71, 8, 0.24);
+  background: #fff7ed;
+}
+
+.document-status-cards dt {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.document-status-cards dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .structure-grid div {
   border: 1px solid var(--border-soft);
   border-radius: 10px;
@@ -405,6 +437,8 @@ small {
 
 .chapter-reader p {
   white-space: pre-wrap;
+  max-width: 82ch;
+  line-height: 1.75;
 }
 
 .reader-chapter-list {
@@ -427,6 +461,7 @@ small {
 .reader-chapter-list button.active {
   border-color: rgba(15, 118, 110, 0.35);
   background: #eefaf7;
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .reader-chapter-list button span {
@@ -466,6 +501,7 @@ small {
 .reader-page-list button.active {
   border-color: rgba(15, 118, 110, 0.35);
   background: #eefaf7;
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .reader-page-list button span {
@@ -520,6 +556,15 @@ small {
 .source-meta {
   display: block;
   overflow-wrap: anywhere;
+}
+
+.source-meta-details {
+  color: var(--subtle);
+}
+
+.source-meta-details summary {
+  cursor: pointer;
+  font-size: 12px;
 }
 
 .analysis-meta {
@@ -614,6 +659,29 @@ small {
   color: var(--primary);
   font-size: 12px;
   font-weight: 700;
+}
+
+.source-card {
+  display: grid;
+  gap: 3px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 7px 8px;
+  background: #fff;
+}
+
+.source-card strong {
+  color: var(--primary);
+  font-size: 12px;
+}
+
+.source-card span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--muted);
+  font-weight: 400;
 }
 
 .export-status {

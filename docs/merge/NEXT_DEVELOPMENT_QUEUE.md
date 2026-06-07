@@ -137,7 +137,7 @@ Result:
 
 ## Stage S5: Real Desktop Validation / Reading UX Polish
 
-Status: planned.
+Status: complete with BLOCKED_MANUAL items.
 
 Goal:
 
@@ -153,3 +153,31 @@ Completion standard:
 - Manual text PDF import, analysis, chat, restart/reopen, and export pass.
 - `npm run build`, `npm test`, and `npm run release:check` pass.
 - `npm run pack` is evaluated if the validation window allows.
+
+Result:
+
+- Added focused display helpers for workspace status, analysis status, chat source labels, and export labels.
+- Polished reader status cards for EPUB/PDF with format, kind, analysis, chat count, updated time, and PDF HOLD status.
+- Improved selected chapter/page visual state.
+- Folded PDF unit metadata behind details.
+- Added chat clear confirmation before deleting persisted chat history.
+- Added manual validation checklist and results documents.
+- Dev smoke passed, but real desktop click-through remains `BLOCKED_MANUAL` in this Codex environment.
+
+## Stage S6: Export System Expansion / PPTX Migration Baseline
+
+Status: planned.
+
+Goal:
+
+- Expand export center around persisted UnifiedDocument knowledge state.
+- Revisit PPTX migration notes and decide whether to add a minimal PPTX exporter.
+- Improve export presets for document, analysis, chat, and bilingual materials.
+- Keep PDF translation public release as HOLD.
+
+Completion standard:
+
+- Export scope and file formats are documented.
+- Markdown/JSON exports remain stable.
+- PPTX migration either lands as a small baseline or stays documented as deferred.
+- `npm run build`, `npm test`, and `npm run release:check` pass.
