@@ -31,7 +31,14 @@ export function chatToMarkdown(title: string, messages: DocumentChatMessage[]): 
     "",
     ...messages.map((message) => {
       const sources = message.sources?.length
-        ? ["", "Sources:", ...message.sources.map((source) => `- ${source.unitId}${source.pageNumber ? `, page ${source.pageNumber}` : ""}: ${source.quote}`)]
+        ? [
+            "",
+            "Sources:",
+            ...message.sources.map((source) => {
+              const locator = [source.unitId, source.pageNumber ? `page ${source.pageNumber}` : undefined].filter(Boolean).join(", ");
+              return `- ${source.sourceHint || source.unitId} (${locator}): ${source.quote}`;
+            })
+          ]
         : [];
       return [`## ${message.role}`, "", message.content, ...sources].join("\n");
     })
@@ -43,6 +50,11 @@ export function analysisToMarkdown(analysis: DocumentAnalysisRecord): string {
     `# ${analysis.title} Analysis`,
     "",
     `Document type: ${analysis.documentKind ?? "unknown"}`,
+    `Language: ${analysis.language ?? "unknown"}`,
+    `Analyzed at: ${analysis.analyzedAt}`,
+    "",
+    "## One Sentence Summary",
+    analysis.oneSentenceSummary,
     "",
     "## Summary",
     analysis.summary,
@@ -69,4 +81,3 @@ function outlineLines(outline: UnifiedDocumentOutlineNode[], depth = 0): string[
   }
   return outline.flatMap((node) => [`${"  ".repeat(depth)}- ${node.title}`, ...outlineLines(node.children, depth + 1)]);
 }
-

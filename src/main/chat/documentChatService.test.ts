@@ -8,7 +8,7 @@ describe("DocumentChatService", () => {
     const answer = service.ask(documentFixture(), "What does the document say about revenue?");
 
     expect(answer.role).toBe("assistant");
-    expect(answer.sources?.[0]).toMatchObject({ unitId: "unit-2", pageNumber: 2 });
+    expect(answer.sources?.[0]).toMatchObject({ unitId: "unit-2", pageNumber: 2, sourceHint: "Page 2" });
     expect(answer.content).toContain("Revenue increased");
     expect(service.list("doc")).toHaveLength(2);
   });
@@ -18,6 +18,16 @@ describe("DocumentChatService", () => {
     service.ask(documentFixture(), "revenue");
     service.clear("doc");
     expect(service.list("doc")).toEqual([]);
+  });
+
+  it("uses EPUB chapter titles as source hints", () => {
+    const service = new DocumentChatService();
+    const document = documentFixture();
+    document.sourceFormat = "epub";
+    document.units[1] = { ...document.units[1], sourceFormat: "epub", chapterTitle: "Chapter Two", pageNumber: undefined };
+    const answer = service.ask(document, "enterprise adoption");
+
+    expect(answer.sources?.[0]).toMatchObject({ unitId: "unit-2", chapterTitle: "Chapter Two", sourceHint: "Chapter Two" });
   });
 });
 
@@ -41,4 +51,3 @@ function documentFixture(): UnifiedDocument {
     updatedAt: "2024-01-01T00:00:00.000Z"
   };
 }
-

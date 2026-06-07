@@ -46,7 +46,14 @@ function documentFixture(): UnifiedDocument {
 
 function chatFixture(): DocumentChatMessage[] {
   return [
-    { id: "m1", documentId: "doc", role: "assistant", content: "Answer", createdAt: "2024-01-01T00:00:00.000Z", sources: [{ unitId: "unit-1", pageNumber: 1, quote: "Quote", score: 1 }] }
+    {
+      id: "m1",
+      documentId: "doc",
+      role: "assistant",
+      content: "Answer",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      sources: [{ unitId: "unit-1", sourceHint: "One, page 1", pageNumber: 1, quote: "Quote", score: 1 }]
+    }
   ];
 }
 
@@ -57,13 +64,15 @@ function analysisFixture(): DocumentAnalysisRecord {
     mode: "quick",
     status: "completed",
     title: "Export Me",
+    oneSentenceSummary: "One sentence",
     summary: "Summary",
     keyPoints: ["Point"],
     keywords: ["keyword"],
     documentKind: "article",
+    language: "en",
     promptHint: "hint",
     sources: [{ unitId: "unit-1", quote: "Quote" }],
+    analyzedAt: "2024-01-01T00:00:00.000Z",
     createdAt: "2024-01-01T00:00:00.000Z"
   };
 }
-

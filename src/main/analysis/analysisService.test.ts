@@ -10,7 +10,10 @@ describe("AnalysisService", () => {
     expect(result.status).toBe("completed");
     expect(result.documentKind).toBe("paper");
     expect(result.promptHint).toContain("academic paper");
+    expect(result.oneSentenceSummary).toContain("Abstract");
     expect(result.summary).toContain("Abstract");
+    expect(result.language).toBe("en");
+    expect(result.analyzedAt).toBeTruthy();
     expect(result.sources[0]).toMatchObject({ unitId: "unit-1", pageNumber: 1 });
     expect(service.getAnalysis("doc")).toEqual(result);
   });
@@ -22,7 +25,7 @@ function documentFixture(): UnifiedDocument {
     sourceFormat: "pdf",
     sourcePath: "/tmp/paper.pdf",
     title: "Paper",
-    metadata: {},
+    metadata: { language: "en" },
     documentKind: { kind: "paper", confidence: 0.9, reasons: [], signals: [], detectedAt: "2024-01-01T00:00:00.000Z" },
     units: [
       {
@@ -44,4 +47,3 @@ function documentFixture(): UnifiedDocument {
     updatedAt: "2024-01-01T00:00:00.000Z"
   };
 }
-

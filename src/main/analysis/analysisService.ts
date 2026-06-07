@@ -15,12 +15,15 @@ export interface DocumentAnalysisRecord {
   mode: "quick";
   status: "completed";
   title: string;
+  oneSentenceSummary: string;
   summary: string;
   keyPoints: string[];
   keywords: string[];
   documentKind?: string;
+  language?: string;
   promptHint: string;
   sources: AnalysisSource[];
+  analyzedAt: string;
   createdAt: string;
 }
 
@@ -31,16 +34,20 @@ export class AnalysisService {
     const textUnits = document.units.filter((unit) => unit.text.trim());
     const sampleUnits = textUnits.slice(0, 5);
     const fullText = textUnits.map((unit) => unit.text).join("\n\n");
+    const createdAt = new Date().toISOString();
+    const summary = summarize(fullText, document.title);
     const record: DocumentAnalysisRecord = {
       id: `analysis-${document.id}`,
       documentId: document.id,
       mode: "quick",
       status: "completed",
       title: document.title,
-      summary: summarize(fullText, document.title),
+      oneSentenceSummary: splitSentences(fullText)[0] ?? summary,
+      summary,
       keyPoints: buildKeyPoints(document, sampleUnits.map((unit) => unit.text)),
       keywords: extractKeywords(fullText),
       documentKind: document.documentKind?.kind,
+      language: typeof document.metadata.language === "string" ? document.metadata.language : undefined,
       promptHint: documentKindPromptHint(document),
       sources: sampleUnits.map((unit) => ({
         unitId: unit.id,
@@ -49,7 +56,8 @@ export class AnalysisService {
         chapterTitle: unit.chapterTitle,
         quote: trimQuote(unit.text)
       })),
-      createdAt: new Date().toISOString()
+      analyzedAt: createdAt,
+      createdAt
     };
     this.records.set(document.id, record);
     return record;
@@ -109,4 +117,3 @@ function trimQuote(text: string): string {
 }
 
 const STOP_WORDS = new Set(["this", "that", "with", "from", "have", "about", "there", "their", "will", "would", "should", "chapter"]);
-

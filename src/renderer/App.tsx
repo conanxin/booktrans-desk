@@ -41,9 +41,15 @@ export function App() {
   const [activeTab, setActiveTab] = useState<"translate" | "jobs" | "exports" | "settings">("translate");
   const [documents, setDocuments] = useState<UnifiedDocument[]>([]);
   const [currentDocument, setCurrentDocument] = useState<UnifiedDocument | null>(null);
+  const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<DocumentAnalysisRecord | null>(null);
+  const [analysisStatus, setAnalysisStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [analysisError, setAnalysisError] = useState("");
   const [chatMessages, setChatMessages] = useState<DocumentChatMessage[]>([]);
   const [chatQuestion, setChatQuestion] = useState("");
+  const [chatStatus, setChatStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [chatError, setChatError] = useState("");
+  const [exportStatus, setExportStatus] = useState("");
 
   useEffect(() => {
     void window.bookTrans.getSettings().then(setSettings);
@@ -95,27 +101,44 @@ export function App() {
     setDocuments(result.data);
     if (!result.data.length) {
       setCurrentDocument(null);
+      setSelectedChapterId(null);
       setAnalysis(null);
+      setAnalysisStatus("idle");
+      setAnalysisError("");
       setChatMessages([]);
+      setChatStatus("idle");
+      setChatError("");
       return;
     }
     const sourcePath = imported ? getImportedSourcePath(imported) : currentDocument?.sourcePath;
     const selected = sourcePath ? result.data.find((document) => document.sourcePath === sourcePath) : result.data[0];
     if (selected) {
-      setCurrentDocument(selected);
-      const existingAnalysis = await window.bookTrans.getAnalysis(selected.id);
-      setAnalysis(existingAnalysis.ok ? existingAnalysis.data ?? null : null);
-      const existingChat = await window.bookTrans.listDocumentChat(selected.id);
-      setChatMessages(existingChat.ok ? existingChat.data ?? [] : []);
+      await loadUnifiedDocument(selected);
     }
   }
 
   async function selectLibraryDocument(document: UnifiedDocument) {
+    await loadUnifiedDocument(document);
+  }
+
+  async function loadUnifiedDocument(document: UnifiedDocument) {
     setCurrentDocument(document);
+    setSelectedChapterId(document.chapters[0]?.id ?? null);
+    setAnalysisStatus("idle");
+    setAnalysisError("");
+    setChatStatus("idle");
+    setChatError("");
+    setExportStatus("");
     const existingAnalysis = await window.bookTrans.getAnalysis(document.id);
     setAnalysis(existingAnalysis.ok ? existingAnalysis.data ?? null : null);
+    if (existingAnalysis.ok && existingAnalysis.data) {
+      setAnalysisStatus("success");
+    }
     const existingChat = await window.bookTrans.listDocumentChat(document.id);
     setChatMessages(existingChat.ok ? existingChat.data ?? [] : []);
+    if (existingChat.ok && existingChat.data?.length) {
+      setChatStatus("success");
+    }
   }
 
   async function deleteLibraryDocument(document: UnifiedDocument) {
@@ -123,8 +146,13 @@ export function App() {
     if (result.ok) {
       if (currentDocument?.id === document.id) {
         setCurrentDocument(null);
+        setSelectedChapterId(null);
         setAnalysis(null);
+        setAnalysisStatus("idle");
+        setAnalysisError("");
         setChatMessages([]);
+        setChatStatus("idle");
+        setChatError("");
       }
       setMessage(`已删除文档快照：${document.title}`);
       await refreshDocumentLibrary();
@@ -211,28 +239,43 @@ export function App() {
       setMessage("请先导入或选择文档。");
       return;
     }
+    setAnalysisStatus("loading");
+    setAnalysisError("");
     const result = await window.bookTrans.startAnalysis(currentDocument.id);
     if (result.ok && result.data) {
       setAnalysis(result.data);
+      setAnalysisStatus("success");
       setMessage("分析已完成。");
     } else {
-      setMessage(formatIpcError(result));
+      const error = formatIpcError(result);
+      setAnalysisStatus("error");
+      setAnalysisError(error);
+      setMessage(error);
     }
   }
 
   async function askDocument() {
     if (!currentDocument || !chatQuestion.trim()) {
+      if (currentDocument) {
+        setChatError("问题不能为空。");
+      }
       return;
     }
     const question = chatQuestion.trim();
     setChatQuestion("");
+    setChatStatus("loading");
+    setChatError("");
     const result = await window.bookTrans.askDocument(currentDocument.id, question);
     if (result.ok && result.data) {
       const list = await window.bookTrans.listDocumentChat(currentDocument.id);
       setChatMessages(list.ok ? list.data ?? [] : [result.data]);
+      setChatStatus("success");
       setMessage("问答已生成。");
     } else {
-      setMessage(formatIpcError(result));
+      const error = formatIpcError(result);
+      setChatStatus("error");
+      setChatError(error);
+      setMessage(error);
     }
   }
 
@@ -249,7 +292,10 @@ export function App() {
           : kind === "chat"
             ? await window.bookTrans.exportChatMarkdown(currentDocument.id)
             : await window.bookTrans.exportAnalysisMarkdown(currentDocument.id);
-    setMessage(result.ok ? (result.data ? `已导出：${result.data}` : "已取消导出。") : formatIpcError(result));
+    const exportLabel = kind === "markdown" ? "Markdown" : kind === "json" ? "JSON" : kind === "chat" ? "Chat Markdown" : "Analysis Markdown";
+    const nextMessage = result.ok ? (result.data ? `已导出 ${exportLabel}：${result.data}` : `已取消导出 ${exportLabel}。`) : formatIpcError(result);
+    setExportStatus(nextMessage);
+    setMessage(nextMessage);
   }
 
   function acceptExportResult(result: Awaited<ReturnType<typeof window.bookTrans.exportEpub>>) {
@@ -315,13 +361,13 @@ export function App() {
                   重置本书配置
                 </button>
               </div>
-              <AnalysisPanel analysis={analysis} onStart={startAnalysis} disabled={!currentDocument} />
-              <ChatPanel messages={chatMessages} question={chatQuestion} onQuestion={setChatQuestion} onAsk={askDocument} disabled={!currentDocument} />
-              <ExportPanel disabled={!currentDocument} hasAnalysis={Boolean(analysis)} hasChat={chatMessages.length > 0} onExport={exportUnified} />
+              <AnalysisPanel analysis={analysis} status={analysisStatus} error={analysisError} onStart={startAnalysis} disabled={!currentDocument} />
+              <ChatPanel messages={chatMessages} question={chatQuestion} status={chatStatus} error={chatError} onQuestion={setChatQuestion} onAsk={askDocument} disabled={!currentDocument} />
+              <ExportPanel disabled={!currentDocument} hasAnalysis={Boolean(analysis)} hasChat={chatMessages.length > 0} status={exportStatus} onExport={exportUnified} />
             </aside>
 
             <section className="content">
-              <DocumentOverview document={currentDocument} />
+              <DocumentOverview document={currentDocument} selectedChapterId={selectedChapterId} onSelectChapter={setSelectedChapterId} />
               <BookInfoCard book={book} />
               <ChapterList document={book} progress={progress.chapters} />
               <ProgressPanel progress={progress} percent={percent} message={message} validation={validation} />
@@ -424,7 +470,15 @@ function DocumentLibraryPanel({
   );
 }
 
-function DocumentOverview({ document }: { document: UnifiedDocument | null }) {
+function DocumentOverview({
+  document,
+  selectedChapterId,
+  onSelectChapter
+}: {
+  document: UnifiedDocument | null;
+  selectedChapterId: string | null;
+  onSelectChapter: (chapterId: string) => void;
+}) {
   if (!document) {
     return (
       <section className="panel reading-panel">
@@ -434,12 +488,16 @@ function DocumentOverview({ document }: { document: UnifiedDocument | null }) {
       </section>
     );
   }
+  const selectedChapter = document.chapters.find((chapter) => chapter.id === selectedChapterId) ?? document.chapters[0] ?? null;
+  const selectedUnits = selectedChapter ? document.units.filter((unit) => selectedChapter.unitIds.includes(unit.id)) : document.units.slice(0, 1);
+  const sourceFileName = document.sourcePath.replace(/\\/g, "/").split("/").pop() ?? document.sourcePath;
   return (
     <section className="panel reading-panel">
       <p className="section-kicker">阅读</p>
       <div className="panel-title-row">
         <div>
           <h2>{document.title}</h2>
+          <p className="muted">文件名：{sourceFileName}</p>
           <p className="muted">来源定位：{document.sourcePath}</p>
         </div>
         <span className="source-format">{document.sourceFormat.toUpperCase()}</span>
@@ -461,14 +519,34 @@ function DocumentOverview({ document }: { document: UnifiedDocument | null }) {
         </div>
       </dl>
       <div className="outline-preview">
-        <h3>解析结构</h3>
-        {document.outline.length ? <OutlineList nodes={document.outline.slice(0, 8)} /> : <p className="empty-hint">暂无 outline。</p>}
+        <h3>章节列表</h3>
+        {document.chapters.length ? (
+          <div className="reader-chapter-list">
+            {document.chapters.map((chapter) => (
+              <button className={selectedChapter?.id === chapter.id ? "active" : ""} key={chapter.id} onClick={() => onSelectChapter(chapter.id)}>
+                <span>{chapter.order + 1}</span>
+                <strong>{chapter.title}</strong>
+              </button>
+            ))}
+          </div>
+        ) : document.outline.length ? (
+          <OutlineList nodes={document.outline.slice(0, 8)} />
+        ) : (
+          <p className="empty-hint">暂无章节。</p>
+        )}
       </div>
-      <div className="unit-preview">
-        <h3>原文片段</h3>
-        {document.units.slice(0, 4).map((unit) => (
+      <div className="chapter-reader">
+        <div className="panel-title-row">
+          <div>
+            <h3>{selectedChapter?.title ?? "正文预览"}</h3>
+            <p className="muted">
+              {selectedUnits.length} units · {selectedChapter?.sourceHref ?? "source snapshot"}
+            </p>
+          </div>
+        </div>
+        {selectedUnits.map((unit) => (
           <article key={unit.id}>
-            <span>{[unit.chapterTitle, unit.pageNumber ? `Page ${unit.pageNumber}` : undefined].filter(Boolean).join(" · ") || unit.role}</span>
+            <span>{[unit.chapterTitle, unit.pageNumber ? `Page ${unit.pageNumber}` : undefined, unit.sourceHref].filter(Boolean).join(" · ") || unit.role}</span>
             <p>{unit.text}</p>
           </article>
         ))}
@@ -490,7 +568,19 @@ function OutlineList({ nodes }: { nodes: UnifiedDocumentOutlineNode[] }) {
   );
 }
 
-function AnalysisPanel({ analysis, onStart, disabled }: { analysis: DocumentAnalysisRecord | null; onStart: () => void; disabled: boolean }) {
+function AnalysisPanel({
+  analysis,
+  status,
+  error,
+  onStart,
+  disabled
+}: {
+  analysis: DocumentAnalysisRecord | null;
+  status: "idle" | "loading" | "success" | "error";
+  error: string;
+  onStart: () => void;
+  disabled: boolean;
+}) {
   return (
     <section className="panel compact-tool-panel">
       <div className="panel-title-row">
@@ -498,14 +588,35 @@ function AnalysisPanel({ analysis, onStart, disabled }: { analysis: DocumentAnal
           <p className="section-kicker">分析</p>
           <h2>快速分析</h2>
         </div>
-        <button onClick={onStart} disabled={disabled}>
-          分析
+        <button onClick={onStart} disabled={disabled || status === "loading"}>
+          {status === "loading" ? "分析中" : "快速分析"}
         </button>
       </div>
+      {status === "error" ? <p className="inline-error">{error}</p> : null}
       {analysis ? (
         <>
-          <p>{analysis.summary}</p>
-          <ul>{analysis.keyPoints.slice(0, 4).map((point) => <li key={point}>{point}</li>)}</ul>
+          <dl className="analysis-meta">
+            <div>
+              <dt>文档类型</dt>
+              <dd>{analysis.documentKind ?? "unknown"}</dd>
+            </div>
+            <div>
+              <dt>语言</dt>
+              <dd>{analysis.language ?? "unknown"}</dd>
+            </div>
+            <div>
+              <dt>分析时间</dt>
+              <dd>{formatDateTime(analysis.analyzedAt)}</dd>
+            </div>
+          </dl>
+          <div className="analysis-summary">
+            <strong>{analysis.oneSentenceSummary}</strong>
+            <p>{analysis.summary}</p>
+          </div>
+          <h3>关键点</h3>
+          <ul>{analysis.keyPoints.slice(0, 6).map((point) => <li key={point}>{point}</li>)}</ul>
+          <h3>关键词</h3>
+          <div className="keyword-list">{analysis.keywords.length ? analysis.keywords.map((keyword) => <span key={keyword}>{keyword}</span>) : <span>None</span>}</div>
         </>
       ) : (
         <p className="empty-hint">先使用本地轻量分析，后续接入完整 chunked LLM 分析。</p>
@@ -517,31 +628,49 @@ function AnalysisPanel({ analysis, onStart, disabled }: { analysis: DocumentAnal
 function ChatPanel({
   messages,
   question,
+  status,
+  error,
   onQuestion,
   onAsk,
   disabled
 }: {
   messages: DocumentChatMessage[];
   question: string;
+  status: "idle" | "loading" | "success" | "error";
+  error: string;
   onQuestion: (value: string) => void;
   onAsk: () => void;
   disabled: boolean;
 }) {
-  const lastAnswer = [...messages].reverse().find((message) => message.role === "assistant");
   return (
     <section className="panel compact-tool-panel">
       <p className="section-kicker">问答</p>
       <h2>文档问答</h2>
       <div className="qa-form">
         <input value={question} onChange={(event) => onQuestion(event.target.value)} placeholder="询问当前文档" disabled={disabled} />
-        <button onClick={onAsk} disabled={disabled || !question.trim()}>
-          问答
+        <button onClick={onAsk} disabled={disabled || !question.trim() || status === "loading"}>
+          {status === "loading" ? "检索中" : "问答"}
         </button>
       </div>
-      {lastAnswer ? (
-        <div className="chat-answer">
-          <p>{lastAnswer.content}</p>
-          <small>来源定位：{lastAnswer.sources?.map((source) => source.pageNumber ? `${source.unitId} / page ${source.pageNumber}` : source.unitId).join(", ")}</small>
+      {error ? <p className="inline-error">{error}</p> : null}
+      {messages.length ? (
+        <div className="chat-thread">
+          {messages.map((message) => (
+            <article className={`chat-message ${message.role}`} key={message.id}>
+              <strong>{message.role === "user" ? "用户" : "DocuMuse Studio"}</strong>
+              <p>{message.content}</p>
+              {message.sources?.length ? (
+                <div className="chat-sources">
+                  <span>Sources</span>
+                  {message.sources.map((source) => (
+                    <small key={`${message.id}-${source.unitId}`}>
+                      {source.sourceHint || source.chapterTitle || source.unitId} · {source.chapterTitle ?? "chapter unknown"} · {source.unitId}
+                    </small>
+                  ))}
+                </div>
+              ) : null}
+            </article>
+          ))}
         </div>
       ) : (
         <p className="empty-hint">使用关键词检索返回带来源的回答。</p>
@@ -554,11 +683,13 @@ function ExportPanel({
   disabled,
   hasAnalysis,
   hasChat,
+  status,
   onExport
 }: {
   disabled: boolean;
   hasAnalysis: boolean;
   hasChat: boolean;
+  status: string;
   onExport: (kind: "markdown" | "json" | "chat" | "analysis") => void;
 }) {
   return (
@@ -579,6 +710,7 @@ function ExportPanel({
           Analysis Markdown
         </button>
       </div>
+      {status ? <p className="export-status">{status}</p> : null}
     </section>
   );
 }
@@ -604,6 +736,14 @@ function getImportedSourcePath(document: ImportedDocument): string {
 
 function documentKindLabel(document: UnifiedDocument): string {
   return document.documentKind?.kind ?? "unknown";
+}
+
+function formatDateTime(value: string | undefined): string {
+  if (!value) {
+    return "unknown";
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
 
 function getTopStatus({

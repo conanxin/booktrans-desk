@@ -343,6 +343,7 @@ small {
 
 .outline-preview,
 .unit-preview,
+.chapter-reader,
 .chat-answer {
   border: 1px solid var(--border-soft);
   border-radius: 10px;
@@ -351,7 +352,8 @@ small {
 }
 
 .outline-preview h3,
-.unit-preview h3 {
+.unit-preview h3,
+.chapter-reader h3 {
   margin: 0 0 8px;
   font-size: 14px;
 }
@@ -361,35 +363,191 @@ small {
   padding-left: 18px;
 }
 
-.unit-preview {
+.unit-preview,
+.chapter-reader {
   display: grid;
   gap: 10px;
 }
 
-.unit-preview article {
+.unit-preview article,
+.chapter-reader article {
   border-top: 1px solid var(--border-soft);
   padding-top: 10px;
 }
 
-.unit-preview article:first-of-type {
+.unit-preview article:first-of-type,
+.chapter-reader article:first-of-type {
   border-top: 0;
   padding-top: 0;
 }
 
-.unit-preview span {
+.unit-preview span,
+.chapter-reader span {
   color: var(--primary);
   font-size: 12px;
   font-weight: 700;
 }
 
 .unit-preview p,
+.chapter-reader p,
 .chat-answer p {
-  display: -webkit-box;
   overflow: hidden;
   margin: 5px 0 0;
+  color: #314252;
+}
+
+.unit-preview p,
+.chat-answer p {
+  display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 4;
-  color: #314252;
+}
+
+.chapter-reader p {
+  white-space: pre-wrap;
+}
+
+.reader-chapter-list {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.reader-chapter-list button {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  justify-items: start;
+  min-height: 42px;
+  text-align: left;
+}
+
+.reader-chapter-list button.active {
+  border-color: rgba(15, 118, 110, 0.35);
+  background: #eefaf7;
+}
+
+.reader-chapter-list button span {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--primary);
+  background: #e6f6f4;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reader-chapter-list button strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analysis-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.analysis-meta div {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 8px;
+  background: var(--panel-muted);
+}
+
+.analysis-meta dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.analysis-meta dd {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+  font-weight: 650;
+}
+
+.analysis-summary {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--panel-muted);
+}
+
+.keyword-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.keyword-list span {
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--primary);
+  background: #eefaf7;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.inline-error {
+  border: 1px solid rgba(180, 35, 24, 0.22);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--danger);
+  background: #fff5f5;
+}
+
+.chat-thread {
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.chat-message {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--panel-muted);
+}
+
+.chat-message.assistant {
+  border-color: rgba(15, 118, 110, 0.2);
+  background: #eefaf7;
+}
+
+.chat-message p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+
+.chat-sources {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 8px;
+}
+
+.chat-sources span {
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.export-status {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--primary);
+  background: #eefaf7;
+  overflow-wrap: anywhere;
 }
 
 .compact-tool-panel h2,
@@ -1056,6 +1214,7 @@ small {
 
   .book-info dl,
   .structure-grid,
+  .analysis-meta,
   .report-stats,
   .diagnostic-summary dl,
   .job-meta-grid {
@@ -1090,6 +1249,7 @@ small {
   .workflow-card,
   .book-info dl,
   .structure-grid,
+  .analysis-meta,
   .report-stats,
   .diagnostic-summary dl,
   .job-meta-grid {
