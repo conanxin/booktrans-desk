@@ -4,6 +4,7 @@ export type ExternalValidationStatus = ValidationStatus | "unavailable";
 export type TranslationStyle = "faithful" | "fluent" | "academic" | "popular";
 export type ProviderPreset = "openai-compatible" | "minimax";
 export type SourceDocumentType = "epub" | "pdf";
+export type PdfRegionRole = "title" | "subtitle" | "body-left-column" | "body-right-column" | "quote-box" | "header" | "footer" | "references";
 export type TranslationErrorCode =
   | "USER_CANCELLED"
   | "PDF_NO_TEXT"
@@ -45,6 +46,15 @@ export interface PdfParagraph {
   pageNumber: number;
   index: number;
   text: string;
+  role?: PdfRegionRole;
+  bbox?: PdfBoundingBox;
+}
+
+export interface PdfBoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 export interface PdfPage {
@@ -133,6 +143,8 @@ export interface TranslatedPdfPage {
     index: number;
     source: string;
     translated: string;
+    id?: string;
+    role?: PdfRegionRole;
   }>;
 }
 

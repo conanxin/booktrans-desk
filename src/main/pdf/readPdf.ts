@@ -2,7 +2,10 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { ImportedPdfDocument, PdfPageInfo } from "../../shared/types.js";
 import { detectScannedLikePdf } from "./detectPdfType.js";
-import { extractReadableTextItems } from "./extractPdfText.js";
+import { classifyPdfRegions } from "./classifyPdfRegions.js";
+import { extractLayoutBlocks } from "./extractLayoutBlocks.js";
+import { bodyReadingBlocks } from "./reconstructReadingOrder.js";
+import { reconstructParagraphs } from "./reconstructParagraphs.js";
 
 export async function readPdf(filePath: string): Promise<ImportedPdfDocument> {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
@@ -21,7 +24,20 @@ export async function readPdf(filePath: string): Promise<ImportedPdfDocument> {
     for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
       const page = await document.getPage(pageNumber);
       const content = await page.getTextContent();
-      pageTexts.push(extractReadableTextItems(content.items as Array<{ str?: string; transform?: number[] }>, pageNumber));
+      const viewport = page.getViewport({ scale: 1 });
+      const layout = extractLayoutBlocks(
+        content.items as Array<{ str?: string; transform?: number[]; width?: number; height?: number; fontName?: string }>,
+        pageNumber,
+        { width: viewport.width, height: viewport.height }
+      );
+      const classified = classifyPdfRegions(layout);
+      const ordered = bodyReadingBlocks(classified);
+      const paragraphs = reconstructParagraphs(ordered, pageNumber);
+      pageTexts.push({
+        pageNumber,
+        text: paragraphs.map((paragraph) => paragraph.text).join("\n\n"),
+        paragraphs
+      });
       page.cleanup();
     }
 

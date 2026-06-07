@@ -41,11 +41,7 @@ export const PDF_EXPORT_LAYOUT = {
   bodyUsesMonospace: false
 } as const;
 
-export async function exportTranslatedPdf(
-  document: ImportedPdfDocument,
-  translatedPages: TranslatedPdfPage[],
-  settings: TranslationSettings
-): Promise<string> {
+export async function exportTranslatedPdf(document: ImportedPdfDocument, translatedPages: TranslatedPdfPage[], settings: TranslationSettings): Promise<string> {
   assertPdfTranslationsExportable(translatedPages);
 
   const pdf = await PDFDocument.create();
@@ -65,12 +61,18 @@ export async function exportTranslatedPdf(
   for (const translatedPage of translatedPages) {
     writer.writeLine(`第 ${translatedPage.pageNumber} 页`, 15, rgb(0.04, 0.33, 0.3));
     for (const paragraph of translatedPage.paragraphs) {
+      if (paragraph.role === "quote-box") {
+        writer.writeLine("引用框", 10, rgb(0.45, 0.32, 0.08));
+      } else if (paragraph.role === "references") {
+        writer.writeLine("参考文献", 10, rgb(0.3, 0.3, 0.36));
+      }
       writer.writeParagraph(paragraph.translated);
     }
     writer.addSpace(PDF_EXPORT_LAYOUT.pageSectionMarginBottom);
   }
 
   const outputPath = path.join(path.dirname(document.filePath), `${path.basename(document.filePath, path.extname(document.filePath))}.zh.pdf`);
+  await fs.writeFile(previewPathFor(outputPath), renderTranslatedPdfHtmlPreview(document, translatedPages), "utf8");
   await fs.writeFile(outputPath, await pdf.save());
   return outputPath;
 }
@@ -90,8 +92,41 @@ export function assertPdfTranslationsExportable(translatedPages: TranslatedPdfPa
   }
 
   if (errors.length) {
-    throw new Error(`PDF_EXPORT_BLOCKED_TRANSLATION_INVALID: 译文中包含模型思考过程或提示词内容，请先重试失败段落。 ${errors.slice(0, 3).join("; ")}`);
+    throw new Error(`PDF_EXPORT_BLOCKED_TRANSLATION_INVALID: 译文中包含模型思考过程或提示词内容，请先重试失败段落。${errors.slice(0, 3).join("; ")}`);
   }
+}
+
+export function previewPathFor(outputPath: string): string {
+  return outputPath.replace(/\.pdf$/i, ".preview.html");
+}
+
+export function renderTranslatedPdfHtmlPreview(document: ImportedPdfDocument, translatedPages: TranslatedPdfPage[]): string {
+  const title = cleanPdfTitle(document.title, document.filePath);
+  const pages = translatedPages
+    .map((page) => {
+      const paragraphs = page.paragraphs
+        .map((paragraph) => `<p class="${paragraph.role ?? "body"}" data-id="${escapeHtml(paragraph.id ?? String(paragraph.index))}">${escapeHtml(paragraph.translated)}</p>`)
+        .join("\n");
+      return `<section class="page" data-page="${page.pageNumber}">\n<h2>第 ${page.pageNumber} 页</h2>\n${paragraphs}\n</section>`;
+    })
+    .join("\n");
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>${escapeHtml(title)}</title>
+<style>
+body { font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif; line-height: 1.75; margin: 32px auto; max-width: 860px; padding: 0 20px; }
+.page { border-bottom: 1px solid #d8dee4; margin-bottom: 28px; padding-bottom: 20px; }
+.quote-box { border-left: 4px solid #b7791f; background: #fff8e8; padding: 8px 12px; }
+.references { color: #555; font-size: 0.92em; }
+</style>
+</head>
+<body>
+<h1>${escapeHtml(title)}</h1>
+${pages}
+</body>
+</html>`;
 }
 
 class PdfTextWriter {
@@ -119,13 +154,7 @@ class PdfTextWriter {
       this.page = this.pdf.addPage([PDF_EXPORT_LAYOUT.pageWidth, PDF_EXPORT_LAYOUT.pageHeight]);
       this.y = PDF_EXPORT_LAYOUT.pageHeight - PDF_EXPORT_LAYOUT.marginTop;
     }
-    this.page.drawText(text, {
-      x: PDF_EXPORT_LAYOUT.marginLeft,
-      y: this.y,
-      size,
-      font: this.font,
-      color
-    });
+    this.page.drawText(text, { x: PDF_EXPORT_LAYOUT.marginLeft, y: this.y, size, font: this.font, color });
     this.y -= size >= 15 ? size + 9 : PDF_EXPORT_LAYOUT.bodyLineHeight;
   }
 
@@ -186,4 +215,8 @@ export function wrapTextByWidth(text: string, font: Pick<PDFFont, "widthOfTextAt
 
 function resolveFontkit() {
   return ((fontkit as unknown as { default?: unknown }).default ?? fontkit) as Parameters<PDFDocument["registerFontkit"]>[0];
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }

@@ -153,6 +153,17 @@
 - Add MiniMax connection test in settings.
 - PDF support remains HOLD until real MiniMax PDF workflow and external reader validation pass.
 
+## Phase 3D Layout-aware PDF Extraction
+
+- Status: current hardening target `v0.3.3-layout-aware-pdf-extraction`.
+- Replace page-level PDF text concatenation with coordinate-based text spans and blocks.
+- Classify page regions as title, subtitle, left/right body columns, quote boxes, headers, footers, and references.
+- Reconstruct two-column reading order before translation and keep headers/footers out of body translation.
+- Translate structured paragraph arrays by stable ids, roles, page numbers, and source text.
+- Validate JSON translation responses for complete ids, order preservation, prompt leakage, and `<think>` output.
+- Generate an HTML preview next to exported translated PDFs for structure review.
+- PDF support remains HOLD until visual packaged UI validation and exported PDF external-reader validation pass.
+
 ## Phase 3 Local Library Management
 
 - Multi-book local library.

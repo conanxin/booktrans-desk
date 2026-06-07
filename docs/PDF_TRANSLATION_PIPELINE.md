@@ -6,20 +6,36 @@ Phase 3B adds translation output quality hardening after real testing found mode
 
 Phase 3C adds startup diagnostics after real MiniMax testing found raw `Translation canceled` errors at the translation start/provider-call stage.
 
+Phase 3D replaces page-text concatenation with layout-aware extraction and structured paragraph translation after real two-column papers produced unusable reading order.
+
 ## Scope
 
 Supported flow:
 
 1. Import PDF.
-2. Extract readable text per page.
-3. Split text into page, paragraph, and chunk units.
-4. Translate with the configured translator, glossary, and style.
-5. Export a new readable translated PDF.
-6. Run lightweight PDF validation.
+2. Extract readable text spans with coordinates per page.
+3. Classify regions and reconstruct reading order.
+4. Reconstruct paragraph units with stable ids.
+5. Translate with the configured translator, glossary, and style.
+6. Export a new readable translated PDF plus an HTML preview.
+7. Run lightweight PDF validation.
 
 ## Text Extraction
 
-PDF parsing runs in the Electron main process with `pdfjs-dist`. The importer reads metadata, page count, text items, and page text. Text items are sorted by approximate y/x coordinates, merged into lines, then grouped into paragraphs.
+PDF parsing runs in the Electron main process with `pdfjs-dist`. The importer reads metadata, page count, text items, and page dimensions. Phase 3D converts text items into spans and blocks with bounding boxes, then classifies each block as:
+
+- `title`
+- `subtitle`
+- `body-left-column`
+- `body-right-column`
+- `quote-box`
+- `header`
+- `footer`
+- `references`
+
+Headers and footers are not sent into body translation. Two-column body text is sorted left column top-down first, then right column top-down. Quote boxes and references are preserved as separate paragraph roles.
+
+Paragraph reconstruction merges wrapped body lines, repairs hyphenated words such as `inten-` + `tional`, repairs short split names such as `Li` + `u`, and preserves citation markers like `[1]`.
 
 ## Scanned-like Detection
 
@@ -64,11 +80,37 @@ Provider and cancellation failures are mapped to structured codes:
 
 Diagnostic logs include page count, text length, chunk count, provider preset, model, request text length, and error code. They do not include API keys, Authorization headers, full source text, or full translations.
 
-The unit model is:
+The Phase 3D unit model is:
 
 ```text
-page -> paragraph -> chunk
+page -> layout block -> classified region -> structured paragraph
 ```
+
+Translator input is a JSON array of structured paragraphs:
+
+```json
+[
+  {
+    "id": "pdf-p1-para-1",
+    "role": "body-left-column",
+    "pageNumber": 1,
+    "sourceText": "The intentional stance depends on context."
+  }
+]
+```
+
+The provider must return a JSON array with the same ids and order:
+
+```json
+[
+  {
+    "id": "pdf-p1-para-1",
+    "translation": "[translated paragraph]"
+  }
+]
+```
+
+The response is rejected if ids are missing, added, reordered, or if the translated text contains prompt leakage or `<think>` content.
 
 ## Export
 
@@ -80,13 +122,15 @@ Output naming:
 original-name.zh.pdf
 ```
 
-The exported PDF includes title, original filename, translation model, style, generated time, page markers, and translated paragraphs.
+The exported PDF includes title, original filename, translation model, style, generated time, page markers, and translated paragraphs. Phase 3D writes body, quote-box, and references sections separately by paragraph role. Headers and footers are kept out of translated body output by default.
 
 Before export, translated paragraphs are checked again. If reasoning or prompt leakage such as `<think>`, `The user wants`, or `Translation:` remains, export is blocked with `PDF_EXPORT_BLOCKED_TRANSLATION_INVALID`.
 
 PDF titles are cleaned before writing metadata. Noisy titles such as `Microsoft Word - Draft.doc` are converted to a clean title or replaced with the source filename basename.
 
 Layout uses A4 sizing, Chinese-friendly font candidates, measured line wrapping, pre-wrap style behavior, break-word behavior, and non-monospace body text.
+
+An adjacent `.preview.html` file is generated next to the translated PDF so testers can inspect page order, paragraph roles, quote boxes, and references before relying on the PDF output.
 
 ## Validation
 

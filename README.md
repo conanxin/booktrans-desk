@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-lightgrey)](.github/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.3.2--pdf--diagnostics--fix-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.3.3--layout--aware--pdf--extraction-orange)](CHANGELOG.md)
 
 BookTrans Desk is an open source desktop alpha for translating reflowable EPUB books into Simplified Chinese with an OpenAI-compatible API. It is local-first: no telemetry, no account system, no cloud sync, and no bundled commercial EPUB content.
 
@@ -13,6 +13,8 @@ Phase 3A-V manual PDF validation status: HOLD. Automatic build, test, audit, rel
 Phase 3B status: `v0.3.1-translation-quality-fix` hardens MiniMax/OpenAI-compatible translation output with a strict prompt, MiniMax thinking disabled, output sanitizing, validation, retry, PDF export quality blocking, cleaned PDF titles, and safer PDF wrapping. PDF support remains HOLD until real UI and external reader validation pass.
 
 Phase 3C status: `v0.3.2-pdf-diagnostics-fix` fixes PDF translation start diagnostics after real MiniMax testing reported raw `Translation canceled` errors. It adds structured error codes, fresh cancellation state per job, PDF chunk diagnostics, provider error mapping, MiniMax connection testing, and friendly UI error messages. PDF support remains HOLD.
+
+Phase 3D status: `v0.3.3-layout-aware-pdf-extraction` replaces simple PDF page-text concatenation with coordinate-based text blocks, region classification, two-column reading order, paragraph reconstruction, structured paragraph translation, JSON response validation, and HTML preview generation. PDF support remains HOLD until real packaged UI and exported PDF reader validation pass.
 
 > Alpha warning: this project is still intended for technical testers. Keep backups of original EPUB files and review provider privacy terms before translating private or copyrighted content.
 
@@ -46,6 +48,7 @@ Use Settings to configure a compatible API provider, or enable the mock translat
 - Review reader compatibility notes for manual alpha checks.
 - Use a Chinese-first, modernized desktop UI for the import, translation, export, jobs, and settings workflows.
 - Import and translate copyable text PDFs, then export a readable translated PDF.
+- Use layout-aware PDF text extraction for two-column body text, quote boxes, references, and paragraph-level translation units.
 
 ## Development
 
@@ -103,7 +106,7 @@ Supported target: reflowable EPUB.
 
 Unsupported formats: fixed-layout EPUB, DRM EPUB, scanned/image-only PDF OCR, encrypted PDF, MOBI, AZW3.
 
-PDF support: text PDFs only. Scanned PDFs, image-only PDFs, encrypted PDFs, OCR, exact layout preservation, and table/formula reconstruction are not supported in Phase 3A.
+PDF support: text PDFs only. Phase 3D improves two-column reading order and paragraph reconstruction, but scanned PDFs, image-only PDFs, encrypted PDFs, OCR, exact layout preservation, and table/formula reconstruction are not supported.
 
 ## Documentation
 

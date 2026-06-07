@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased / v0.3.2-pdf-diagnostics-fix
+## Unreleased / v0.3.3-layout-aware-pdf-extraction
+
+- Replace simple PDF page-text concatenation with coordinate-based text blocks and spans.
+- Add PDF region classification for title, subtitle, two body columns, quote boxes, headers, footers, and references.
+- Sort two-column pages in reading order: left column top-down, then right column top-down, while excluding headers and footers from body translation.
+- Reconstruct paragraphs by merging wrapped lines, repairing hyphenated words, and fixing short split names such as `Li` + `u`.
+- Translate PDF content as structured paragraph arrays with stable ids, roles, page numbers, and source text.
+- Require structured JSON translation responses and reject missing ids, added ids, reordered ids, prompt leakage, and `<think>` output.
+- Export translated PDFs from structured paragraph roles and write an adjacent HTML preview for structure review.
+- Keep PDF release decision as HOLD pending real packaged UI and exported PDF reader validation.
+
+## v0.3.2-pdf-diagnostics-fix
 
 - Fix PDF translation start failures being misreported as raw `Translation canceled` IPC errors.
 - Add structured translation error codes and Chinese UI error mapping.

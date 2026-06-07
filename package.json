@@ -1,6 +1,6 @@
 {
   "name": "booktrans-desk",
-  "version": "0.3.2-alpha.0",
+  "version": "0.3.3-alpha.0",
   "description": "Open source desktop EPUB AI translation alpha.",
   "main": "dist/main/index.js",
   "type": "module",

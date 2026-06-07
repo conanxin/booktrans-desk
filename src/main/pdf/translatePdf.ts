@@ -3,7 +3,8 @@ import type { ChapterProgress, ImportedPdfDocument, PdfTranslationJobResult, Tra
 import { chunkText } from "../translate/chunkText.js";
 import { createTranslator } from "../translate/translator.js";
 import { createTranslationError } from "../translate/translationErrors.js";
-import { createStats, mergeQualityStats, translateWithQualityGate } from "../translate/translateWithQualityGate.js";
+import { createStats } from "../translate/translateWithQualityGate.js";
+import { toStructuredParagraphInputs, translateStructuredParagraphs } from "./translateStructuredParagraphs.js";
 
 type ProgressCallback = (progress: TranslationProgress) => void;
 type TextChunker = typeof chunkText;
@@ -82,33 +83,24 @@ export async function translatePdf(
       paragraphs: []
     };
 
+    const inputs = toStructuredParagraphInputs(page.paragraphs);
+    log.push(
+      `Provider request start: providerPreset=${settings.providerPreset ?? "openai-compatible"}, model=${settings.useMock ? "mock" : settings.model}, paragraphCount=${inputs.length}, textLength=${inputs.reduce((sum, input) => sum + input.sourceText.length, 0)}`
+    );
+    const translations = await translateStructuredParagraphs(translator, inputs, signal);
+    const translationById = new Map(translations.map((item) => [item.id, item.translation]));
+
     for (const paragraph of page.paragraphs) {
-      const chunks = chunkPlan.paragraphChunks.get(paragraph.id) ?? [];
-      const translatedChunksForParagraph = [];
-      for (const chunk of chunks) {
-        if (signal.aborted) {
-          throw createTranslationError("USER_CANCELLED");
-        }
-        log.push(`Provider request start: providerPreset=${settings.providerPreset ?? "openai-compatible"}, model=${settings.useMock ? "mock" : settings.model}, textLength=${chunk.text.length}`);
-        const translated = await translateWithQualityGate(translator, chunk.text, signal, {
-          onStats: (stats) => {
-            mergeQualityStats(quality, stats);
-          },
-          onLog: (message) => {
-            log.push(message);
-            emit("translating", page.pageNumber);
-          }
-        });
-        translatedChunksForParagraph.push(translated);
-        translatedChunks += 1;
-        status.currentChunk += 1;
-        emit("translating", page.pageNumber);
-      }
       translatedPage.paragraphs.push({
+        id: paragraph.id,
         index: paragraph.index,
+        role: paragraph.role,
         source: paragraph.text,
-        translated: translatedChunksForParagraph.join("\n\n")
+        translated: translationById.get(paragraph.id) ?? ""
       });
+      translatedChunks += 1;
+      status.currentChunk += 1;
+      emit("translating", page.pageNumber);
     }
 
     status.status = "completed";
@@ -147,9 +139,9 @@ export function createPdfChunkPlan(document: ImportedPdfDocument, chunker: TextC
       if (!chunks.length) {
         throw createTranslationError("PDF_CHUNKING_FAILED", `page=${page.pageNumber}, paragraph=${paragraph.index}`);
       }
-      paragraphChunks.set(paragraph.id, chunks);
-      pageCount += chunks.length;
-      totalChunks += chunks.length;
+      paragraphChunks.set(paragraph.id, [{ index: 0, text: paragraph.text }]);
+      pageCount += 1;
+      totalChunks += 1;
     }
     pageChunkCounts.set(page.pageNumber, pageCount);
   }
