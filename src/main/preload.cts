@@ -13,12 +13,16 @@ import type {
   TranslatorConnectionTestResult,
   ValidationReport
 } from "../shared/types.js";
+import type { UnifiedDocument } from "../shared/documentModel.js";
 
 const electron = require("electron") as typeof import("electron");
 const { contextBridge, ipcRenderer } = electron;
 
 const api = {
   importEpub: (): Promise<ImportedDocument | null> => ipcRenderer.invoke("book:import"),
+  listDocuments: (): Promise<IpcResult<UnifiedDocument[]>> => ipcRenderer.invoke("documents:list"),
+  getDocument: (id: string): Promise<IpcResult<UnifiedDocument | null>> => ipcRenderer.invoke("documents:get", id),
+  deleteDocument: (id: string): Promise<IpcResult<{ deleted: true }>> => ipcRenderer.invoke("documents:delete", id),
   getSettings: (): Promise<TranslationSettings> => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings: TranslationSettings): Promise<TranslationSettings> => ipcRenderer.invoke("settings:save", settings),
   startTranslation: (settings: TranslationSettings): Promise<IpcResult<{ completed: true }>> => ipcRenderer.invoke("translation:start", settings),

@@ -21,8 +21,11 @@ import type {
   TranslatorConnectionTestResult,
   ValidationReport
 } from "../shared/types.js";
+import type { UnifiedDocument } from "../shared/documentModel.js";
+import { fromImportedBook, fromImportedPdfDocument } from "../shared/documentAdapters.js";
 import { validationReportToMarkdown } from "../shared/validationReport.js";
 import { getSettings, saveSettings } from "./config/settings.js";
+import { createDocumentLibraryStore } from "./document/documentLibraryStore.js";
 import { createDiagnosticBundle, defaultDiagnosticBundleName } from "./diagnostics/createDiagnosticBundle.js";
 import { runExternalEpubCheck } from "./epub/runExternalEpubCheck.js";
 import { readEpub } from "./epub/readEpub.js";
@@ -43,6 +46,7 @@ import { testTranslatorConnection } from "./translate/testTranslatorConnection.j
 
 let currentBook: ImportedBook | null = null;
 let currentPdf: ImportedPdfDocument | null = null;
+let currentUnifiedDocument: UnifiedDocument | null = null;
 let lastResult: TranslationJobResult | null = null;
 let lastPdfResult: PdfTranslationJobResult | null = null;
 const cancellation = new TranslationCancellationManager();
@@ -51,6 +55,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   const store = () => createTranslationJobStore(app.getPath("userData"));
   const exportHistory = () => createExportHistoryStore(app.getPath("userData"));
   const profileStore = () => createTranslationProfileStore(app.getPath("userData"));
+  const documentLibrary = () => createDocumentLibraryStore(app.getPath("userData"));
   const manager = () => new JobManager(store());
 
   async function recordExport(
@@ -129,10 +134,12 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     const extension = path.extname(filePath).toLowerCase();
     currentBook = null;
     currentPdf = null;
+    currentUnifiedDocument = null;
     lastResult = null;
     lastPdfResult = null;
     if (extension === ".pdf") {
       currentPdf = await readPdf(filePath);
+      currentUnifiedDocument = await documentLibrary().importDocumentSnapshot(fromImportedPdfDocument(currentPdf));
       return currentPdf;
     }
     currentBook = await readEpub(filePath);
@@ -150,7 +157,22 @@ export function registerIpc(mainWindow: BrowserWindow): void {
         style: loadedProfile.style
       });
     }
+    currentUnifiedDocument = await documentLibrary().importDocumentSnapshot(fromImportedBook(currentBook));
     return currentBook;
+  });
+
+  ipcMain.handle("documents:list", async (): Promise<IpcResult<UnifiedDocument[]>> => withIpcResult(() => documentLibrary().listDocuments()));
+  ipcMain.handle("documents:get", async (_event, id: string): Promise<IpcResult<UnifiedDocument | null>> => withIpcResult(() => documentLibrary().readDocument(id)));
+  ipcMain.handle("documents:delete", async (_event, id: string): Promise<IpcResult<{ deleted: true }>> => {
+    try {
+      await documentLibrary().deleteDocument(id);
+      if (currentUnifiedDocument?.id === id) {
+        currentUnifiedDocument = null;
+      }
+      return { ok: true, data: { deleted: true } };
+    } catch (error) {
+      return toIpcError(error);
+    }
   });
 
   ipcMain.handle("settings:get", () => getSettings());
