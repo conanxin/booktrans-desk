@@ -35,6 +35,7 @@ import { runExternalEpubCheck } from "./epub/runExternalEpubCheck.js";
 import { readEpub } from "./epub/readEpub.js";
 import { validateEpub } from "./epub/validateEpub.js";
 import { writeTranslatedEpub } from "./epub/writeTranslatedEpub.js";
+import { ExportCenter } from "./export/exportCenter.js";
 import { createExportHistoryStore, normalizeExternalStatus, normalizeValidationStatus } from "./export/exportHistoryStore.js";
 import { exportTranslatedPdf } from "./pdf/exportTranslatedPdf.js";
 import { readPdf } from "./pdf/readPdf.js";
@@ -63,6 +64,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   const manager = () => new JobManager(store());
   const analysisService = new AnalysisService();
   const chatService = new DocumentChatService();
+  const exportCenter = new ExportCenter();
 
   async function recordExport(
     outputPath: string,
@@ -198,6 +200,34 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     chatService.clear(documentId);
     return { ok: true, data: { cleared: true } };
   });
+  ipcMain.handle("export:documentMarkdown", async (_event, documentId?: string): Promise<IpcResult<string | null>> =>
+    withIpcResult(async () => {
+      const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
+      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.md`, "Markdown", ["md"], exportCenter.documentMarkdown(document));
+    })
+  );
+  ipcMain.handle("export:documentJson", async (_event, documentId?: string): Promise<IpcResult<string | null>> =>
+    withIpcResult(async () => {
+      const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
+      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.json`, "JSON", ["json"], exportCenter.documentJson(document));
+    })
+  );
+  ipcMain.handle("export:chatMarkdown", async (_event, documentId: string): Promise<IpcResult<string | null>> =>
+    withIpcResult(async () => {
+      const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
+      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.chat.md`, "Markdown", ["md"], exportCenter.chatMarkdown(document, chatService.list(document.id)));
+    })
+  );
+  ipcMain.handle("export:analysisMarkdown", async (_event, documentId: string): Promise<IpcResult<string | null>> =>
+    withIpcResult(async () => {
+      const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
+      const analysis = analysisService.getAnalysis(document.id);
+      if (!analysis) {
+        throw new Error("No analysis is available for this document.");
+      }
+      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.analysis.md`, "Markdown", ["md"], exportCenter.analysisMarkdown(analysis));
+    })
+  );
 
   ipcMain.handle("settings:get", () => getSettings());
   ipcMain.handle("settings:save", (_event, settings: TranslationSettings) => saveSettings(settings));
@@ -541,6 +571,29 @@ function reportToMarkdown(
     "## Checked Files",
     ...(report.checkedFiles.length ? report.checkedFiles.map((item) => `- ${item}`) : ["- None"])
   ].join("\n");
+}
+
+async function saveTextWithDialog(
+  mainWindow: BrowserWindow,
+  defaultPath: string,
+  filterName: string,
+  extensions: string[],
+  content: string
+): Promise<string | null> {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: "Export",
+    defaultPath,
+    filters: [{ name: filterName, extensions }]
+  });
+  if (result.canceled || !result.filePath) {
+    return null;
+  }
+  await fs.writeFile(result.filePath, content, "utf8");
+  return result.filePath;
+}
+
+function safeFileName(value: string): string {
+  return (value || "document").replace(/[\\/:*?"<>|]+/g, "_").trim() || "document";
 }
 
 function isPdfValidationReport(report: ValidationReport | PdfValidationReport): report is PdfValidationReport {
