@@ -36,6 +36,11 @@ describe("releaseCheckCore", () => {
     expect(result.failures.some((failure: string) => failure.includes("docs/SECURITY.md"))).toBe(true);
   });
 
+  it("fails when development handoff is missing", () => {
+    const withoutHandoff = requiredDocs.filter((file: string) => file !== "docs/DEVELOPMENT_HANDOFF.md");
+    expect(check(withoutHandoff, {}).failures.some((failure: string) => failure.includes("DEVELOPMENT_HANDOFF.md"))).toBe(true);
+  });
+
   it("fails when issue templates or triage docs are missing", () => {
     const withoutIssueTemplate = requiredDocs.filter((file: string) => file !== ".github/ISSUE_TEMPLATE/bug_report.yml");
     const withoutTriage = requiredDocs.filter((file: string) => file !== "docs/triage/TRIAGE_GUIDE.md");

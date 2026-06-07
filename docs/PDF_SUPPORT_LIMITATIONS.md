@@ -2,6 +2,8 @@
 
 Current PDF support is an MVP for text PDFs only.
 
+PDF translation is experimental and currently held from public release until manual packaged UI validation and external reader validation pass.
+
 ## Validation Status
 
 Phase 3A-V decision: HOLD.

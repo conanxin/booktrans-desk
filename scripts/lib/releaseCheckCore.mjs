@@ -7,6 +7,7 @@ export const requiredDocs = [
   "README.md",
   "CHANGELOG.md",
   "LICENSE",
+  "docs/DEVELOPMENT_HANDOFF.md",
   "docs/SECURITY.md",
   "docs/ROADMAP.md",
   "docs/EPUB_COMPATIBILITY_MATRIX.md",

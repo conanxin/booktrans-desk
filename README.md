@@ -6,6 +6,8 @@
 
 BookTrans Desk is an open source desktop alpha for translating reflowable EPUB books into Simplified Chinese with an OpenAI-compatible API. It is local-first: no telemetry, no account system, no cloud sync, and no bundled commercial EPUB content.
 
+EPUB is the current usable alpha path. PDF translation is experimental and currently held from public release until manual packaged UI validation and external reader validation pass. Continue cross-machine development from `v0.3.3-layout-aware-pdf-extraction`.
+
 Phase 3A status: `v0.3.0-pdf-translation-mvp` adds an internal MVP for copyable text PDF import, translation, reflowed PDF export, and lightweight PDF validation. Scanned/image-only PDFs are detected but OCR is not supported.
 
 Phase 3A-V manual PDF validation status: HOLD. Automatic build, test, audit, release check, pack, and dist passed, and the packed executable passed a process smoke check, but visible packaged UI validation and exported PDF external reader-open validation were blocked by the current environment.
@@ -132,6 +134,7 @@ PDF support: text PDFs only. Phase 3D improves two-column reading order and para
 - [Phase 2.14 Chinese UI Redesign Report](docs/PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md)
 - [PDF Translation Pipeline](docs/PDF_TRANSLATION_PIPELINE.md)
 - [PDF Support Limitations](docs/PDF_SUPPORT_LIMITATIONS.md)
+- [Development Handoff](docs/DEVELOPMENT_HANDOFF.md)
 - [Phase 3A PDF Translation MVP Report](docs/PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md)
 - [Phase 3A Manual PDF Validation Report](docs/PHASE_3A_MANUAL_PDF_VALIDATION_REPORT.md)
 - [Phase 3B Translation Output Quality Fix Report](docs/PHASE_3B_TRANSLATION_OUTPUT_QUALITY_FIX_REPORT.md)

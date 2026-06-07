@@ -1,5 +1,9 @@
 # Roadmap
 
+Current development handoff tag: `v0.3.3-layout-aware-pdf-extraction`.
+
+EPUB is the current usable alpha path. PDF translation is experimental and currently held from public release until manual packaged UI validation and external reader validation pass.
+
 ## Phase 1
 
 - EPUB import, translation, progress, and export.
@@ -189,6 +193,6 @@
 ## Current Format Scope
 
 - Current target: reflowable EPUB.
-- PDF support is internal MVP only for copyable text PDFs.
+- PDF support is experimental and internal MVP only for copyable text PDFs.
 - Not supported: fixed-layout EPUB, DRM EPUB, scanned/image-only PDF OCR, encrypted PDF, MOBI, and AZW3.
 - Out of current scope: Calibre integration, batch translation, book library database, user login, cloud sync, online reader, paid systems, plugins, and auto publishing.

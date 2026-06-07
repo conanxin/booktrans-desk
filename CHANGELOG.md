@@ -10,6 +10,8 @@
 - Require structured JSON translation responses and reject missing ids, added ids, reordered ids, prompt leakage, and `<think>` output.
 - Export translated PDFs from structured paragraph roles and write an adjacent HTML preview for structure review.
 - Keep PDF release decision as HOLD pending real packaged UI and exported PDF reader validation.
+- Document that EPUB is the current usable alpha path and PDF translation is experimental and currently held from public release until manual packaged UI validation and external reader validation pass.
+- Add cross-machine development handoff instructions for continuing from `v0.3.3-layout-aware-pdf-extraction`.
 
 ## v0.3.2-pdf-diagnostics-fix
 
