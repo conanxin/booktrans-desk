@@ -333,14 +333,46 @@ Result:
 - Internal alpha readiness is `BLOCKED_BY_MANUAL_VALIDATION`.
 - PDF translation remains experimental and public release remains HOLD.
 
-## Stage S12: Blocker Fixes / Manual Validation Rerun
+## Stage S12: UX DocuMuse Studio Workspace Shell
+
+Status: complete.
+
+Goal:
+
+- Redesign the renderer shell around DocuMuse Studio's document workbench flow.
+- Move product emphasis from translation wizard to document library, reading, AI assistant, export, and translation tasks.
+- Keep existing EPUB translation, analysis, chat, export, and translation version capabilities reachable.
+- Keep PDF translation public release as HOLD.
+
+Completion standard:
+
+- Top bar no longer presents a four-step translation wizard.
+- Left rail focuses on import, document library, selected document, and task status.
+- Main workspace focuses on EPUB/PDF reading.
+- Right context panel contains AI, Export, Translation, and Details tabs.
+- PDF translation is only presented as experimental / HOLD in Translation context.
+- `npm run build`, `npm test`, and `npm run release:check` pass.
+
+Result:
+
+- Removed the old global translation workflow from the workspace shell.
+- Added a three-column workbench: left document rail, center reader stage, right context panel.
+- Moved quick analysis and document chat into the AI tab.
+- Moved grouped knowledge exports into the Export tab.
+- Moved EPUB full translation, selected translation, settings, progress, and translation versions into the Translation tab.
+- Moved filename/source/diagnostics/outline metadata into the Details tab.
+- Kept PDF translation clearly labeled `Experimental / HOLD`.
+- No backend services or release state were changed.
+- Real Windows click-through remains `BLOCKED_MANUAL`.
+
+## Stage S13: Blocker Fixes / Manual Validation Rerun
 
 Status: next.
 
 Goal:
 
 - Resolve S11 packaging blocker from a clean Windows session.
-- Complete real EPUB/PDF desktop click-through.
+- Complete real EPUB/PDF desktop click-through against the redesigned workspace shell.
 - Record PASS/FAIL/BLOCKED results without fabricating manual validation.
 - Keep PDF translation public release as HOLD.
 
@@ -351,9 +383,9 @@ Completion standard:
 - Export external open checks are recorded.
 - Merge readiness is updated based on blocker status.
 
-## Stage S13: Selected Units UX / Translation Version Picker Polish
+## Stage S14: Selected Units UX / Translation Version Picker Polish
 
-Status: planned after S12 validation.
+Status: planned after S13 validation.
 
 Goal:
 
@@ -362,7 +394,7 @@ Goal:
 - Improve selected EPUB chapter translation beyond text-unit snapshot baseline.
 - Keep existing translated EPUB export compatible.
 
-## Stage S14: PR / Merge-to-master Preparation
+## Stage S15: PR / Merge-to-master Preparation
 
 Status: planned after manual validation.
 

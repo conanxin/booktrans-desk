@@ -19,6 +19,14 @@ S11 validation result:
 - `npm run release:check`: passed.
 - `npm run pack`: blocked by process/file lock and timeout around `release\win-unpacked`.
 
+S12 UX validation result:
+
+- `npm run build`: passed.
+- `npm test`: passed after rerun, 52 test files / 211 tests.
+- `npm run release:check`: passed after rerun.
+- Dev smoke: Vite ready, TypeScript watch 0 errors, Electron processes observed.
+- Real desktop click-through: still pending.
+
 ## Pack Status
 
 Prior S7 and S10 packaged validation preparation passed `npm run pack`. S11 pack did not complete because electron-builder became blocked around ignored `release\win-unpacked` output. Release artifacts remain uncommitted.
@@ -43,6 +51,7 @@ Prior S7 and S10 packaged validation preparation passed `npm run pack`. S11 pack
 | Bilingual Markdown/HTML | Baseline ready for manual validation |
 | Translation versions | Baseline implemented |
 | Export history | Integrated for knowledge exports |
+| Workspace information architecture | Redesigned in S12, pending real desktop validation |
 
 ## BLOCKED_MANUAL Items
 
@@ -61,6 +70,7 @@ PDF translation is still experimental. It may be used internally for page-level 
 ## Release Readiness
 
 - Code readiness: high.
+- Product-shell readiness: improved by S12 UX refactor.
 - Automated validation: pass for build/test/release:check.
 - Packaged validation: blocked in S11 by process/file lock.
 - Manual UI validation: blocked/pending.

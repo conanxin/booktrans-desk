@@ -19,6 +19,19 @@ S11 did not clear the merge gate:
 
 Result: keep `NO_MERGE_YET`.
 
+## S12 UX Outcome
+
+S12 addressed the major product-shell feedback:
+
+- The workspace no longer presents a global import/configure/translate/export wizard.
+- The left rail now focuses on import, document library, selected document, and task status.
+- The center stage focuses on EPUB/PDF reading.
+- The right context panel contains AI, Export, Translation, and Details tabs.
+- Translation remains available as a task capability rather than the global product spine.
+- PDF translation remains clearly labeled `Experimental / HOLD`.
+
+S12 improves merge-branch product coherence, but it does not clear the S11 manual validation blockers.
+
 ## Current Branch Strengths
 
 - Maintains the existing BookTrans Desk Electron shell, IPC boundaries, EPUB translation engine, retry/resume jobs, export history, and packaging setup.
@@ -35,6 +48,7 @@ Result: keep `NO_MERGE_YET`.
 - Real Windows desktop click-through remains `BLOCKED_MANUAL`.
 - S11 pack is currently blocked by an environment/process lock around `release\win-unpacked`.
 - Packaged UI needs direct human validation after the merge work.
+- The redesigned workspace shell needs real Windows click-through validation.
 - PPTX baseline has structural validation but still needs visual validation in PowerPoint/WPS/LibreOffice.
 - Bilingual HTML should be opened in a real browser with generated synthetic fixtures.
 - Selected EPUB chapter translation is a text-unit snapshot baseline, not an XHTML-preserving translated chapter export.

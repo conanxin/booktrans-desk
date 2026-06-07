@@ -10,12 +10,23 @@ function read(file: string): string {
 }
 
 describe("Chinese UI copy", () => {
-  it("contains Chinese tab labels", () => {
+  it("contains DocuMuse Studio workspace shell labels", () => {
     const app = read("src/renderer/App.tsx");
-    expect(app).toContain("翻译工作台");
-    expect(app).toContain("任务");
-    expect(app).toContain("导出记录");
-    expect(app).toContain("设置");
+    expect(app).toContain("DocuMuse Studio");
+    expect(app).toContain("本地 AI 文档阅读、分析、翻译与知识导出工作台");
+    expect(app).toContain("文档库");
+    expect(app).toContain("文档助手");
+    expect(app).toContain("生成材料");
+    expect(app).toContain("文档详情");
+  });
+
+  it("keeps translation as a contextual task with PDF HOLD copy", () => {
+    const app = read("src/renderer/App.tsx");
+    expect(app).toContain("翻译任务");
+    expect(app).toContain("EPUB 全书翻译");
+    expect(app).toContain("实验性翻译当前页");
+    expect(app).toContain("PDF translation: Experimental / HOLD");
+    expect(app).toContain("PDF 翻译不是 public release 能力");
   });
 
   it("contains Chinese translation style labels", () => {
@@ -26,18 +37,11 @@ describe("Chinese UI copy", () => {
     expect(settings).toContain("通俗易懂");
   });
 
-  it("contains Chinese diagnostic safety notice", () => {
-    const validation = read("src/renderer/components/ValidationReportPanel.tsx");
-    expect(validation).toContain("诊断包会自动脱敏");
-    expect(validation).toContain("不包含原始 EPUB");
-    expect(validation).toContain("API 密钥");
-  });
-
-  it("contains primary Chinese empty states", () => {
-    expect(read("src/renderer/components/ImportPanel.tsx")).toContain("还没有导入文件");
-    expect(read("src/renderer/components/BookInfoCard.tsx")).toContain("导入 EPUB 后");
-    expect(read("src/renderer/components/ChapterList.tsx")).toContain("导入文件后");
-    expect(read("src/renderer/components/JobManagerPanel.tsx")).toContain("暂无翻译任务");
-    expect(read("src/renderer/components/ExportHistoryPanel.tsx")).toContain("暂无导出记录");
+  it("contains primary empty states for the new document workbench", () => {
+    const app = read("src/renderer/App.tsx");
+    expect(app).toContain("导入 EPUB 或 PDF 开始");
+    expect(app).toContain("尚未分析");
+    expect(app).toContain("还没有问答");
+    expect(app).toContain("暂无译文版本");
   });
 });

@@ -45,3 +45,26 @@
   - Record PASS/FAIL/BLOCKED results in `docs/merge/MANUAL_DESKTOP_VALIDATION_RESULTS.md`.
 - Notes:
   - Dev process smoke passed, but process smoke is not a replacement for manual UI validation.
+
+## S12-UX-001
+
+- Severity: high
+- Area: workspace UX / product framing
+- Status: fixed
+- Steps to reproduce:
+  1. Open the pre-S12 `merge-documuse-studio` workspace UI.
+  2. Observe the top workflow and left rail.
+- Expected:
+  - DocuMuse Studio should feel like a document workbench: library, reading, AI assistant, export, and translation tasks.
+- Actual:
+  - The UI still felt like a BookTrans Desk translation wizard, with import/configure/translate/export as the global product spine.
+  - Analysis, chat, export buttons, settings, translation versions, and export history competed in the left rail.
+  - Reading was visually secondary.
+  - PDF translation entry points and PDF HOLD messaging felt contradictory.
+- Suggested fix:
+  - Redesign the shell around a left document rail, center reader, and right context panel.
+  - Move AI, Export, Translation, and Details into right-side tabs.
+  - Keep PDF translation explicitly experimental / HOLD.
+- Status notes:
+  - Fixed in S12 UX shell refactor.
+  - Requires real Windows click-through validation in the next stage.
