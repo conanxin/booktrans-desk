@@ -29,6 +29,12 @@ Internal MVP / HOLD for public PDF release until visible packaged UI validation 
 - Manual PDF import, translation, export, and external reader-open validation were blocked.
 - Final decision remains HOLD.
 
+## Phase 3B Quality Fix Update
+
+- Real PDF testing found unacceptable translated output containing `<think>` reasoning, prompt commentary, English assistant explanations, and noisy PDF metadata titles.
+- Phase 3B adds MiniMax thinking disabled, strict prompt isolation, output sanitizer, output validator, repair retry, PDF export quality gate, PDF title cleanup, and safer translated PDF wrapping.
+- PDF release decision remains HOLD until a real packaged UI workflow and external reader-open validation pass.
+
 ## Security Check
 
 - PDF fixtures are generated in temporary directories during tests.

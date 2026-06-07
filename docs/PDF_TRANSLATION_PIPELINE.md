@@ -2,6 +2,8 @@
 
 Phase 3A adds a first PDF translation MVP for text PDFs.
 
+Phase 3B adds translation output quality hardening after real testing found model reasoning and prompt commentary in exported PDFs.
+
 ## Scope
 
 Supported flow:
@@ -32,11 +34,20 @@ User-facing message:
 PDF translation reuses:
 
 - OpenAI-compatible translator.
+- MiniMax Token Plan provider preset with `thinking.type = disabled`.
 - Mock translator.
 - Glossary.
 - Style setting.
 - Existing chunking logic.
 - Cancellation via AbortController.
+
+Each chunk now runs through:
+
+1. strict translation-engine prompt with `<source_text>` isolation,
+2. output sanitizing,
+3. output validation,
+4. repair retry up to two times,
+5. visible failed-chunk placeholder if the output remains invalid.
 
 The unit model is:
 
@@ -55,6 +66,12 @@ original-name.zh.pdf
 ```
 
 The exported PDF includes title, original filename, translation model, style, generated time, page markers, and translated paragraphs.
+
+Before export, translated paragraphs are checked again. If reasoning or prompt leakage such as `<think>`, `The user wants`, or `Translation:` remains, export is blocked with `PDF_EXPORT_BLOCKED_TRANSLATION_INVALID`.
+
+PDF titles are cleaned before writing metadata. Noisy titles such as `Microsoft Word - Draft.doc` are converted to a clean title or replaced with the source filename basename.
+
+Layout uses A4 sizing, Chinese-friendly font candidates, measured line wrapping, pre-wrap style behavior, break-word behavior, and non-monospace body text.
 
 ## Validation
 

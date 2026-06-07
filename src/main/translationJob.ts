@@ -7,11 +7,13 @@ import type {
   TranslationJobResult,
   TranslationProgress,
   TranslationSettings,
+  TranslationQualityProgress,
   TranslatedChapter
 } from "../shared/types.js";
 import { countTranslatableTextNodeGroups, translateXhtmlTextNodes } from "./epub/translateXhtmlTextNodes.js";
 import { createTranslator } from "./translate/translator.js";
 import { createTranslationJobStore, TranslationJobStore } from "./translate/translationJobStore.js";
+import { createStats, mergeQualityStats } from "./translate/translateWithQualityGate.js";
 
 export type ProgressCallback = (progress: TranslationProgress) => void;
 
@@ -53,6 +55,7 @@ export async function translateBook(
   const translatedChapters: TranslatedChapter[] = await store.toTranslatedChapters(job);
   let translatedChunks = chapterProgress.reduce((sum, item) => sum + (item.status === "completed" ? item.totalChunks : item.currentChunk), 0);
   const log: string[] = [`Translation job ${job.jobId} ready.`];
+  const quality: TranslationQualityProgress = createStats();
 
   const emit = (status: TranslationProgress["status"], currentChapter?: string) => {
     onProgress({
@@ -61,7 +64,8 @@ export async function translateBook(
       totalChunks,
       status,
       chapters: chapterProgress.map((item) => ({ ...item })),
-      log: [...log]
+      log: [...log],
+      quality: { ...quality, warnings: [...quality.warnings] }
     });
   };
 
@@ -99,6 +103,15 @@ export async function translateBook(
           progress.currentChunk += 1;
           translatedChunks += 1;
           emit("translating", chapter.title);
+        },
+        quality: {
+          onStats: (stats) => {
+            mergeQualityStats(quality, stats);
+          },
+          onLog: (message) => {
+            log.push(message);
+            emit("translating", chapter.title);
+          }
         }
       });
       translatedChapters.push({ chapterId: chapter.id, href: chapter.href, html: translatedHtml });

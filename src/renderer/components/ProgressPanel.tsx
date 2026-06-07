@@ -25,6 +25,14 @@ export function ProgressPanel({ progress, percent, message, validation }: Progre
           已完成分块：{progress.translatedChunks} / {progress.totalChunks}
         </span>
       </div>
+      {progress.quality ? (
+        <div className={`quality-summary ${progress.quality.status}`}>
+          <span>已清理思考输出次数：{progress.quality.cleanedReasoningCount}</span>
+          <span>已重试次数：{progress.quality.retryCount}</span>
+          <span>失败分块数：{progress.quality.failedChunkCount}</span>
+          <span>翻译质量状态：{progress.quality.status === "normal" ? "正常" : progress.quality.status === "warning" ? "有警告" : "失败"}</span>
+        </div>
+      ) : null}
       {message ? <p className="message">{message}</p> : null}
       {validation ? (
         <div className={`validation-result ${validation.status}`}>

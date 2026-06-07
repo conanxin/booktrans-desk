@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
-import type { ChapterProgress, ImportedPdfDocument, PdfTranslationJobResult, TranslationProgress, TranslationSettings, TranslatedPdfPage } from "../../shared/types.js";
+import type { ChapterProgress, ImportedPdfDocument, PdfTranslationJobResult, TranslationProgress, TranslationQualityProgress, TranslationSettings, TranslatedPdfPage } from "../../shared/types.js";
 import { chunkText } from "../translate/chunkText.js";
 import { createTranslator } from "../translate/translator.js";
+import { createStats, mergeQualityStats, translateWithQualityGate } from "../translate/translateWithQualityGate.js";
 
 type ProgressCallback = (progress: TranslationProgress) => void;
 
@@ -23,6 +24,7 @@ export async function translatePdf(
   );
   let translatedChunks = 0;
   const translatedPages: TranslatedPdfPage[] = [];
+  const quality: TranslationQualityProgress = createStats();
   const pageStatuses: ChapterProgress[] = document.pages.map((page) => ({
     chapterId: `pdf-page-${page.pageNumber}`,
     chapterTitle: `第 ${page.pageNumber} 页`,
@@ -43,7 +45,8 @@ export async function translatePdf(
       totalChunks,
       status,
       chapters: pageStatuses.map((item) => ({ ...item })),
-      log: [...log]
+      log: [...log],
+      quality: { ...quality, warnings: [...quality.warnings] }
     });
   };
 
@@ -77,7 +80,15 @@ export async function translatePdf(
         if (signal.aborted) {
           throw new Error("PDF 翻译已取消。");
         }
-        const translated = await translator.translate(chunk.text, signal);
+        const translated = await translateWithQualityGate(translator, chunk.text, signal, {
+          onStats: (stats) => {
+            mergeQualityStats(quality, stats);
+          },
+          onLog: (message) => {
+            log.push(message);
+            emit("translating", page.pageNumber);
+          }
+        });
         translatedChunksForParagraph.push(translated);
         translatedChunks += 1;
         status.currentChunk += 1;

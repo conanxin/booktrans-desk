@@ -54,6 +54,10 @@ FINAL_DECISION: HOLD
 
 The Phase 3A PDF MVP remains suitable for internal automated validation only. It is not ready for public PDF release until a real Windows desktop session verifies the packed UI visually and opens an exported translated PDF in at least one external reader.
 
+## Phase 3B Follow-up
+
+Real PDF translation testing after this record found output contamination from MiniMax-M3, including `<think>` reasoning, assistant prompt commentary, English explanations, and noisy PDF title metadata. Phase 3B adds provider preset hardening, output sanitizing, validation, repair retry, PDF export quality blocking, title cleanup, and layout improvements. This does not change the manual validation decision: PDF remains HOLD.
+
 ## Next Steps
 
 - Run the packed app in a visible Windows desktop session.

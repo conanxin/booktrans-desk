@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import type { AnyNode, Element, Text } from "domhandler";
 import type { Translator } from "../../shared/types.js";
+import { translateWithQualityGate, type QualityTranslationCallbacks } from "../translate/translateWithQualityGate.js";
 
 const SKIP_TAGS = new Set(["script", "style", "svg", "math", "code", "pre", "noscript"]);
 const GROUP_DELIMITER = "__BOOKTRANS_TEXT_NODE_BREAK__";
@@ -8,6 +9,7 @@ const GROUP_DELIMITER = "__BOOKTRANS_TEXT_NODE_BREAK__";
 export interface TranslateXhtmlTextNodesOptions {
   signal?: AbortSignal;
   onNodeTranslated?: () => void;
+  quality?: QualityTranslationCallbacks;
 }
 
 interface TextTarget {
@@ -42,7 +44,7 @@ export async function translateXhtmlTextNodes(
      * we fall back to one request per text node to protect the XHTML structure.
      */
     const source = group.targets.map((target) => target.text).join(`\n${GROUP_DELIMITER}\n`);
-    const translated = await translator.translate(source, options.signal);
+    const translated = await translateWithQualityGate(translator, source, options.signal, options.quality);
     const pieces = translated.split(new RegExp(`\\s*${GROUP_DELIMITER}\\s*`));
     if (pieces.length === group.targets.length) {
       group.targets.forEach((target, index) => {
@@ -109,7 +111,7 @@ async function translateSingleNode(
   options: TranslateXhtmlTextNodesOptions
 ): Promise<void> {
   throwIfAborted(options.signal);
-  const translated = await translator.translate(target.text.trim(), options.signal);
+  const translated = await translateWithQualityGate(translator, target.text.trim(), options.signal, options.quality);
   replaceTextPreservingOuterWhitespace(target.node, target.text, translated);
   options.onNodeTranslated?.();
 }

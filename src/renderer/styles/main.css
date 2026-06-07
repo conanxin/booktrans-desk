@@ -414,6 +414,26 @@ small {
   font-weight: 650;
 }
 
+.settings-hint {
+  display: grid;
+  gap: 7px;
+  border: 1px solid rgba(14, 105, 94, 0.18);
+  border-radius: 10px;
+  padding: 11px 12px;
+  color: var(--muted);
+  background: #eefaf7;
+  font-size: 13px;
+}
+
+.settings-hint strong,
+.settings-hint span {
+  display: block;
+}
+
+.settings-hint button {
+  justify-self: start;
+}
+
 .check-row {
   grid-template-columns: 18px 1fr;
   align-items: center;
@@ -498,6 +518,31 @@ small {
   margin-top: 12px;
   color: var(--muted);
   font-size: 13px;
+}
+
+.quality-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--muted);
+  background: var(--panel-muted);
+  font-size: 13px;
+}
+
+.quality-summary.warning {
+  border-color: rgba(181, 71, 8, 0.22);
+  color: var(--warning);
+  background: #fff7ed;
+}
+
+.quality-summary.failed {
+  border-color: rgba(176, 32, 32, 0.22);
+  color: var(--danger);
+  background: #fff2f2;
 }
 
 .progress-track {

@@ -47,11 +47,12 @@ export const requiredDocs = [
   "docs/PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md",
   "docs/PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md",
   "docs/PHASE_3A_MANUAL_PDF_VALIDATION_REPORT.md",
+  "docs/PHASE_3B_TRANSLATION_OUTPUT_QUALITY_FIX_REPORT.md",
   "scripts/github-labels.json"
 ];
 
-export const currentPackageVersion = "0.3.0-alpha.0";
-export const currentReleaseVersion = "v0.3.0-pdf-translation-mvp";
+export const currentPackageVersion = "0.3.1-alpha.0";
+export const currentReleaseVersion = "v0.3.1-translation-quality-fix";
 
 const requiredCompatibilityFixtures = [
   "nested-sections",

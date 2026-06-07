@@ -133,6 +133,16 @@
 - Manual PDF import, translation, export, and external reader-open validation were not completed.
 - Next gate is a real Windows desktop validation session before any public PDF release decision.
 
+## Phase 3B Translation Output Quality and PDF Export Fix
+
+- Status: current hardening target `v0.3.1-translation-quality-fix`.
+- Fix real MiniMax-M3 output contamination where `<think>`, assistant reasoning, prompt commentary, and English explanations entered translated PDFs.
+- Add MiniMax Token Plan preset with thinking disabled.
+- Add strict translation prompt, output sanitizer, output validator, repair retry, and failed-chunk placeholder handling across EPUB and PDF.
+- Add PDF export quality gate so polluted translations are blocked before writing a PDF.
+- Improve translated PDF title cleanup, A4 layout, Chinese font candidates, measured wrapping, and overflow prevention.
+- PDF support remains HOLD until real visible UI and reader validation pass.
+
 ## Phase 3 Local Library Management
 
 - Multi-book local library.

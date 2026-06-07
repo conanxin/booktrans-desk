@@ -2,6 +2,7 @@ export type TranslationStatus = "pending" | "translating" | "completed" | "faile
 export type ValidationStatus = "pass" | "warning" | "fail";
 export type ExternalValidationStatus = ValidationStatus | "unavailable";
 export type TranslationStyle = "faithful" | "fluent" | "academic" | "popular";
+export type ProviderPreset = "openai-compatible" | "minimax";
 export type SourceDocumentType = "epub" | "pdf";
 
 export interface BookMetadata {
@@ -73,6 +74,7 @@ export interface TranslationSettings {
   baseUrl: string;
   apiKey: string;
   model: string;
+  providerPreset?: ProviderPreset;
   useMock?: boolean;
   glossary?: string;
   style?: TranslationStyle;
@@ -99,6 +101,7 @@ export interface TranslationProgress {
   status: TranslationStatus;
   chapters: ChapterProgress[];
   log: string[];
+  quality?: TranslationQualityProgress;
 }
 
 export interface TranslatedChapter {
@@ -129,7 +132,19 @@ export interface PdfTranslationJobResult {
 }
 
 export interface Translator {
-  translate(text: string, signal?: AbortSignal): Promise<string>;
+  translate(text: string, signal?: AbortSignal, context?: TranslationRequestContext): Promise<string>;
+}
+
+export interface TranslationRequestContext {
+  repair?: boolean;
+}
+
+export interface TranslationQualityProgress {
+  cleanedReasoningCount: number;
+  retryCount: number;
+  failedChunkCount: number;
+  status: "normal" | "warning" | "failed";
+  warnings: string[];
 }
 
 export interface ValidationReport {

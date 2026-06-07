@@ -23,6 +23,7 @@ export function App() {
     baseUrl: "https://api.openai.com/v1",
     apiKey: "",
     model: "gpt-4o-mini",
+    providerPreset: "openai-compatible",
     useMock: false,
     glossary: "",
     style: "faithful"

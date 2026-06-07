@@ -21,6 +21,15 @@ export function TranslationSettingsPanel({ settings, busy, onSave, glossaryCount
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
+  function applyMinimaxDefaults() {
+    setDraft((current) => ({
+      ...current,
+      providerPreset: "minimax",
+      baseUrl: "https://api.minimaxi.com/v1",
+      model: "MiniMax-M3"
+    }));
+  }
+
   return (
     <details className="panel settings-panel" open={defaultOpen}>
       <summary>
@@ -34,6 +43,28 @@ export function TranslationSettingsPanel({ settings, busy, onSave, glossaryCount
       </summary>
 
       <div className="settings-fields">
+        <label>
+          <span>服务商预设</span>
+          <select
+            value={draft.providerPreset ?? "openai-compatible"}
+            onChange={(event) => update("providerPreset", event.target.value as TranslationSettings["providerPreset"])}
+            disabled={busy}
+          >
+            <option value="openai-compatible">OpenAI-compatible</option>
+            <option value="minimax">MiniMax Token Plan</option>
+          </select>
+        </label>
+        {draft.providerPreset === "minimax" ? (
+          <div className="settings-hint">
+            <strong>MiniMax Token Plan 推荐配置</strong>
+            <span>API 地址：https://api.minimaxi.com/v1</span>
+            <span>模型：MiniMax-M3</span>
+            <span>已自动关闭 thinking 输出，避免思考过程进入译文。</span>
+            <button type="button" onClick={applyMinimaxDefaults} disabled={busy}>
+              应用 MiniMax 默认配置
+            </button>
+          </div>
+        ) : null}
         <label>
           <span>API 地址</span>
           <input value={draft.baseUrl} onChange={(event) => update("baseUrl", event.target.value)} disabled={busy} />

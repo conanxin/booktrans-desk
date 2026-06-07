@@ -8,6 +8,8 @@ Phase 3A-V decision: HOLD.
 
 Automated PDF import, translation, validation, and export tests pass, and the packed executable passed a process smoke check. Visible packaged UI validation and exported PDF external reader-open validation were blocked by the current environment, so no public PDF release readiness is claimed.
 
+Phase 3B adds output quality protection after real testing found MiniMax reasoning and prompt commentary in translated PDFs. The app now disables MiniMax thinking output, sanitizes and validates model output, retries invalid chunks, and blocks PDF export if polluted translated text remains. PDF release status is still HOLD until a real manual workflow passes.
+
 ## Supported
 
 - Import PDFs with copyable/extractable text.

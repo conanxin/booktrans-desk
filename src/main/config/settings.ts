@@ -5,6 +5,7 @@ const defaults: Required<TranslationSettings> = {
   baseUrl: process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1",
   apiKey: "",
   model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+  providerPreset: "openai-compatible",
   useMock: false,
   glossary: "",
   style: "faithful",
@@ -21,6 +22,7 @@ export function getSettings(): TranslationSettings {
     baseUrl: store.get("baseUrl", defaults.baseUrl),
     apiKey: store.get("apiKey", defaults.apiKey),
     model: store.get("model", defaults.model),
+    providerPreset: store.get("providerPreset", defaults.providerPreset),
     useMock: store.get("useMock", defaults.useMock ?? false),
     glossary: store.get("glossary", defaults.glossary),
     style: store.get("style", defaults.style),
@@ -32,6 +34,7 @@ export function saveSettings(settings: TranslationSettings): TranslationSettings
   store.set("baseUrl", settings.baseUrl);
   store.set("apiKey", settings.apiKey);
   store.set("model", settings.model);
+  store.set("providerPreset", settings.providerPreset ?? "openai-compatible");
   store.set("useMock", Boolean(settings.useMock));
   store.set("glossary", settings.glossary ?? "");
   store.set("style", settings.style ?? "faithful");

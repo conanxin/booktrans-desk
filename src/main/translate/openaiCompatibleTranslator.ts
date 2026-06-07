@@ -1,4 +1,5 @@
-import type { TranslationSettings, TranslationStyle, Translator } from "../../shared/types.js";
+import type { ProviderPreset, TranslationRequestContext, TranslationSettings, Translator } from "../../shared/types.js";
+import { buildTranslationPrompt } from "./buildTranslationPrompt.js";
 
 interface ChatCompletionResponse {
   choices?: Array<{ message?: { content?: unknown } }>;
@@ -13,7 +14,8 @@ export class OpenAICompatibleTranslator implements Translator {
   private readonly apiKey: string;
   private readonly model: string;
   private readonly glossary: string;
-  private readonly style: TranslationStyle;
+  private readonly style: TranslationSettings["style"];
+  private readonly providerPreset: ProviderPreset;
   private readonly timeoutMs: number;
 
   constructor(settings: TranslationSettings, timeoutMs = DEFAULT_TIMEOUT_MS) {
@@ -22,10 +24,11 @@ export class OpenAICompatibleTranslator implements Translator {
     this.model = settings.model;
     this.glossary = settings.glossary?.trim() ?? "";
     this.style = settings.style ?? "faithful";
+    this.providerPreset = settings.providerPreset ?? "openai-compatible";
     this.timeoutMs = timeoutMs;
   }
 
-  async translate(text: string, signal?: AbortSignal): Promise<string> {
+  async translate(text: string, signal?: AbortSignal, context: TranslationRequestContext = {}): Promise<string> {
     if (!this.baseUrl || !this.apiKey || !this.model) {
       throw new Error("OpenAI-compatible API settings are incomplete.");
     }
@@ -34,7 +37,7 @@ export class OpenAICompatibleTranslator implements Translator {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       throwIfAborted(signal);
       try {
-        return await this.requestTranslation(text, signal);
+        return await this.requestTranslation(text, signal, context);
       } catch (error) {
         if (isAbortError(error) || signal?.aborted) {
           throw new Error("Translation cancelled.");
@@ -50,7 +53,7 @@ export class OpenAICompatibleTranslator implements Translator {
     throw lastError ?? new Error("Translation request failed.");
   }
 
-  private async requestTranslation(text: string, signal?: AbortSignal): Promise<string> {
+  private async requestTranslation(text: string, signal: AbortSignal | undefined, context: TranslationRequestContext): Promise<string> {
     const timeoutController = new AbortController();
     const timeout = setTimeout(() => timeoutController.abort(), this.timeoutMs);
     const combinedSignal = anySignal([signal, timeoutController.signal]);
@@ -63,17 +66,7 @@ export class OpenAICompatibleTranslator implements Translator {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.apiKey}`
         },
-        body: JSON.stringify({
-          model: this.model,
-          temperature: 0.2,
-          messages: [
-            {
-              role: "system",
-              content: buildSystemPrompt(this.style, this.glossary)
-            },
-            { role: "user", content: text }
-          ]
-        })
+        body: JSON.stringify(buildChatCompletionRequestBody(this.model, this.style ?? "faithful", this.glossary, text, this.providerPreset, context))
       });
 
       if (!response.ok) {
@@ -102,31 +95,37 @@ export class OpenAICompatibleTranslator implements Translator {
   }
 }
 
+export function buildChatCompletionRequestBody(
+  model: string,
+  style: NonNullable<TranslationSettings["style"]>,
+  glossary: string,
+  text: string,
+  providerPreset: ProviderPreset = "openai-compatible",
+  context: TranslationRequestContext = {}
+): Record<string, unknown> {
+  return {
+    model,
+    temperature: 0.2,
+    messages: buildTranslationPrompt(text, { style, glossary }, context),
+    ...providerExtraBody(providerPreset)
+  };
+}
+
+function providerExtraBody(providerPreset: ProviderPreset): Record<string, unknown> {
+  if (providerPreset === "minimax") {
+    return {
+      thinking: {
+        type: "disabled"
+      }
+    };
+  }
+  return {};
+}
+
 class HttpTranslationError extends Error {
   constructor(readonly status: number, message: string) {
     super(message);
   }
-}
-
-function buildSystemPrompt(style: TranslationStyle, glossary: string): string {
-  const styleGuide: Record<TranslationStyle, string> = {
-    faithful: "Use a faithful, accurate style.",
-    fluent: "Use natural, fluent Simplified Chinese.",
-    academic: "Use formal academic written Chinese.",
-    popular: "Use plain, accessible Simplified Chinese."
-  };
-  const glossaryInstruction = glossary
-    ? `\nMandatory glossary. Follow these source => target term mappings exactly:\n${glossary}`
-    : "";
-  return [
-    "Translate EPUB body text into Simplified Chinese.",
-    styleGuide[style],
-    "Preserve paragraph breaks, inline markers, footnote references, placeholders, and heading intent.",
-    "Return only the translation.",
-    glossaryInstruction
-  ]
-    .filter(Boolean)
-    .join("\n");
 }
 
 function isRetryableError(error: unknown): boolean {

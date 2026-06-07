@@ -60,6 +60,7 @@ describe("releaseCheckCore", () => {
     const withoutReleasePolicy = requiredDocs.filter((file: string) => file !== "docs/releases/RELEASE_DECISION_POLICY.md");
     const withoutPdfReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md");
     const withoutManualPdfValidationReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_3A_MANUAL_PDF_VALIDATION_REPORT.md");
+    const withoutQualityFixReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_3B_TRANSLATION_OUTPUT_QUALITY_FIX_REPORT.md");
     expect(check(withoutReaderResults, {}).failures.some((failure: string) => failure.includes("MANUAL_READER_VALIDATION_RESULTS.md"))).toBe(true);
     expect(check(withoutChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md"))).toBe(true);
     expect(check(withoutFinalChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.8-public-alpha.md"))).toBe(true);
@@ -78,6 +79,7 @@ describe("releaseCheckCore", () => {
     expect(
       check(withoutManualPdfValidationReport, {}).failures.some((failure: string) => failure.includes("PHASE_3A_MANUAL_PDF_VALIDATION_REPORT.md"))
     ).toBe(true);
+    expect(check(withoutQualityFixReport, {}).failures.some((failure: string) => failure.includes("PHASE_3B_TRANSLATION_OUTPUT_QUALITY_FIX_REPORT.md"))).toBe(true);
   });
 
 
@@ -129,16 +131,16 @@ function check(files: string[], content: Record<string, string>) {
 
 function defaultContent(file: string): string {
   if (file === "package.json") {
-    return JSON.stringify({ version: "0.3.0-alpha.0" });
+    return JSON.stringify({ version: "0.3.1-alpha.0" });
   }
   if (file === "package-lock.json") {
-    return JSON.stringify({ version: "0.3.0-alpha.0", packages: { "": { version: "0.3.0-alpha.0" } } });
+    return JSON.stringify({ version: "0.3.1-alpha.0", packages: { "": { version: "0.3.1-alpha.0" } } });
   }
   if (file === "README.md") {
-    return "# Readme\n\nAlpha warning\n\nWindows unsigned warning\n\nv0.3.0-pdf-translation-mvp\n";
+    return "# Readme\n\nAlpha warning\n\nWindows unsigned warning\n\nv0.3.1-translation-quality-fix\n";
   }
   if (file === "CHANGELOG.md") {
-    return "# v0.3.0-pdf-translation-mvp\n";
+    return "# v0.3.1-translation-quality-fix\n";
   }
   if (file === "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md") {
     return "# v0.2.8-public-alpha\n\n## Final Decision\n\n## Windows Unsigned Warning\n\n## Privacy Model\n\nPrivacy warning\n\n## Checksums\nSHA256_PLACEHOLDER\n\nDo not upload copyrighted EPUBs or API keys.\n";

@@ -1,6 +1,16 @@
 # Changelog
 
-## Unreleased / v0.3.0-pdf-translation-mvp
+## Unreleased / v0.3.1-translation-quality-fix
+
+- Add MiniMax Token Plan provider preset with request body `thinking.type = disabled`.
+- Replace the translation prompt with a strict translation-engine protocol and source text isolation.
+- Add translation output sanitizing, validation, repair retry, and failed-chunk placeholder handling for EPUB and PDF translation.
+- Block PDF export when translated paragraphs still contain reasoning or prompt leakage.
+- Clean noisy PDF metadata titles such as `Microsoft Word - ...doc`.
+- Improve translated PDF export wrapping, A4 layout, Chinese font candidates, and non-monospace body text.
+- Keep PDF release decision as HOLD pending real packaged UI and external reader validation.
+
+## v0.3.0-pdf-translation-mvp
 
 - Add text PDF import with metadata, page count, page text, paragraph extraction, and scanned-like detection.
 - Add PDF translation MVP using existing translators, glossary, style, chunking, cancellation, and progress events.
