@@ -27,6 +27,7 @@ import { validationReportToMarkdown } from "../shared/validationReport.js";
 import { getSettings, saveSettings } from "./config/settings.js";
 import { createDocumentLibraryStore } from "./document/documentLibraryStore.js";
 import { detectDocumentKindForDocument } from "./document/documentKindDetector.js";
+import { extractOutline } from "./document/outlineExtractor.js";
 import { createDiagnosticBundle, defaultDiagnosticBundleName } from "./diagnostics/createDiagnosticBundle.js";
 import { runExternalEpubCheck } from "./epub/runExternalEpubCheck.js";
 import { readEpub } from "./epub/readEpub.js";
@@ -140,7 +141,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     lastPdfResult = null;
     if (extension === ".pdf") {
       currentPdf = await readPdf(filePath);
-      currentUnifiedDocument = withDetectedDocumentKind(fromImportedPdfDocument(currentPdf));
+      currentUnifiedDocument = enrichUnifiedDocument(fromImportedPdfDocument(currentPdf));
       currentUnifiedDocument = await documentLibrary().importDocumentSnapshot(currentUnifiedDocument);
       return currentPdf;
     }
@@ -159,7 +160,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
         style: loadedProfile.style
       });
     }
-    currentUnifiedDocument = withDetectedDocumentKind(fromImportedBook(currentBook));
+    currentUnifiedDocument = enrichUnifiedDocument(fromImportedBook(currentBook));
     currentUnifiedDocument = await documentLibrary().importDocumentSnapshot(currentUnifiedDocument);
     return currentBook;
   });
@@ -506,9 +507,13 @@ function isPdfValidationReport(report: ValidationReport | PdfValidationReport): 
   return "fileSize" in report || "pageCount" in report;
 }
 
-function withDetectedDocumentKind(document: UnifiedDocument): UnifiedDocument {
-  return {
+function enrichUnifiedDocument(document: UnifiedDocument): UnifiedDocument {
+  const outlined = {
     ...document,
-    documentKind: detectDocumentKindForDocument(document)
+    outline: extractOutline(document).tree
+  };
+  return {
+    ...outlined,
+    documentKind: detectDocumentKindForDocument(outlined)
   };
 }
