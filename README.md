@@ -6,7 +6,7 @@
 
 BookTrans Desk is an open source desktop alpha for translating reflowable EPUB books into Simplified Chinese with an OpenAI-compatible API. It is local-first: no telemetry, no account system, no cloud sync, and no bundled commercial EPUB content.
 
-Phase 2.14 status: `v0.2.14-chinese-ui-redesign` localizes the app to a Chinese-first interface and refreshes the renderer into a cleaner, modern desktop workbench while keeping the EPUB translation pipeline unchanged.
+Phase 3A status: `v0.3.0-pdf-translation-mvp` adds an internal MVP for copyable text PDF import, translation, reflowed PDF export, and lightweight PDF validation. Scanned/image-only PDFs are detected but OCR is not supported.
 
 > Alpha warning: this project is still intended for technical testers. Keep backups of original EPUB files and review provider privacy terms before translating private or copyrighted content.
 
@@ -39,6 +39,7 @@ Use Settings to configure a compatible API provider, or enable the mock translat
 - Run generated EPUB fixture regression tests.
 - Review reader compatibility notes for manual alpha checks.
 - Use a Chinese-first, modernized desktop UI for the import, translation, export, jobs, and settings workflows.
+- Import and translate copyable text PDFs, then export a readable translated PDF.
 
 ## Development
 
@@ -94,7 +95,9 @@ See [docs/alpha/PRIVACY_NOTICE.md](docs/alpha/PRIVACY_NOTICE.md) and [docs/SECUR
 
 Supported target: reflowable EPUB.
 
-Unsupported formats: fixed-layout EPUB, DRM EPUB, PDF, MOBI, AZW3.
+Unsupported formats: fixed-layout EPUB, DRM EPUB, scanned/image-only PDF OCR, encrypted PDF, MOBI, AZW3.
+
+PDF support: text PDFs only. Scanned PDFs, image-only PDFs, encrypted PDFs, OCR, exact layout preservation, and table/formula reconstruction are not supported in Phase 3A.
 
 ## Documentation
 
@@ -118,6 +121,9 @@ Unsupported formats: fixed-layout EPUB, DRM EPUB, PDF, MOBI, AZW3.
 - [White Screen Troubleshooting](docs/troubleshooting/WHITE_SCREEN.md)
 - [Phase 2.12 White Screen Hotfix Report](docs/PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md)
 - [Phase 2.14 Chinese UI Redesign Report](docs/PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md)
+- [PDF Translation Pipeline](docs/PDF_TRANSLATION_PIPELINE.md)
+- [PDF Support Limitations](docs/PDF_SUPPORT_LIMITATIONS.md)
+- [Phase 3A PDF Translation MVP Report](docs/PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md)
 - [Windows Unsigned Warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md)
 - [RC Burn-down](docs/releases/RC_BURNDOWN.md)
 - [Roadmap](docs/ROADMAP.md)

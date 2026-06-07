@@ -1,14 +1,41 @@
-import type { ImportedBook } from "../../shared/types.js";
+import type { ImportedDocument, ImportedPdfDocument } from "../../shared/types.js";
 
 interface BookInfoCardProps {
-  book: ImportedBook | null;
+  book: ImportedDocument | null;
 }
 
 export function BookInfoCard({ book }: BookInfoCardProps) {
   return (
     <section className="panel book-info">
       <h2>书籍信息</h2>
-      {book ? (
+      {isPdf(book) ? (
+        <dl>
+          <div>
+            <dt>文件名</dt>
+            <dd>{basename(book.filePath)}</dd>
+          </div>
+          <div>
+            <dt>标题</dt>
+            <dd>{book.title || "未知"}</dd>
+          </div>
+          <div>
+            <dt>作者</dt>
+            <dd>{book.author || "未知"}</dd>
+          </div>
+          <div>
+            <dt>页数</dt>
+            <dd>{book.pageCount}</dd>
+          </div>
+          <div>
+            <dt>可提取文本量</dt>
+            <dd>{book.textLength.toLocaleString()} 字符</dd>
+          </div>
+          <div>
+            <dt>PDF 类型</dt>
+            <dd>{book.isScannedLike ? "可能是扫描版 PDF" : "文本型 PDF"}</dd>
+          </div>
+        </dl>
+      ) : book ? (
         <dl>
           <div>
             <dt>书名</dt>
@@ -40,4 +67,12 @@ export function BookInfoCard({ book }: BookInfoCardProps) {
       )}
     </section>
   );
+}
+
+function isPdf(book: ImportedDocument | null): book is ImportedPdfDocument {
+  return book?.type === "pdf";
+}
+
+function basename(filePath: string): string {
+  return filePath.split(/[\\/]/).filter(Boolean).at(-1) ?? filePath;
 }

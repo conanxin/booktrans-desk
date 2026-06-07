@@ -2,6 +2,7 @@ export type TranslationStatus = "pending" | "translating" | "completed" | "faile
 export type ValidationStatus = "pass" | "warning" | "fail";
 export type ExternalValidationStatus = ValidationStatus | "unavailable";
 export type TranslationStyle = "faithful" | "fluent" | "academic" | "popular";
+export type SourceDocumentType = "epub" | "pdf";
 
 export interface BookMetadata {
   title: string;
@@ -20,7 +21,45 @@ export interface Chapter {
   order: number;
 }
 
+export interface PdfPageInfo {
+  pageNumber: number;
+  textLength: number;
+  paragraphCount: number;
+  status: "pending" | "translating" | "completed" | "failed" | "skipped";
+}
+
+export interface PdfParagraph {
+  id: string;
+  pageNumber: number;
+  index: number;
+  text: string;
+}
+
+export interface PdfPage {
+  pageNumber: number;
+  text: string;
+  paragraphs: PdfParagraph[];
+}
+
+export interface PdfDocumentInfo {
+  type: "pdf";
+  title?: string;
+  author?: string;
+  filePath: string;
+  pageCount: number;
+  textLength: number;
+  pages: PdfPageInfo[];
+  isScannedLike: boolean;
+}
+
+export interface ImportedPdfDocument extends PdfDocumentInfo {
+  pageTexts: PdfPage[];
+}
+
+export type ImportedDocument = ImportedBook | ImportedPdfDocument;
+
 export interface ImportedBook {
+  type?: "epub";
   filePath: string;
   rootFilePath: string;
   opfDir: string;
@@ -50,7 +89,11 @@ export interface ChapterProgress {
 }
 
 export interface TranslationProgress {
+  documentType?: SourceDocumentType;
   currentChapter?: string;
+  currentPage?: number;
+  translatedPages?: number;
+  totalPages?: number;
   translatedChunks: number;
   totalChunks: number;
   status: TranslationStatus;
@@ -67,6 +110,21 @@ export interface TranslatedChapter {
 export interface TranslationJobResult {
   book: ImportedBook;
   translatedChapters: TranslatedChapter[];
+  jobId: string;
+}
+
+export interface TranslatedPdfPage {
+  pageNumber: number;
+  paragraphs: Array<{
+    index: number;
+    source: string;
+    translated: string;
+  }>;
+}
+
+export interface PdfTranslationJobResult {
+  document: ImportedPdfDocument;
+  translatedPages: TranslatedPdfPage[];
   jobId: string;
 }
 
@@ -91,6 +149,25 @@ export interface ExportedEpubResult {
   validation: ValidationReport;
   externalValidation?: ExternalEpubCheckReport;
 }
+
+export interface PdfValidationReport {
+  status: ValidationStatus;
+  errors: string[];
+  warnings: string[];
+  checkedFiles: string[];
+  summary: string;
+  pageCount?: number;
+  fileSize?: number;
+  title?: string;
+  author?: string;
+}
+
+export interface ExportedPdfResult {
+  outputPath: string;
+  validation: PdfValidationReport;
+}
+
+export type ExportedDocumentResult = ExportedEpubResult | ExportedPdfResult;
 
 export interface ExternalEpubCheckReport {
   status: ExternalValidationStatus;
@@ -133,8 +210,10 @@ export interface JobChapterDetail {
 
 export interface TranslationJobSummary {
   jobId: string;
+  sourceType?: SourceDocumentType;
   bookTitle: string;
   sourceEpubPath: string;
+  sourcePath?: string;
   targetLanguage: string;
   createdAt: string;
   updatedAt: string;
@@ -149,9 +228,12 @@ export interface TranslationJobSummary {
 export interface ExportHistoryItem {
   id: string;
   jobId?: string;
+  sourceType?: SourceDocumentType;
   sourceBookTitle?: string;
   sourceEpubPath?: string;
+  sourcePath?: string;
   outputEpubPath: string;
+  outputPath?: string;
   createdAt: string;
   validationStatus: ValidationStatus | "unknown";
   externalValidationStatus?: ExternalValidationStatus;

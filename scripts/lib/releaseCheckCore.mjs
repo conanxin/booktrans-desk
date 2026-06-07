@@ -10,6 +10,8 @@ export const requiredDocs = [
   "docs/SECURITY.md",
   "docs/ROADMAP.md",
   "docs/EPUB_COMPATIBILITY_MATRIX.md",
+  "docs/PDF_TRANSLATION_PIPELINE.md",
+  "docs/PDF_SUPPORT_LIMITATIONS.md",
   "docs/READER_COMPATIBILITY_NOTES.md",
   "docs/troubleshooting/WHITE_SCREEN.md",
   "docs/TEST_FIXTURES.md",
@@ -25,6 +27,7 @@ export const requiredDocs = [
   "docs/triage/TRIAGE_GUIDE.md",
   "docs/triage/ALPHA_FEEDBACK_WORKFLOW.md",
   "docs/releases/ALPHA_RELEASE_CHECKLIST.md",
+  "docs/releases/RELEASE_DECISION_POLICY.md",
   "docs/releases/v0.2.5-alpha-rc.md",
   "docs/releases/MANUAL_READER_VALIDATION_CHECKLIST.md",
   "docs/releases/MANUAL_READER_VALIDATION_RESULTS.md",
@@ -42,11 +45,12 @@ export const requiredDocs = [
   "docs/PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md",
   "docs/PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md",
   "docs/PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md",
+  "docs/PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md",
   "scripts/github-labels.json"
 ];
 
-export const currentPackageVersion = "0.2.14-alpha.0";
-export const currentReleaseVersion = "v0.2.14-chinese-ui-redesign";
+export const currentPackageVersion = "0.3.0-alpha.0";
+export const currentReleaseVersion = "v0.3.0-pdf-translation-mvp";
 
 const requiredCompatibilityFixtures = [
   "nested-sections",
@@ -60,6 +64,7 @@ const requiredCompatibilityFixtures = [
 const forbiddenPathRules = [
   { label: ".env", test: (file) => file === ".env" || (/^\.env\./.test(file) && file !== ".env.example") },
   { label: "*.epub", test: (file) => file.toLowerCase().endsWith(".epub") },
+  { label: "*.pdf", test: (file) => file.toLowerCase().endsWith(".pdf") },
   { label: "*.zip", test: (file) => file.toLowerCase().endsWith(".zip") },
   { label: "*.exe", test: (file) => file.toLowerCase().endsWith(".exe") },
   { label: "*.dmg", test: (file) => file.toLowerCase().endsWith(".dmg") },
@@ -168,6 +173,18 @@ function runVersionAndReleaseChecks({ fileSet, readFile, failures }) {
     for (const fixture of requiredCompatibilityFixtures) {
       if (!matrix.includes(fixture)) {
         failures.push(`docs/EPUB_COMPATIBILITY_MATRIX.md must mention ${fixture}`);
+      }
+    }
+    if (!matrix.includes("Text PDF") || !matrix.includes("scanned PDF")) {
+      failures.push("docs/EPUB_COMPATIBILITY_MATRIX.md must mention PDF support scope");
+    }
+  }
+
+  if (fileSet.has("docs/releases/RELEASE_DECISION_POLICY.md")) {
+    const policy = safeRead(readFile, "docs/releases/RELEASE_DECISION_POLICY.md");
+    for (const required of ["packaged UI visible PASS", "PDF import minimal-text PASS", "PDF export PASS", "no P0/P1 blockers"]) {
+      if (!policy.includes(required)) {
+        failures.push(`RELEASE_DECISION_POLICY.md must mention ${required}`);
       }
     }
   }

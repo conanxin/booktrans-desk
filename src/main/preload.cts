@@ -1,9 +1,11 @@
 import type {
   ExportHistoryItem,
+  ExportedDocumentResult,
   ExportedEpubResult,
   ExternalEpubCheckReport,
-  ImportedBook,
+  ImportedDocument,
   IpcResult,
+  PdfValidationReport,
   TranslationProfile,
   TranslationJobSummary,
   TranslationProgress,
@@ -15,15 +17,15 @@ const electron = require("electron") as typeof import("electron");
 const { contextBridge, ipcRenderer } = electron;
 
 const api = {
-  importEpub: (): Promise<ImportedBook | null> => ipcRenderer.invoke("book:import"),
+  importEpub: (): Promise<ImportedDocument | null> => ipcRenderer.invoke("book:import"),
   getSettings: (): Promise<TranslationSettings> => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings: TranslationSettings): Promise<TranslationSettings> => ipcRenderer.invoke("settings:save", settings),
   startTranslation: (settings: TranslationSettings): Promise<void> => ipcRenderer.invoke("translation:start", settings),
   cancelTranslation: (): Promise<void> => ipcRenderer.invoke("translation:cancel"),
   clearJobCache: (): Promise<void> => ipcRenderer.invoke("translation:clear-cache"),
-  exportEpub: (): Promise<ExportedEpubResult> => ipcRenderer.invoke("book:export"),
+  exportEpub: (): Promise<ExportedDocumentResult> => ipcRenderer.invoke("book:export"),
   saveValidationMarkdown: (
-    report: ValidationReport,
+    report: ValidationReport | PdfValidationReport,
     externalValidation: ExternalEpubCheckReport | undefined,
     title: string
   ): Promise<IpcResult<string | null>> => ipcRenderer.invoke("validation:saveMarkdown", report, externalValidation, title),

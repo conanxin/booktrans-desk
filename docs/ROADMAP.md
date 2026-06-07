@@ -117,6 +117,14 @@
 - Modernize visual styling with CSS variables, light panels, restrained tabs, softer shadows, responsive max width, and cleaner empty states.
 - Keep EPUB import, translation, validation, retry/resume, and export behavior unchanged.
 
+## Phase 3A PDF Import and Text PDF Translation MVP
+
+- Status: current internal target `v0.3.0-pdf-translation-mvp`.
+- Support copyable text PDF import, text extraction, page/paragraph/chunk translation, reflowed translated PDF export, and lightweight validation.
+- Detect scanned-like PDFs and show an OCR unsupported message.
+- Keep OCR, exact layout preservation, bilingual export, table handling, selected page translation, encrypted PDF handling, and batch PDF translation on the roadmap.
+- Public PDF release requires packaged UI visible PASS plus exported PDF reader-open PASS.
+
 ## Phase 3 Local Library Management
 
 - Multi-book local library.
@@ -134,7 +142,7 @@
 
 ## Phase 5 Multi-format Support
 
-- Explore PDF, MOBI, and AZW3 import paths.
+- Expand PDF support beyond text PDF MVP, then explore MOBI and AZW3 import paths.
 - Keep DRM-protected content out of scope unless legal processing is clearly supported.
 - More language targets and richer per-book translation profiles.
 - Real-world reader compatibility fixture expansion.

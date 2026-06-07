@@ -22,6 +22,7 @@ describe("releaseCheckCore", () => {
   it("fails on EPUB files", () => {
     const result = check([...requiredDocs, "tests/fixtures/book.epub"], {});
     expect(result.failures.some((failure: string) => failure.includes("*.epub"))).toBe(true);
+    expect(check([...requiredDocs, "tests/fixtures/book.pdf"], {}).failures.some((failure: string) => failure.includes("*.pdf"))).toBe(true);
   });
 
   it("fails on diagnostic zip and packed release files", () => {
@@ -54,6 +55,10 @@ describe("releaseCheckCore", () => {
     const withoutTroubleshooting = requiredDocs.filter((file: string) => file !== "docs/troubleshooting/WHITE_SCREEN.md");
     const withoutHotfixReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md");
     const withoutChineseUiReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md");
+    const withoutPdfPipeline = requiredDocs.filter((file: string) => file !== "docs/PDF_TRANSLATION_PIPELINE.md");
+    const withoutPdfLimitations = requiredDocs.filter((file: string) => file !== "docs/PDF_SUPPORT_LIMITATIONS.md");
+    const withoutReleasePolicy = requiredDocs.filter((file: string) => file !== "docs/releases/RELEASE_DECISION_POLICY.md");
+    const withoutPdfReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md");
     expect(check(withoutReaderResults, {}).failures.some((failure: string) => failure.includes("MANUAL_READER_VALIDATION_RESULTS.md"))).toBe(true);
     expect(check(withoutChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md"))).toBe(true);
     expect(check(withoutFinalChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.8-public-alpha.md"))).toBe(true);
@@ -65,6 +70,10 @@ describe("releaseCheckCore", () => {
     expect(check(withoutTroubleshooting, {}).failures.some((failure: string) => failure.includes("WHITE_SCREEN.md"))).toBe(true);
     expect(check(withoutHotfixReport, {}).failures.some((failure: string) => failure.includes("PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md"))).toBe(true);
     expect(check(withoutChineseUiReport, {}).failures.some((failure: string) => failure.includes("PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md"))).toBe(true);
+    expect(check(withoutPdfPipeline, {}).failures.some((failure: string) => failure.includes("PDF_TRANSLATION_PIPELINE.md"))).toBe(true);
+    expect(check(withoutPdfLimitations, {}).failures.some((failure: string) => failure.includes("PDF_SUPPORT_LIMITATIONS.md"))).toBe(true);
+    expect(check(withoutReleasePolicy, {}).failures.some((failure: string) => failure.includes("RELEASE_DECISION_POLICY.md"))).toBe(true);
+    expect(check(withoutPdfReport, {}).failures.some((failure: string) => failure.includes("PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md"))).toBe(true);
   });
 
 
@@ -116,16 +125,16 @@ function check(files: string[], content: Record<string, string>) {
 
 function defaultContent(file: string): string {
   if (file === "package.json") {
-    return JSON.stringify({ version: "0.2.14-alpha.0" });
+    return JSON.stringify({ version: "0.3.0-alpha.0" });
   }
   if (file === "package-lock.json") {
-    return JSON.stringify({ version: "0.2.14-alpha.0", packages: { "": { version: "0.2.14-alpha.0" } } });
+    return JSON.stringify({ version: "0.3.0-alpha.0", packages: { "": { version: "0.3.0-alpha.0" } } });
   }
   if (file === "README.md") {
-    return "# Readme\n\nAlpha warning\n\nWindows unsigned warning\n\nv0.2.14-chinese-ui-redesign\n";
+    return "# Readme\n\nAlpha warning\n\nWindows unsigned warning\n\nv0.3.0-pdf-translation-mvp\n";
   }
   if (file === "CHANGELOG.md") {
-    return "# v0.2.14-chinese-ui-redesign\n";
+    return "# v0.3.0-pdf-translation-mvp\n";
   }
   if (file === "docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md") {
     return "# v0.2.8-public-alpha\n\n## Final Decision\n\n## Windows Unsigned Warning\n\n## Privacy Model\n\nPrivacy warning\n\n## Checksums\nSHA256_PLACEHOLDER\n\nDo not upload copyrighted EPUBs or API keys.\n";
@@ -143,7 +152,10 @@ function defaultContent(file: string): string {
     return "Release decision: CONDITIONAL_GO\n\nPrerelease status: Must be marked prerelease\n";
   }
   if (file === "docs/EPUB_COMPATIBILITY_MATRIX.md") {
-    return "nested-sections split-text-inline entities-special-chars nav-landmarks duplicate-hrefs large-chapter-chunking";
+    return "nested-sections split-text-inline entities-special-chars nav-landmarks duplicate-hrefs large-chapter-chunking Text PDF scanned PDF";
+  }
+  if (file === "docs/releases/RELEASE_DECISION_POLICY.md") {
+    return "packaged UI visible PASS\nPDF import minimal-text PASS\nPDF export PASS\nno P0/P1 blockers\n";
   }
   if (file === "scripts/github-labels.json") {
     return JSON.stringify([

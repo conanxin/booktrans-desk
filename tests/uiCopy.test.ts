@@ -34,9 +34,9 @@ describe("Chinese UI copy", () => {
   });
 
   it("contains primary Chinese empty states", () => {
-    expect(read("src/renderer/components/ImportPanel.tsx")).toContain("还没有导入电子书");
+    expect(read("src/renderer/components/ImportPanel.tsx")).toContain("还没有导入文件");
     expect(read("src/renderer/components/BookInfoCard.tsx")).toContain("导入 EPUB 后");
-    expect(read("src/renderer/components/ChapterList.tsx")).toContain("导入电子书后");
+    expect(read("src/renderer/components/ChapterList.tsx")).toContain("导入文件后");
     expect(read("src/renderer/components/JobManagerPanel.tsx")).toContain("暂无翻译任务");
     expect(read("src/renderer/components/ExportHistoryPanel.tsx")).toContain("暂无导出记录");
   });

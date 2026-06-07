@@ -4,9 +4,14 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import type {
   ExportHistoryItem,
   ExportedEpubResult,
+  ExportedPdfResult,
   ExternalEpubCheckReport,
   ImportedBook,
+  ImportedDocument,
+  ImportedPdfDocument,
   IpcResult,
+  PdfValidationReport,
+  PdfTranslationJobResult,
   TranslationJobResult,
   TranslationProfile,
   TranslationSettings,
@@ -20,13 +25,19 @@ import { readEpub } from "./epub/readEpub.js";
 import { runExternalEpubCheck } from "./epub/runExternalEpubCheck.js";
 import { validateEpub } from "./epub/validateEpub.js";
 import { writeTranslatedEpub } from "./epub/writeTranslatedEpub.js";
+import { exportTranslatedPdf } from "./pdf/exportTranslatedPdf.js";
+import { readPdf } from "./pdf/readPdf.js";
+import { translatePdf } from "./pdf/translatePdf.js";
+import { validatePdf } from "./pdf/validatePdf.js";
 import { createTranslationProfileStore, getBookFingerprint } from "./profile/translationProfileStore.js";
 import { translateBook, type TranslateBookOptions } from "./translationJob.js";
 import { JobManager, sanitizeError } from "./translate/jobManager.js";
 import { createTranslationJobStore } from "./translate/translationJobStore.js";
 
 let currentBook: ImportedBook | null = null;
+let currentPdf: ImportedPdfDocument | null = null;
 let lastResult: TranslationJobResult | null = null;
+let lastPdfResult: PdfTranslationJobResult | null = null;
 let activeController: AbortController | null = null;
 
 export function registerIpc(mainWindow: BrowserWindow): void {
@@ -45,11 +56,28 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   ): Promise<void> {
     await exportHistory().add({
       jobId,
+      sourceType: "epub",
       sourceBookTitle: book.metadata.title,
       sourceEpubPath: book.filePath,
+      sourcePath: book.filePath,
       outputEpubPath: outputPath,
+      outputPath,
       validationStatus: normalizeValidationStatus(validation.status),
       externalValidationStatus: normalizeExternalStatus(externalValidation?.status),
+      targetLanguage: "zh-CN",
+      settings
+    });
+  }
+
+  async function recordPdfExport(outputPath: string, validation: ExportedPdfResult["validation"], document: ImportedPdfDocument, settings: TranslationSettings, jobId?: string): Promise<void> {
+    await exportHistory().add({
+      jobId,
+      sourceType: "pdf",
+      sourceBookTitle: document.title ?? path.basename(document.filePath),
+      sourcePath: document.filePath,
+      outputEpubPath: outputPath,
+      outputPath,
+      validationStatus: normalizeValidationStatus(validation.status),
       targetLanguage: "zh-CN",
       settings
     });
@@ -87,14 +115,25 @@ export function registerIpc(mainWindow: BrowserWindow): void {
 
   ipcMain.handle("book:import", async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: "Import EPUB",
+      title: "导入 EPUB / PDF",
       properties: ["openFile"],
-      filters: [{ name: "EPUB", extensions: ["epub"] }]
+      filters: [{ name: "EPUB / PDF", extensions: ["epub", "pdf"] }]
     });
     if (result.canceled || !result.filePaths[0]) {
       return null;
     }
-    currentBook = await readEpub(result.filePaths[0]);
+    const filePath = result.filePaths[0];
+    const extension = path.extname(filePath).toLowerCase();
+    currentBook = null;
+    currentPdf = null;
+    lastResult = null;
+    lastPdfResult = null;
+    if (extension === ".pdf") {
+      currentPdf = await readPdf(filePath);
+      return currentPdf;
+    }
+    currentBook = await readEpub(filePath);
+    currentBook.type = "epub";
     currentBook.bookFingerprint = getBookFingerprint(currentBook);
     const loadedProfile = await profileStore().getByFingerprint(currentBook.bookFingerprint);
     if (loadedProfile) {
@@ -108,7 +147,6 @@ export function registerIpc(mainWindow: BrowserWindow): void {
         style: loadedProfile.style
       });
     }
-    lastResult = null;
     return currentBook;
   });
 
@@ -116,8 +154,32 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   ipcMain.handle("settings:save", (_event, settings: TranslationSettings) => saveSettings(settings));
 
   ipcMain.handle("translation:start", async (_event, settings: TranslationSettings) => {
+    if (currentPdf) {
+      if (activeController) {
+        throw new Error("A translation task is already running.");
+      }
+      activeController = new AbortController();
+      try {
+        lastPdfResult = await translatePdf(currentPdf, settings, activeController.signal, (progress) => {
+          mainWindow.webContents.send("translation:progress", progress);
+        });
+      } catch (error) {
+        mainWindow.webContents.send("translation:progress", {
+          documentType: "pdf",
+          translatedChunks: 0,
+          totalChunks: 0,
+          status: activeController.signal.aborted ? "cancelled" : "failed",
+          chapters: [],
+          log: [sanitizeError(error)]
+        });
+        throw error;
+      } finally {
+        activeController = null;
+      }
+      return;
+    }
     if (!currentBook) {
-      throw new Error("Import an EPUB before starting translation.");
+      throw new Error("请先导入 EPUB 或 PDF。");
     }
     await runManagedTranslation(currentBook, settings);
   });
@@ -129,11 +191,18 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   ipcMain.handle("translation:clear-cache", async () => {
     await store().clearAll();
     lastResult = null;
+    lastPdfResult = null;
   });
 
-  ipcMain.handle("book:export", async (): Promise<ExportedEpubResult> => {
+  ipcMain.handle("book:export", async (): Promise<ExportedEpubResult | ExportedPdfResult> => {
+    if (lastPdfResult) {
+      const outputPath = await exportTranslatedPdf(lastPdfResult.document, lastPdfResult.translatedPages, getSettings());
+      const validation = await validatePdf(outputPath);
+      await recordPdfExport(outputPath, validation, lastPdfResult.document, getSettings(), lastPdfResult.jobId);
+      return { outputPath, validation };
+    }
     if (!lastResult) {
-      throw new Error("Translate the book before exporting.");
+      throw new Error("请先完成翻译再导出。");
     }
     const outputPath = await writeTranslatedEpub(lastResult.book, lastResult.translatedChapters);
     const validation = await validateEpub(outputPath);
@@ -144,7 +213,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
 
   ipcMain.handle(
     "validation:saveMarkdown",
-    async (_event, report: ValidationReport, externalValidation: ExternalEpubCheckReport | undefined, title: string): Promise<IpcResult<string | null>> => {
+    async (_event, report: ValidationReport | PdfValidationReport, externalValidation: ExternalEpubCheckReport | undefined, title: string): Promise<IpcResult<string | null>> => {
     try {
       const safeTitle = (title || "book").replace(/[\\/:*?"<>|]+/g, "_").trim() || "book";
       const result = await dialog.showSaveDialog(mainWindow, {
@@ -155,7 +224,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       if (result.canceled || !result.filePath) {
         return { ok: true, data: null };
       }
-      await fs.writeFile(result.filePath, validationReportToMarkdown(report, externalValidation, `${safeTitle} Validation Report`), "utf8");
+      await fs.writeFile(result.filePath, reportToMarkdown(report, externalValidation, `${safeTitle} Validation Report`), "utf8");
       return { ok: true, data: result.filePath };
     } catch (error) {
       return { ok: false, error: sanitizeError(error) };
@@ -298,7 +367,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   ipcMain.handle("profiles:save", async (_event, settings: TranslationSettings): Promise<IpcResult<TranslationProfile>> => {
     try {
       if (!currentBook) {
-        throw new Error("Import a book before saving a profile.");
+        throw new Error("请先导入 EPUB 再保存本书配置。PDF 暂不支持书籍配置。");
       }
       const profile = await profileStore().saveForBook(currentBook, settings);
       currentBook.loadedProfile = profile;
@@ -311,7 +380,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   ipcMain.handle("profiles:delete", async (): Promise<IpcResult<{ deleted: true }>> => {
     try {
       if (!currentBook?.bookFingerprint) {
-        throw new Error("No imported book profile to reset.");
+        throw new Error("当前没有可重置的 EPUB 书籍配置。");
       }
       await profileStore().delete(currentBook.bookFingerprint);
       currentBook.loadedProfile = undefined;
@@ -350,4 +419,39 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       }
     }
   );
+}
+
+function reportToMarkdown(
+  report: ValidationReport | PdfValidationReport,
+  externalValidation: ExternalEpubCheckReport | undefined,
+  title: string
+): string {
+  if (!isPdfValidationReport(report)) {
+    return validationReportToMarkdown(report, externalValidation, title);
+  }
+  return [
+    `# ${title}`,
+    "",
+    `Status: ${report.status}`,
+    "",
+    `Summary: ${report.summary}`,
+    "",
+    `Page count: ${report.pageCount ?? 0}`,
+    `File size: ${report.fileSize ?? 0}`,
+    `Title: ${report.title ?? "Unknown"}`,
+    `Author: ${report.author ?? "Unknown"}`,
+    "",
+    "## Errors",
+    ...(report.errors.length ? report.errors.map((item) => `- ${item}`) : ["- None"]),
+    "",
+    "## Warnings",
+    ...(report.warnings.length ? report.warnings.map((item) => `- ${item}`) : ["- None"]),
+    "",
+    "## Checked Files",
+    ...(report.checkedFiles.length ? report.checkedFiles.map((item) => `- ${item}`) : ["- None"])
+  ].join("\n");
+}
+
+function isPdfValidationReport(report: ValidationReport | PdfValidationReport): report is PdfValidationReport {
+  return "fileSize" in report || "pageCount" in report;
 }

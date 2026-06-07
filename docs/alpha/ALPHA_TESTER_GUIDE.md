@@ -2,15 +2,18 @@
 
 BookTrans Desk is a local-first desktop alpha for AI-assisted translation of reflowable EPUB books into Simplified Chinese.
 
-Current alpha target: `v0.2.14-chinese-ui-redesign`.
+Current alpha target: `v0.3.0-pdf-translation-mvp`.
 
 The earlier public alpha package can show a Windows packaged white screen. If the app opens but the UI stays blank, upgrade to the hotfix release and see `docs/troubleshooting/WHITE_SCREEN.md`.
 
 Phase 2.14 changes the app to a Chinese-first interface with a cleaner workflow layout. Please report any remaining English UI copy, layout overflow, or unclear Chinese wording.
 
+Phase 3A adds text PDF translation MVP. Test only PDFs you have the right to process. Start with small copyable-text PDFs. Scanned/image-only PDFs are detected, but OCR is not supported yet.
+
 ## Supported Today
 
 - Import reflowable EPUB files.
+- Import copyable text PDF files.
 - Translate XHTML text nodes with an OpenAI-compatible API or mock translator.
 - Resume and retry chapter-level translation jobs.
 - Export translated EPUB files.
@@ -22,7 +25,10 @@ Phase 2.14 changes the app to a Chinese-first interface with a cleaner workflow 
 
 - DRM EPUB.
 - Fixed-layout EPUB.
-- PDF, MOBI, AZW3.
+- Scanned/image-only PDF OCR.
+- Exact PDF layout preservation.
+- Encrypted PDF.
+- MOBI, AZW3.
 - Cloud sync, accounts, telemetry, auto-update, online reader, batch library management.
 
 ## Install Dependencies

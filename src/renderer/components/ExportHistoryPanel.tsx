@@ -78,6 +78,7 @@ export function ExportHistoryPanel({ onMessage }: ExportHistoryPanelProps) {
                 <p title={item.outputEpubPath}>{item.outputEpubPath}</p>
               </div>
               <span>{formatDate(item.createdAt)}</span>
+              <span>{item.sourceType === "pdf" ? "PDF" : "EPUB"}</span>
               <span>{formatValidationLabel(item.validationStatus)}</span>
               <span>{formatExternalValidationLabel(item.externalValidationStatus)}</span>
               <span>{item.fileExists === undefined ? "未知" : item.fileExists ? "文件存在" : "文件缺失"}</span>

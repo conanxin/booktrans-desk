@@ -4,9 +4,9 @@ Use this checklist before publishing an alpha build.
 
 ## Version
 
-- `package.json` version is `0.2.8-alpha.0`.
-- `package-lock.json` root version matches `0.2.8-alpha.0`.
-- README, CHANGELOG, release prep docs, and phase report reference `v0.2.8-public-alpha`.
+- `package.json` version is `0.3.0-alpha.0`.
+- `package-lock.json` root version matches `0.3.0-alpha.0`.
+- README, CHANGELOG, release prep docs, and phase report reference `v0.3.0-pdf-translation-mvp`.
 
 ## Privacy And Security
 
@@ -14,7 +14,7 @@ Use this checklist before publishing an alpha build.
 - Diagnostic bundles state that original EPUB files, exported EPUB files, API keys, Authorization headers, and full book text are excluded.
 - Test fixtures remain synthetic and copyright-safe.
 - No commercial EPUB fixtures are committed.
-- No generated EPUB files are committed.
+- No generated EPUB/PDF files are committed.
 - No release artifacts are committed.
 
 ## Verification
@@ -60,6 +60,15 @@ Use this checklist before publishing an alpha build.
 - Windows alpha packaging remains unsigned.
 - `release/` output is ignored by git.
 - Testers should read `docs/alpha/ALPHA_TESTER_GUIDE.md` and `docs/alpha/PRIVACY_NOTICE.md`.
+
+## PDF MVP Gate
+
+- PDF import minimal-text PASS.
+- PDF translate with mock/test provider PASS.
+- PDF export PASS.
+- Exported PDF opens in at least one reader PASS before public release.
+- Packaged UI visible PASS before public release.
+- If any PDF gate item is missing, mark the build internal RC, CONDITIONAL_GO, or HOLD.
 
 ## Triage
 

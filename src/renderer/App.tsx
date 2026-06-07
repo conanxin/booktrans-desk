@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ExternalEpubCheckReport, ImportedBook, TranslationProgress, TranslationSettings, ValidationReport } from "../shared/types.js";
+import type { ExternalEpubCheckReport, ImportedBook, ImportedDocument, ImportedPdfDocument, TranslationProgress, TranslationSettings, ValidationReport, PdfValidationReport } from "../shared/types.js";
 import { BookInfoCard } from "./components/BookInfoCard.js";
 import { ChapterList } from "./components/ChapterList.js";
 import { ExportHistoryPanel } from "./components/ExportHistoryPanel.js";
@@ -18,7 +18,7 @@ const emptyProgress: TranslationProgress = {
 };
 
 export function App() {
-  const [book, setBook] = useState<ImportedBook | null>(null);
+  const [book, setBook] = useState<ImportedDocument | null>(null);
   const [settings, setSettings] = useState<TranslationSettings>({
     baseUrl: "https://api.openai.com/v1",
     apiKey: "",
@@ -29,7 +29,7 @@ export function App() {
   });
   const [progress, setProgress] = useState<TranslationProgress>(emptyProgress);
   const [message, setMessage] = useState("");
-  const [validation, setValidation] = useState<ValidationReport | null>(null);
+  const [validation, setValidation] = useState<ValidationReport | PdfValidationReport | null>(null);
   const [externalValidation, setExternalValidation] = useState<ExternalEpubCheckReport | undefined>();
   const [busy, setBusy] = useState(false);
   const [canExport, setCanExport] = useState(false);
@@ -62,10 +62,12 @@ export function App() {
       setCanExport(false);
       setValidation(null);
       setExternalValidation(undefined);
-      if (imported.loadedProfile) {
+      if (isEpub(imported) && imported.loadedProfile) {
         const saved = await window.bookTrans.getSettings();
         setSettings(saved);
         setMessage(`已导入《${imported.metadata.title}》，并自动载入本书的翻译配置。`);
+      } else if (isPdf(imported)) {
+        setMessage(imported.isScannedLike ? "已导入 PDF，但它可能是扫描版或图片型 PDF，当前版本暂不支持 OCR。" : `已导入 PDF：${imported.title ?? imported.filePath}。`);
       } else {
         setMessage(`已导入《${imported.metadata.title}》。`);
       }
@@ -87,10 +89,10 @@ export function App() {
     setCanExport(false);
     setValidation(null);
     setExternalValidation(undefined);
-    setMessage("翻译任务已开始。");
+    setMessage(isPdf(book) ? "PDF 翻译任务已开始。" : "EPUB 翻译任务已开始。");
     try {
       await window.bookTrans.startTranslation(settings);
-      setMessage("翻译已完成，可以导出 EPUB。");
+      setMessage(isPdf(book) ? "PDF 翻译已完成，可以导出 PDF。" : "EPUB 翻译已完成，可以导出 EPUB。");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "翻译失败。");
     } finally {
@@ -109,7 +111,7 @@ export function App() {
       const result = await window.bookTrans.exportEpub();
       if (result) {
         setValidation(result.validation);
-        setExternalValidation(result.externalValidation);
+        setExternalValidation("externalValidation" in result ? result.externalValidation : undefined);
         setMessage(`已导出：${result.outputPath}`);
       }
     } catch (error) {
@@ -137,12 +139,13 @@ export function App() {
 
   function acceptExportResult(result: Awaited<ReturnType<typeof window.bookTrans.exportEpub>>) {
     setValidation(result.validation);
-    setExternalValidation(result.externalValidation);
+    setExternalValidation("externalValidation" in result ? result.externalValidation : undefined);
     setCanExport(true);
   }
 
   const topStatus = getTopStatus({ book: Boolean(book), busy, canExport, progressStatus: progress.status, validationStatus: validation?.status });
   const glossaryCount = settings.glossary?.split(/\r?\n/).filter((line) => line.trim()).length ?? 0;
+  const currentDocumentType = isPdf(book) ? "pdf" : book ? "epub" : null;
 
   return (
     <main className="app-shell">
@@ -177,22 +180,22 @@ export function App() {
               <ImportPanel onImport={importBook} busy={busy} />
               <TranslationSettingsPanel settings={settings} onSave={saveSettings} busy={busy} glossaryCount={glossaryCount} />
               <div className="actions">
-                <button className="primary" onClick={startTranslation} disabled={!book || busy}>
-                  开始翻译
+                <button className="primary" onClick={startTranslation} disabled={!book || busy || (isPdf(book) && book.isScannedLike)}>
+                  {currentDocumentType === "pdf" ? "开始翻译 PDF" : "开始翻译 EPUB"}
                 </button>
                 <button onClick={cancelTranslation} disabled={!busy}>
                   取消任务
                 </button>
                 <button className={canExport ? "primary" : ""} onClick={exportBook} disabled={!canExport || busy}>
-                  导出 EPUB
+                  {currentDocumentType === "pdf" ? "导出 PDF" : "导出 EPUB"}
                 </button>
                 <button onClick={clearJobCache} disabled={busy}>
                   清理任务缓存
                 </button>
-                <button onClick={saveProfile} disabled={!book || busy}>
+                <button onClick={saveProfile} disabled={!book || busy || isPdf(book)}>
                   保存本书配置
                 </button>
-                <button onClick={resetProfile} disabled={!book || busy}>
+                <button onClick={resetProfile} disabled={!book || busy || isPdf(book)}>
                   重置本书配置
                 </button>
               </div>
@@ -200,9 +203,9 @@ export function App() {
 
           <section className="content">
             <BookInfoCard book={book} />
-            <ChapterList chapters={book?.chapters ?? []} progress={progress.chapters} />
+              <ChapterList document={book} progress={progress.chapters} />
             <ProgressPanel progress={progress} percent={percent} message={message} validation={validation} />
-              <ValidationReportPanel report={validation} externalReport={externalValidation} title={book?.metadata.title ?? "EPUB"} onMessage={setMessage} />
+              <ValidationReportPanel report={validation} externalReport={externalValidation} title={getDocumentTitle(book)} onMessage={setMessage} />
             </section>
           </section>
         </section>
@@ -212,14 +215,14 @@ export function App() {
         <section className="single-column">
           <JobManagerPanel settings={settings} busy={busy} onBusy={setBusy} onMessage={setMessage} onExport={acceptExportResult} />
           <ProgressPanel progress={progress} percent={percent} message={message} validation={validation} />
-          <ValidationReportPanel report={validation} externalReport={externalValidation} title={book?.metadata.title ?? "EPUB"} onMessage={setMessage} />
+          <ValidationReportPanel report={validation} externalReport={externalValidation} title={getDocumentTitle(book)} onMessage={setMessage} />
         </section>
       ) : null}
 
       {activeTab === "exports" ? (
         <section className="single-column">
           <ExportHistoryPanel onMessage={setMessage} />
-          <ValidationReportPanel report={validation} externalReport={externalValidation} title={book?.metadata.title ?? "EPUB"} onMessage={setMessage} />
+          <ValidationReportPanel report={validation} externalReport={externalValidation} title={getDocumentTitle(book)} onMessage={setMessage} />
         </section>
       ) : null}
 
@@ -240,7 +243,7 @@ export function App() {
 
 function WorkflowSteps({ bookReady, busy, canExport }: { bookReady: boolean; busy: boolean; canExport: boolean }) {
   const activeIndex = canExport ? 3 : busy ? 2 : bookReady ? 1 : 0;
-  const steps = ["导入 EPUB", "配置翻译", "开始翻译", "导出结果"];
+  const steps = ["导入文件", "配置翻译", "开始翻译", "导出结果"];
   return (
     <section className="workflow-card" aria-label="翻译流程">
       {steps.map((step, index) => (
@@ -251,6 +254,21 @@ function WorkflowSteps({ bookReady, busy, canExport }: { bookReady: boolean; bus
       ))}
     </section>
   );
+}
+
+function isPdf(document: ImportedDocument | null): document is ImportedPdfDocument {
+  return document?.type === "pdf";
+}
+
+function isEpub(document: ImportedDocument | null): document is ImportedBook {
+  return Boolean(document && document.type !== "pdf");
+}
+
+function getDocumentTitle(document: ImportedDocument | null): string {
+  if (!document) {
+    return "BookTrans Desk";
+  }
+  return isPdf(document) ? document.title ?? "PDF" : document.metadata.title;
 }
 
 function getTopStatus({

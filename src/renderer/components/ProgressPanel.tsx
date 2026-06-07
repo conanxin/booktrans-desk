@@ -1,11 +1,11 @@
-import type { TranslationProgress, ValidationReport } from "../../shared/types.js";
+import type { PdfValidationReport, TranslationProgress, ValidationReport } from "../../shared/types.js";
 import { formatStatusLabel, formatValidationLabel } from "../uiText.js";
 
 interface ProgressPanelProps {
   progress: TranslationProgress;
   percent: number;
   message: string;
-  validation: ValidationReport | null;
+  validation: ValidationReport | PdfValidationReport | null;
 }
 
 export function ProgressPanel({ progress, percent, message, validation }: ProgressPanelProps) {
@@ -28,7 +28,7 @@ export function ProgressPanel({ progress, percent, message, validation }: Progre
       {message ? <p className="message">{message}</p> : null}
       {validation ? (
         <div className={`validation-result ${validation.status}`}>
-          <strong>EPUB 验证：{formatValidationLabel(validation.status)}</strong>
+          <strong>{progress.documentType === "pdf" ? "PDF" : "EPUB"} 验证：{formatValidationLabel(validation.status)}</strong>
           <span>{validation.summary}</span>
           {validation.status === "fail" ? <span>导出文件已保留，但它可能无法被部分阅读器打开。</span> : null}
         </div>

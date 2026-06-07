@@ -1,10 +1,10 @@
-import type { ExternalEpubCheckReport, ValidationReport } from "../../shared/types.js";
+import type { ExternalEpubCheckReport, PdfValidationReport, ValidationReport } from "../../shared/types.js";
 import { groupEpubCheckIssues } from "../../shared/epubCheckIssues.js";
 import { validationReportToMarkdown } from "../../shared/validationReport.js";
 import { formatExternalValidationLabel, formatValidationLabel } from "../uiText.js";
 
 interface ValidationReportPanelProps {
-  report: ValidationReport | null;
+  report: ValidationReport | PdfValidationReport | null;
   externalReport?: ExternalEpubCheckReport;
   title: string;
   onMessage: (message: string) => void;
@@ -23,11 +23,11 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
     return (
       <section className="panel validation-panel">
         <div className="panel-title-row">
-          <h2>EPUB 验证报告</h2>
+          <h2>验证报告</h2>
           <button onClick={exportDiagnosticBundle}>导出诊断包</button>
         </div>
         <DiagnosticBundleSummary />
-        <p className="muted">导出 EPUB 后，这里会显示详细验证报告。</p>
+        <p className="muted">导出 EPUB 或 PDF 后，这里会显示详细验证报告。</p>
       </section>
     );
   }
@@ -37,7 +37,7 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
     if (!report) {
       return;
     }
-    await navigator.clipboard.writeText(validationReportToMarkdown(report, externalReport, `${title} Validation Report`));
+    await navigator.clipboard.writeText(reportToMarkdown(report, externalReport, `${title} Validation Report`));
     onMessage("验证报告已复制为 Markdown。");
   }
 
@@ -52,7 +52,7 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
   return (
     <section className="panel validation-panel">
       <div className="panel-title-row">
-        <h2>EPUB 验证报告</h2>
+        <h2>{isPdfValidationReport(report) ? "PDF 验证报告" : "EPUB 验证报告"}</h2>
         <div className="inline-actions">
           <button onClick={copyMarkdown}>复制 Markdown 报告</button>
           <button onClick={saveMarkdown}>保存报告</button>
@@ -66,20 +66,20 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
       </div>
       <dl className="report-stats">
         <div>
-          <dt>OPF 路径</dt>
-          <dd>{report.opfPath ?? "未知"}</dd>
+          <dt>{isPdfValidationReport(report) ? "文件大小" : "OPF 路径"}</dt>
+          <dd>{isPdfValidationReport(report) ? `${Math.round((report.fileSize ?? 0) / 1024)} KB` : report.opfPath ?? "未知"}</dd>
         </div>
         <div>
-          <dt>Manifest 项</dt>
-          <dd>{report.manifestItemCount ?? 0}</dd>
+          <dt>{isPdfValidationReport(report) ? "页数" : "Manifest 项"}</dt>
+          <dd>{isPdfValidationReport(report) ? report.pageCount ?? 0 : report.manifestItemCount ?? 0}</dd>
         </div>
         <div>
-          <dt>Spine 项</dt>
-          <dd>{report.spineItemCount ?? 0}</dd>
+          <dt>{isPdfValidationReport(report) ? "标题" : "Spine 项"}</dt>
+          <dd>{isPdfValidationReport(report) ? report.title ?? "未知" : report.spineItemCount ?? 0}</dd>
         </div>
         <div>
-          <dt>XHTML 检查数</dt>
-          <dd>{report.xhtmlCheckedCount ?? 0}</dd>
+          <dt>{isPdfValidationReport(report) ? "作者" : "XHTML 检查数"}</dt>
+          <dd>{isPdfValidationReport(report) ? report.author ?? "未知" : report.xhtmlCheckedCount ?? 0}</dd>
         </div>
       </dl>
       <ReportList title="错误" items={report.errors} tone="error" />
@@ -142,6 +142,37 @@ export function ValidationReportPanel({ report, externalReport, title, onMessage
       ) : null}
     </section>
   );
+}
+
+function reportToMarkdown(report: ValidationReport | PdfValidationReport, externalReport: ExternalEpubCheckReport | undefined, title: string): string {
+  if (!isPdfValidationReport(report)) {
+    return validationReportToMarkdown(report, externalReport, title);
+  }
+  return [
+    `# ${title}`,
+    "",
+    `Status: ${report.status}`,
+    "",
+    `Summary: ${report.summary}`,
+    "",
+    `Page count: ${report.pageCount ?? 0}`,
+    `File size: ${report.fileSize ?? 0}`,
+    `Title: ${report.title ?? "Unknown"}`,
+    `Author: ${report.author ?? "Unknown"}`,
+    "",
+    "## Errors",
+    ...(report.errors.length ? report.errors.map((item) => `- ${item}`) : ["- None"]),
+    "",
+    "## Warnings",
+    ...(report.warnings.length ? report.warnings.map((item) => `- ${item}`) : ["- None"]),
+    "",
+    "## Checked Files",
+    ...(report.checkedFiles.length ? report.checkedFiles.map((item) => `- ${item}`) : ["- None"])
+  ].join("\n");
+}
+
+function isPdfValidationReport(report: ValidationReport | PdfValidationReport): report is PdfValidationReport {
+  return "fileSize" in report || "pageCount" in report;
 }
 
 function DiagnosticBundleSummary() {

@@ -1,6 +1,16 @@
 # Changelog
 
-## Unreleased / v0.2.14-chinese-ui-redesign
+## Unreleased / v0.3.0-pdf-translation-mvp
+
+- Add text PDF import with metadata, page count, page text, paragraph extraction, and scanned-like detection.
+- Add PDF translation MVP using existing translators, glossary, style, chunking, cancellation, and progress events.
+- Add translated PDF export as a readable reflowed PDF.
+- Add lightweight PDF validation.
+- Update Chinese UI to import EPUB / PDF and switch page/chapters plus export labels by document type.
+- Add synthetic PDF fixture tests for import, translation, export, validation, and history safety.
+- Add PDF support and release-gate documentation.
+
+## v0.2.14-chinese-ui-redesign
 
 - Localize the renderer UI to Chinese-first copy across navigation, workflow actions, settings, progress, validation, jobs, and exports.
 - Redesign the translation workbench around a four-step import/configure/translate/export flow.
