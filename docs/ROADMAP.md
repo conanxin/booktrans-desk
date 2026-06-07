@@ -1,5 +1,79 @@
 # Roadmap
 
+Current merge branch: `merge-documuse-studio`.
+
+Current merge branch status: DocuMuse Studio internal alpha candidate after manual Windows click-through validation.
+
+Current recommendation: do not merge to `master` yet. Do not create a GitHub Release. Do not publish a public alpha. PDF translation remains experimental and public release remains HOLD.
+
+## DocuMuse Studio Merge Branch Status
+
+S2 through S9 are complete on the merge branch:
+
+- Unified document library for EPUB/PDF snapshots.
+- EPUB reading, analysis, chat, translation, export, and persisted analysis/chat state.
+- PDF reading, analysis, chat, knowledge export, and persisted analysis/chat state.
+- Knowledge export presets, Full Archive ZIP, Baseline PPTX, save dialog polish, export validation, and export history.
+- Bilingual Markdown/HTML export with full and selected chapter/page/unit scopes.
+- Persisted translation versions and selected translation baseline.
+
+Automatic validation is passing. Real Windows desktop click-through remains `BLOCKED_MANUAL`, so public release readiness is still NO.
+
+## S10 Readiness
+
+S10 turns the code state into a product state:
+
+- README explains the BookTrans Desk to DocuMuse Studio merge branch.
+- Product framing describes DocuMuse Studio as a local-first AI reading, translation, analysis, Q&A, and export workbench.
+- Merge-to-master decision is `NO_MERGE_YET`.
+- Internal alpha readiness is conditional on S11 manual Windows validation.
+
+## S11 Manual Windows Click-through Validation
+
+Goal:
+
+- Run the real desktop app on Windows.
+- Import synthetic EPUB/PDF fixtures.
+- Validate reading, analysis, chat, translation versions, exports, restart persistence, and export history.
+- Run packaged app smoke from `npm run pack`.
+- Keep PDF translation public release HOLD.
+
+Completion standard:
+
+- EPUB workflow: PASS or documented issue.
+- PDF reading/analysis/chat/export workflow: PASS or documented issue.
+- ZIP/PPTX/HTML/Markdown/JSON external open checks: PASS or documented issue.
+- PDF translation HOLD messaging is visible.
+
+## S12 Selected Units UX / Translation Version Picker Polish
+
+Goal:
+
+- Add selected-unit multi-select UI.
+- Improve translation version filtering and version metadata display.
+- Improve selected EPUB chapter translation beyond text-unit snapshot baseline.
+- Keep full translated EPUB export compatibility.
+
+## S13 PR / Merge-to-master Preparation
+
+Only start after S11 passes or has clearly triaged issues.
+
+Goal:
+
+- Decide whether to keep package metadata as BookTrans Desk or rename product metadata to DocuMuse Studio.
+- Prepare PR notes for master.
+- Confirm no generated artifacts, real documents, API keys, or release artifacts are committed.
+- Decide whether an internal tag such as `v0.4.0-documuse-studio-alpha-internal` is appropriate.
+
+## Later
+
+- OCR for scanned PDFs.
+- Vector search / embeddings / local RAG.
+- Bilingual PDF export.
+- Full PPTX template polish.
+- DOCX support.
+- Plugin/provider profile expansion.
+
 Current development handoff tag: `v0.3.3-layout-aware-pdf-extraction`.
 
 EPUB is the current usable alpha path. PDF translation is experimental and currently held from public release until manual packaged UI validation and external reader validation pass.

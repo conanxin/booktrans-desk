@@ -1,5 +1,32 @@
 # Changelog
 
+## Unreleased / DocuMuse Studio merge branch
+
+Branch: `merge-documuse-studio`
+
+Latest S10 base commit: `8f148b1 feat: persist translation versions and selected translation baseline`.
+
+Validation status before S10 documentation:
+
+- `npm run build`: passed.
+- `npm test`: passed, 52 test files / 211 tests.
+- `npm run release:check`: passed.
+- No release was created.
+- No public alpha was published.
+- Real desktop click-through remains `BLOCKED_MANUAL`.
+- PDF translation remains experimental and public release remains HOLD.
+
+Merge branch summary:
+
+- Add a UnifiedDocument model and local document library for EPUB/PDF snapshots.
+- Add EPUB reading, analysis, document chat, persisted analysis/chat state, and knowledge export.
+- Add PDF reading, analysis, document chat, persisted analysis/chat state, and knowledge export while keeping PDF translation HOLD.
+- Add export presets for Study Notes, Research Digest, Presentation Outline, Podcast Prep, Full Archive ZIP, and Baseline PPTX.
+- Add export save dialog polish, export validation, and export history integration for knowledge exports.
+- Add bilingual Markdown and HTML export for full and selected chapter/page/unit scopes.
+- Add persisted translation versions and selected translation baselines for EPUB chapters, PDF experimental pages, and selected units.
+- Add merge-readiness, product-framing, internal-alpha-readiness, and S11 manual validation documentation.
+
 ## Unreleased / v0.3.3-layout-aware-pdf-extraction
 
 - Replace simple PDF page-text concatenation with coordinate-based text blocks and spans.

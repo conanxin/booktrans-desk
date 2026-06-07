@@ -279,7 +279,7 @@ Result:
 
 ## Stage S10: Workspace README / Merge Branch Product Framing
 
-Status: next.
+Status: complete.
 
 Goal:
 
@@ -292,3 +292,52 @@ Completion standard:
 - README names the branch as a DocuMuse Studio merge branch and explains current user flows.
 - Known limitations and manual validation requirements remain visible.
 - `npm run build`, `npm test`, and `npm run release:check` pass.
+
+Result:
+
+- README now frames this branch as `BookTrans Desk / DocuMuse Studio Merge Branch`.
+- CHANGELOG, ROADMAP, and DEVELOPMENT_HANDOFF include merge branch status and validation boundaries.
+- Product framing, merge-to-master decision, internal alpha readiness, S11 manual validation plan, and S10 report are recorded in `docs/merge`.
+- Current merge decision remains `NO_MERGE_YET`.
+- Internal alpha readiness is conditional after real Windows desktop click-through validation.
+- PDF translation remains experimental and public release remains HOLD.
+
+## Stage S11: Manual Windows Click-through Validation
+
+Status: next.
+
+Goal:
+
+- Run real Windows desktop validation for EPUB/PDF workflows.
+- Confirm analysis/chat/translation versions survive restart.
+- Confirm Markdown/JSON/ZIP/PPTX/HTML exports can be saved and opened externally.
+- Confirm PDF translation HOLD messaging remains visible.
+
+Completion standard:
+
+- EPUB workflow results recorded as PASS/FAIL/BLOCKED with notes.
+- PDF workflow results recorded as PASS/FAIL/BLOCKED with notes.
+- Packaged app flow checked from `npm run pack`.
+- No release artifacts or generated exports are committed.
+
+## Stage S12: Selected Units UX / Translation Version Picker Polish
+
+Status: planned.
+
+Goal:
+
+- Add selected-unit multi-select UI.
+- Improve translation version filtering, labels, and stale warnings.
+- Improve selected EPUB chapter translation beyond text-unit snapshot baseline.
+- Keep existing translated EPUB export compatible.
+
+## Stage S13: PR / Merge-to-master Preparation
+
+Status: planned after S11.
+
+Goal:
+
+- Prepare PR notes after real desktop validation.
+- Decide package metadata/productName rename strategy.
+- Confirm repository hygiene and release boundaries.
+- Decide whether an internal tag is appropriate.

@@ -1,30 +1,72 @@
-# BookTrans Desk
+# BookTrans Desk / DocuMuse Studio Merge Branch
 
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-lightgrey)](.github/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.3.3--layout--aware--pdf--extraction-orange)](CHANGELOG.md)
+[![Branch](https://img.shields.io/badge/branch-merge--documuse--studio-orange)](docs/merge/PRODUCT_FRAMING.md)
 
-BookTrans Desk is an open source desktop alpha for translating reflowable EPUB books into Simplified Chinese with an OpenAI-compatible API. It is local-first: no telemetry, no account system, no cloud sync, and no bundled commercial EPUB content.
+This README describes the `merge-documuse-studio` branch. The historical `master` branch and earlier public alpha releases remain BookTrans Desk: a local-first Electron EPUB translation tool. This merge branch is the in-progress transition toward **DocuMuse Studio**, a local-first desktop workbench for AI reading, translation, analysis, Q&A, and knowledge export.
 
-EPUB is the current usable alpha path. PDF translation is experimental and currently held from public release until manual packaged UI validation and external reader validation pass. Continue cross-machine development from `v0.3.3-layout-aware-pdf-extraction`.
+No GitHub Release has been created from this branch. It has not been merged to `master` and is not a public alpha. Real Windows desktop click-through validation is still pending and tracked as `BLOCKED_MANUAL`.
 
-Phase 3A status: `v0.3.0-pdf-translation-mvp` adds an internal MVP for copyable text PDF import, translation, reflowed PDF export, and lightweight PDF validation. Scanned/image-only PDFs are detected but OCR is not supported.
+## Product Positioning
 
-Phase 3A-V manual PDF validation status: HOLD. Automatic build, test, audit, release check, pack, and dist passed, and the packed executable passed a process smoke check, but visible packaged UI validation and exported PDF external reader-open validation were blocked by the current environment.
+DocuMuse Studio treats an imported EPUB or PDF as a local knowledge object, not just a file to translate. The same workspace can read the source text, inspect document structure, run quick analysis, ask questions with sources, translate content, persist AI state, and export reusable materials.
 
-Phase 3B status: `v0.3.1-translation-quality-fix` hardens MiniMax/OpenAI-compatible translation output with a strict prompt, MiniMax thinking disabled, output sanitizing, validation, retry, PDF export quality blocking, cleaned PDF titles, and safer PDF wrapping. PDF support remains HOLD until real UI and external reader validation pass.
+Core principles:
 
-Phase 3C status: `v0.3.2-pdf-diagnostics-fix` fixes PDF translation start diagnostics after real MiniMax testing reported raw `Translation canceled` errors. It adds structured error codes, fresh cancellation state per job, PDF chunk diagnostics, provider error mapping, MiniMax connection testing, and friendly UI error messages. PDF support remains HOLD.
+- Local-first desktop app.
+- No account system, no telemetry, no cloud sync.
+- Existing BookTrans EPUB translation remains the usable translation alpha path.
+- DocuMuse-style reading, analysis, chat, outline, export, and document model ideas are merged into the desktop shell.
+- PDF reading, analysis, chat, and knowledge export are available on this branch.
+- PDF translation remains experimental and public release is HOLD.
 
-Phase 3D status: `v0.3.3-layout-aware-pdf-extraction` replaces simple PDF page-text concatenation with coordinate-based text blocks, region classification, two-column reading order, paragraph reconstruction, structured paragraph translation, JSON response validation, and HTML preview generation. PDF support remains HOLD until real packaged UI and exported PDF reader validation pass.
+## Current Branch Status
 
-> Alpha warning: this project is still intended for technical testers. Keep backups of original EPUB files and review provider privacy terms before translating private or copyrighted content.
+- Branch: `merge-documuse-studio`
+- Historical stable handoff tag: `v0.3.3-layout-aware-pdf-extraction`
+- Latest S10 base commit before this documentation phase: `8f148b1 feat: persist translation versions and selected translation baseline`
+- Package name and product metadata still use `booktrans-desk` / `BookTrans Desk`.
+- Suggested product name for this merge branch: DocuMuse Studio.
+- Release status: no release, no public alpha, no merge to `master`.
+- Manual desktop validation: `BLOCKED_MANUAL` until a real Windows click-through is completed.
 
-> Windows unsigned warning: current Windows alpha packages are unsigned. Download only from the project GitHub Release page, verify checksums when provided, or build from source.
+## Capability Matrix
 
-## Screenshot
+| Capability | EPUB | PDF | Status |
+| --- | --- | --- | --- |
+| Import | Pass | Pass for text PDFs | Implemented on merge branch |
+| Unified document library | Pass | Pass | Local JSON snapshots in Electron userData |
+| Reading workspace | Pass by chapter | Pass by page and unit | Implemented |
+| Structure metadata | Chapters and units | Pages, roles, source hints, bbox where available | Implemented |
+| Quick analysis | Pass | Pass | Persisted per document |
+| Chat with sources | Pass | Pass | Persisted per document |
+| Analysis/chat recovery after restart | Pass | Pass | Stored in UnifiedDocument snapshot |
+| Full translation | Usable alpha | Experimental | PDF public release HOLD |
+| Selected translation | Chapter baseline | Page experimental baseline | Stored as translation versions |
+| Translation versions | Pass | Internal experimental | Multiple versions can be persisted and selected |
+| Document Markdown / JSON | Pass | Pass | Save dialog, validation, export history |
+| Chat / Analysis Markdown | Pass | Pass | Uses persisted state |
+| Study Notes / Research Digest / Presentation / Podcast presets | Pass | Pass | Markdown presets |
+| Full Archive ZIP | Pass | Pass | Structural validation included |
+| Baseline PPTX | Pass | Pass | OpenXML baseline, visual validation pending |
+| Bilingual Markdown / HTML | Baseline | Baseline with HOLD warning | Uses translation versions or explicit missing placeholders |
+| Packaged app | `npm run pack` passes in prior S7 validation | Same | Real packaged UI click-through pending |
 
-Screenshot placeholder: use only generated fixture books or your own non-private test EPUBs when adding screenshots. Do not commit screenshots of real user libraries or copyrighted book content.
+## Current Features
+
+- UnifiedDocument model for EPUB/PDF snapshots.
+- Local document library backed by Electron userData.
+- EPUB import, chapter reading, document kind, analysis, chat, translation, and translated EPUB export.
+- PDF import, page reading, layout-aware unit metadata, document kind, analysis, chat, and knowledge export.
+- Persisted analysis results and chat histories.
+- Persisted translation versions for EPUB and internal PDF experimental results.
+- Selected EPUB chapter translation baseline.
+- Selected PDF page translation baseline marked experimental.
+- Markdown, JSON, Chat Markdown, Analysis Markdown, Study Notes, Research Digest, Presentation Outline, Podcast Prep, ZIP archive, and baseline PPTX export.
+- Bilingual Markdown and single-file bilingual HTML export.
+- Export save dialogs, export validation, and export history.
+- Existing BookTrans translation profiles, retry/resume job behavior, and EPUB export path remain in place.
 
 ## Quick Start
 
@@ -33,115 +75,92 @@ npm install
 npm run dev
 ```
 
-Use Settings to configure a compatible API provider, or enable the mock translator for local dry runs.
+Use Settings to configure a compatible provider, or use the mock translator for local dry runs. Do not commit local settings, API keys, imported books, imported PDFs, or generated export artifacts.
 
-## Current Features
-
-- Import reflowable `.epub` files.
-- Translate XHTML text nodes while preserving inline structure and resources.
-- Resume and retry chapter-level translation jobs.
-- Export translated EPUB files.
-- View validation reports and optional external EPUBCheck output.
-- Track export history.
-- Refresh export history file status and remove missing records.
-- Save and auto-load per-book translation profiles.
-- Export privacy-safe diagnostic bundles for issue reports.
-- Run generated EPUB fixture regression tests.
-- Review reader compatibility notes for manual alpha checks.
-- Use a Chinese-first, modernized desktop UI for the import, translation, export, jobs, and settings workflows.
-- Import and translate copyable text PDFs, then export a readable translated PDF.
-- Use layout-aware PDF text extraction for two-column body text, quote boxes, references, and paragraph-level translation units.
-
-## Development
+## Validation Commands
 
 ```bash
 npm run build
 npm test
-npm audit
-```
-
-## Packaging
-
-```bash
-npm run pack
-npm run dist
-```
-
-Packaging uses electron-builder. Artifacts are written to `release/`, which is ignored by git. Windows packaging is the primary target; Linux AppImage is configured as a secondary target. macOS packaging is roadmap-only.
-
-Before publishing a public alpha, follow the [manual reader validation checklist](docs/releases/MANUAL_READER_VALIDATION_CHECKLIST.md), [RC burn-down](docs/releases/RC_BURNDOWN.md), [checksum instructions](docs/releases/INSTALLER_CHECKSUMS.md), and [Windows unsigned warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md).
-
-Phase 2.8 decision status: CONDITIONAL_GO. Automatic checks, packaging, dist artifact generation, and checksum recording passed, but visible UI verification and real reader validation still need to be completed before treating the public alpha as fully verified.
-
-Phase 2.9 final validation status: CONDITIONAL_GO. App and portable processes start, Calibre reader process smoke opened a temporary validated minimal EPUB, but visual UI and visible reader text confirmation remain incomplete.
-
-Public alpha prerelease published: [BookTrans Desk v0.2.9 Public Alpha (Conditional)](https://github.com/conanxin/booktrans-desk/releases/tag/v0.2.9-public-alpha-conditional). Final decision remains CONDITIONAL_GO.
-
-Packaged app hotfix status: `v0.2.12-white-screen-hotfix` fixes the Windows packaged renderer white screen caused by preload ESM/CommonJS mismatch and absolute Vite asset paths. Users of the public alpha package should upgrade to the hotfix release once published.
-
-Chinese UI redesign status: `v0.2.14-chinese-ui-redesign` updates the alpha UI copy, navigation, workflow layout, settings panel, progress panel, validation report, jobs, exports, and visual styling for Chinese testers.
-
-## Release Check
-
-```bash
 npm run release:check
-npm run labels:print
+npm run pack
 ```
 
-The release check runs build, tests, audit, version consistency checks, release document checks, label JSON validation, and a repository safety scan for tracked `.env`, EPUB binaries, generated build folders, and common credential patterns.
+`npm run release:check` runs build, tests, audit, release document checks, label JSON validation, and a repository safety scan for tracked `.env`, generated build folders, EPUB/PDF binaries, and common credential patterns.
 
-`npm run labels:print` prints optional GitHub label sync instructions without making GitHub API calls or reading tokens.
+Packaging uses electron-builder. Artifacts are written to `release/`, which is ignored by git. Do not commit release artifacts.
 
 ## Privacy Model
 
-- EPUB import is local.
-- Text is sent to your configured model provider only when you start translation.
+- Imports are local.
+- No telemetry is sent by the app.
+- No account, login, or cloud sync exists.
 - API keys are stored in local Electron settings.
-- Job cache, export history, and per-book profiles do not store API keys.
-- External EPUBCheck is optional and runs as a local command.
+- Text is sent to the configured provider only when the user starts translation, analysis, or chat.
+- Document snapshots do not store API keys.
+- Analysis/chat/translation snapshots do not store Authorization headers or raw provider responses.
+- Export history does not store API keys.
+- Diagnostics and manual validation artifacts must use synthetic or non-sensitive documents.
 
 See [docs/alpha/PRIVACY_NOTICE.md](docs/alpha/PRIVACY_NOTICE.md) and [docs/SECURITY.md](docs/SECURITY.md).
 
-## Supported EPUB Scope
+## Not Supported / HOLD
 
-Supported target: reflowable EPUB.
+- PDF translation public release: HOLD.
+- Real Windows desktop click-through: pending.
+- PPTX visual validation in PowerPoint/WPS/LibreOffice: pending.
+- OCR: not supported.
+- Scanned/image-only PDF translation: not supported.
+- Exact PDF layout preservation: not supported.
+- Bilingual PDF export: not supported.
+- Fixed-layout EPUB: not supported.
+- DRM EPUB/PDF: not supported.
+- Vector database / embeddings / RAG: not implemented.
+- Cloud sync, login, multi-user auth: not implemented.
+- Selected units multi-select UI: pending.
+- Translation version diff/compare: pending.
 
-Unsupported formats: fixed-layout EPUB, DRM EPUB, scanned/image-only PDF OCR, encrypted PDF, MOBI, AZW3.
+## Merge Readiness
 
-PDF support: text PDFs only. Phase 3D improves two-column reading order and paragraph reconstruction, but scanned PDFs, image-only PDFs, encrypted PDFs, OCR, exact layout preservation, and table/formula reconstruction are not supported.
+Current recommendation: do not merge this branch to `master` yet.
+
+Recommended gate:
+
+1. Complete S11 real Windows desktop click-through validation.
+2. Confirm EPUB import, translation, export, reading, analysis, chat, restart recovery, bilingual export, ZIP, PPTX, and export history.
+3. Confirm PDF import, reading, analysis, chat, restart recovery, bilingual export, ZIP, PPTX, and visible PDF translation HOLD messaging.
+4. Decide whether to keep package metadata as BookTrans Desk for the first internal alpha or rename product metadata to DocuMuse Studio in a dedicated change.
+
+See [docs/merge/MERGE_TO_MASTER_DECISION_REPORT.md](docs/merge/MERGE_TO_MASTER_DECISION_REPORT.md).
 
 ## Documentation
 
+- [Product Framing](docs/merge/PRODUCT_FRAMING.md)
+- [Merge-to-Master Decision Report](docs/merge/MERGE_TO_MASTER_DECISION_REPORT.md)
+- [Internal Alpha Readiness Report](docs/merge/INTERNAL_ALPHA_READINESS_REPORT.md)
+- [S11 Manual Windows Validation Plan](docs/merge/S11_MANUAL_WINDOWS_VALIDATION_PLAN.md)
+- [Next Development Queue](docs/merge/NEXT_DEVELOPMENT_QUEUE.md)
+- [Translation Version Model](docs/merge/TRANSLATION_VERSION_MODEL.md)
+- [Bilingual Export Evaluation](docs/merge/BILINGUAL_EXPORT_EVALUATION.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Development Handoff](docs/DEVELOPMENT_HANDOFF.md)
+- [PDF Translation Pipeline](docs/PDF_TRANSLATION_PIPELINE.md)
+- [PDF Support Limitations](docs/PDF_SUPPORT_LIMITATIONS.md)
 - [Alpha Tester Guide](docs/alpha/ALPHA_TESTER_GUIDE.md)
 - [Test Plan](docs/alpha/TEST_PLAN.md)
 - [Triage Guide](docs/triage/TRIAGE_GUIDE.md)
 - [Compatibility Matrix](docs/EPUB_COMPATIBILITY_MATRIX.md)
 - [Reader Compatibility Notes](docs/READER_COMPATIBILITY_NOTES.md)
-- [Test Fixtures](docs/TEST_FIXTURES.md)
-- [Alpha Release Checklist](docs/releases/ALPHA_RELEASE_CHECKLIST.md)
-- [v0.2.5 RC Release Notes](docs/releases/v0.2.5-alpha-rc.md)
-- [GitHub Release Draft](docs/releases/GITHUB_RELEASE_DRAFT_v0.2.6-public-alpha-prep.md)
-- [v0.2.8 GitHub Release Draft](docs/releases/GITHUB_RELEASE_DRAFT_v0.2.8-public-alpha.md)
-- [Installer Checksums](docs/releases/INSTALLER_CHECKSUMS.md)
-- [v0.2.8 Release Checksums](docs/releases/RELEASE_CHECKSUMS_v0.2.8-public-alpha.md)
-- [Release Checksum Results](docs/releases/RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md)
-- [Manual Reader Validation Results](docs/releases/MANUAL_READER_VALIDATION_RESULTS.md)
-- [Packed App Launch Results](docs/releases/PACKED_APP_MANUAL_LAUNCH_RESULTS.md)
-- [Phase 2.9 Final Validation Burn-down](docs/PHASE_2_9_FINAL_VALIDATION_BURNDOWN_REPORT.md)
-- [Public Alpha Publication Record](docs/releases/PUBLIC_ALPHA_PUBLICATION_RECORD.md)
-- [White Screen Troubleshooting](docs/troubleshooting/WHITE_SCREEN.md)
-- [Phase 2.12 White Screen Hotfix Report](docs/PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md)
-- [Phase 2.14 Chinese UI Redesign Report](docs/PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md)
-- [PDF Translation Pipeline](docs/PDF_TRANSLATION_PIPELINE.md)
-- [PDF Support Limitations](docs/PDF_SUPPORT_LIMITATIONS.md)
-- [Development Handoff](docs/DEVELOPMENT_HANDOFF.md)
-- [Phase 3A PDF Translation MVP Report](docs/PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md)
-- [Phase 3A Manual PDF Validation Report](docs/PHASE_3A_MANUAL_PDF_VALIDATION_REPORT.md)
-- [Phase 3B Translation Output Quality Fix Report](docs/PHASE_3B_TRANSLATION_OUTPUT_QUALITY_FIX_REPORT.md)
-- [Phase 3C PDF Translation Failure Diagnostics Report](docs/PHASE_3C_PDF_TRANSLATION_FAILURE_DIAGNOSTICS_REPORT.md)
-- [Windows Unsigned Warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md)
-- [RC Burn-down](docs/releases/RC_BURNDOWN.md)
-- [Roadmap](docs/ROADMAP.md)
+
+## Historical BookTrans Desk Public Alpha Notes
+
+Earlier BookTrans Desk public alpha history remains separate from this merge branch. The historical prerelease was published as [BookTrans Desk v0.2.9 Public Alpha (Conditional)](https://github.com/conanxin/booktrans-desk/releases/tag/v0.2.9-public-alpha-conditional). That does not imply this DocuMuse Studio merge branch is public-release ready.
+
+Current Windows alpha packages are unsigned. Download only from the project GitHub Release page, verify checksums when provided, or build from source.
+
+> Alpha warning: this merge branch is still intended for technical testers. Keep backups of original EPUB/PDF files and review provider privacy terms before translating, analyzing, or chatting with private or copyrighted content.
+
+> Windows unsigned warning: current Windows alpha packages are unsigned. Download only from the project GitHub Release page, verify checksums when provided, or build from source.
 
 ## License
 

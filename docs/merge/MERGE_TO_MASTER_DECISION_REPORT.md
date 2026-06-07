@@ -1,0 +1,90 @@
+# Merge-to-master Decision Report
+
+## Decision
+
+Current recommendation: **NO_MERGE_YET**.
+
+The `merge-documuse-studio` branch is a strong internal alpha candidate, but it should not be merged to `master` until S11 real Windows desktop click-through validation is complete.
+
+## Current Branch Strengths
+
+- Maintains the existing BookTrans Desk Electron shell, IPC boundaries, EPUB translation engine, retry/resume jobs, export history, and packaging setup.
+- Adds UnifiedDocument snapshots and a local document library.
+- Adds EPUB/PDF reading, analysis, chat, and persisted AI state.
+- Adds knowledge exports, Full Archive ZIP, Baseline PPTX, bilingual Markdown/HTML, and export validation.
+- Adds persisted translation versions and selected translation baselines.
+- Keeps API keys out of snapshots and export history.
+- Keeps PDF translation public release as HOLD.
+- Automated validation is passing: build, tests, release check.
+
+## Current Risks
+
+- Real Windows desktop click-through remains `BLOCKED_MANUAL`.
+- Packaged UI needs direct human validation after the merge work.
+- PPTX baseline has structural validation but still needs visual validation in PowerPoint/WPS/LibreOffice.
+- Bilingual HTML should be opened in a real browser with generated synthetic fixtures.
+- Selected EPUB chapter translation is a text-unit snapshot baseline, not an XHTML-preserving translated chapter export.
+- PDF translation snapshots are internal and experimental.
+- Product/package metadata still says BookTrans Desk.
+
+## Manual Items Required Before Merge
+
+- EPUB import, reading, analysis, chat, full translation, current chapter translation, restart persistence, and export validation.
+- PDF import, reading, analysis, chat, experimental current page translation, restart persistence, and export validation.
+- Save dialogs and export history for Markdown, JSON, ZIP, PPTX, bilingual Markdown, and bilingual HTML.
+- External opening:
+  - translated EPUB in an EPUB reader
+  - ZIP archive in unzip tooling
+  - PPTX in PowerPoint/WPS/LibreOffice
+  - HTML in a browser
+  - Markdown in an editor
+  - JSON in a parser
+- Packaged app launch from `release/win-unpacked`.
+- Visible confirmation that PDF translation is still experimental/HOLD.
+
+## Merge-to-master Checklist
+
+- [ ] S11 manual Windows validation complete.
+- [ ] No generated exports committed.
+- [ ] No release artifacts committed.
+- [ ] No real user EPUB/PDF files committed.
+- [ ] No API keys or local settings committed.
+- [ ] `npm run build` passes.
+- [ ] `npm test` passes.
+- [ ] `npm run release:check` passes.
+- [ ] `npm run pack` passes if package metadata changes.
+- [ ] README and handoff clearly state release status.
+- [ ] Product metadata rename decision made.
+
+## Expected Impact After Merge
+
+Merging to `master` would move the public development branch from a focused BookTrans Desk EPUB/PDF translation project toward DocuMuse Studio. That is desirable only after manual validation, because the README and UI now describe a broader product promise.
+
+## Product Metadata Decision
+
+Do not rename package metadata in S10. Keep:
+
+- package name: `booktrans-desk`
+- productName: `BookTrans Desk`
+- appId: `dev.booktrans.desk`
+
+Recommended next step: decide after S11 whether the first internal alpha should keep BookTrans Desk metadata or switch productName to DocuMuse Studio in a dedicated change with packaged validation.
+
+## Public Alpha History
+
+Keep BookTrans Desk public alpha history separate. Earlier public alpha releases do not imply DocuMuse Studio merge branch readiness.
+
+## Internal Tag Decision
+
+Do not create a tag now. After S11 passes, consider:
+
+`v0.4.0-documuse-studio-alpha-internal`
+
+Only tag after manual validation results are recorded.
+
+## Final Recommendation
+
+- Merge decision: **NO_MERGE_YET**
+- Internal alpha decision: **INTERNAL_ALPHA_CANDIDATE_AFTER_MANUAL_VALIDATION**
+- Public release decision: **NO_PUBLIC_RELEASE**
+- PDF translation release decision: **HOLD**
