@@ -14,6 +14,8 @@ import type {
   ValidationReport
 } from "../shared/types.js";
 import type { UnifiedDocument } from "../shared/documentModel.js";
+import type { DocumentAnalysisRecord } from "./analysis/analysisService.js";
+import type { DocumentChatMessage } from "./chat/documentChatService.js";
 
 const electron = require("electron") as typeof import("electron");
 const { contextBridge, ipcRenderer } = electron;
@@ -23,6 +25,11 @@ const api = {
   listDocuments: (): Promise<IpcResult<UnifiedDocument[]>> => ipcRenderer.invoke("documents:list"),
   getDocument: (id: string): Promise<IpcResult<UnifiedDocument | null>> => ipcRenderer.invoke("documents:get", id),
   deleteDocument: (id: string): Promise<IpcResult<{ deleted: true }>> => ipcRenderer.invoke("documents:delete", id),
+  startAnalysis: (documentId?: string): Promise<IpcResult<DocumentAnalysisRecord>> => ipcRenderer.invoke("analysis:start", documentId),
+  getAnalysis: (documentId: string): Promise<IpcResult<DocumentAnalysisRecord | null>> => ipcRenderer.invoke("analysis:get", documentId),
+  askDocument: (documentId: string | undefined, question: string): Promise<IpcResult<DocumentChatMessage>> => ipcRenderer.invoke("chat:ask", documentId, question),
+  listDocumentChat: (documentId: string): Promise<IpcResult<DocumentChatMessage[]>> => ipcRenderer.invoke("chat:list", documentId),
+  clearDocumentChat: (documentId: string): Promise<IpcResult<{ cleared: true }>> => ipcRenderer.invoke("chat:clear", documentId),
   getSettings: (): Promise<TranslationSettings> => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings: TranslationSettings): Promise<TranslationSettings> => ipcRenderer.invoke("settings:save", settings),
   startTranslation: (settings: TranslationSettings): Promise<IpcResult<{ completed: true }>> => ipcRenderer.invoke("translation:start", settings),

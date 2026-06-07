@@ -2,6 +2,8 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
+import { AnalysisService } from "./analysis/analysisService.js";
+import { DocumentChatService } from "./chat/documentChatService.js";
 import type {
   ExportHistoryItem,
   ExportedDocumentResult,
@@ -59,6 +61,8 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   const profileStore = () => createTranslationProfileStore(app.getPath("userData"));
   const documentLibrary = () => createDocumentLibraryStore(app.getPath("userData"));
   const manager = () => new JobManager(store());
+  const analysisService = new AnalysisService();
+  const chatService = new DocumentChatService();
 
   async function recordExport(
     outputPath: string,
@@ -177,6 +181,22 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     } catch (error) {
       return toIpcError(error);
     }
+  });
+
+  ipcMain.handle("analysis:start", async (_event, documentId?: string) =>
+    withIpcResult(async () => analysisService.startQuickAnalysis(await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId)))
+  );
+  ipcMain.handle("analysis:get", (_event, documentId: string): IpcResult<ReturnType<AnalysisService["getAnalysis"]>> => ({
+    ok: true,
+    data: analysisService.getAnalysis(documentId)
+  }));
+  ipcMain.handle("chat:ask", async (_event, documentId: string | undefined, question: string) =>
+    withIpcResult(async () => chatService.ask(await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId), question))
+  );
+  ipcMain.handle("chat:list", (_event, documentId: string) => ({ ok: true, data: chatService.list(documentId) }));
+  ipcMain.handle("chat:clear", (_event, documentId: string): IpcResult<{ cleared: true }> => {
+    chatService.clear(documentId);
+    return { ok: true, data: { cleared: true } };
   });
 
   ipcMain.handle("settings:get", () => getSettings());
@@ -465,6 +485,26 @@ async function withIpcResult<T>(action: () => Promise<T>): Promise<IpcResult<T>>
   } catch (error) {
     return toIpcError(error);
   }
+}
+
+async function resolveUnifiedDocument(
+  store: ReturnType<typeof createDocumentLibraryStore>,
+  currentDocument: UnifiedDocument | null,
+  documentId?: string
+): Promise<UnifiedDocument> {
+  if (!documentId && currentDocument) {
+    return currentDocument;
+  }
+  if (documentId && currentDocument?.id === documentId) {
+    return currentDocument;
+  }
+  if (documentId) {
+    const document = await store.readDocument(documentId);
+    if (document) {
+      return document;
+    }
+  }
+  throw new Error("No unified document is available for this operation.");
 }
 
 function toIpcError<T = never>(error: unknown): IpcResult<T> {
