@@ -14,6 +14,7 @@ import type {
   ImportedDocument,
   ImportedPdfDocument,
   IpcResult,
+  KnowledgeExportResult,
   PdfValidationReport,
   PdfTranslationJobResult,
   TranslationJobResult,
@@ -38,6 +39,13 @@ import { writeTranslatedEpub } from "./epub/writeTranslatedEpub.js";
 import { ExportCenter } from "./export/exportCenter.js";
 import type { ExportPresetId } from "./export/exportPresets.js";
 import { createExportHistoryStore, normalizeExternalStatus, normalizeValidationStatus } from "./export/exportHistoryStore.js";
+import {
+  statusToValidationStatus,
+  validateJsonExport,
+  validateMarkdownExport,
+  validatePptxExport,
+  validateZipExport
+} from "./export/exportValidation.js";
 import { exportTranslatedPdf } from "./pdf/exportTranslatedPdf.js";
 import { readPdf } from "./pdf/readPdf.js";
 import { translatePdf } from "./pdf/translatePdf.js";
@@ -78,6 +86,8 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     await exportHistory().add({
       jobId,
       sourceType: "epub",
+      exportCategory: "translation",
+      exportKind: "translated-epub",
       sourceBookTitle: book.metadata.title,
       sourceEpubPath: book.filePath,
       sourcePath: book.filePath,
@@ -94,6 +104,8 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     await exportHistory().add({
       jobId,
       sourceType: "pdf",
+      exportCategory: "translation",
+      exportKind: "translated-pdf",
       sourceBookTitle: document.title ?? path.basename(document.filePath),
       sourcePath: document.filePath,
       outputEpubPath: outputPath,
@@ -102,6 +114,76 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       targetLanguage: "zh-CN",
       settings
     });
+  }
+
+  async function saveKnowledgeTextExport(
+    document: UnifiedDocument,
+    exportKind: NonNullable<ExportHistoryItem["exportKind"]>,
+    defaultPath: string,
+    filterName: string,
+    extensions: string[],
+    content: string
+  ): Promise<KnowledgeExportResult> {
+    return saveKnowledgeExport(document, exportKind, defaultPath, filterName, extensions, Buffer.from(content, "utf8"));
+  }
+
+  async function saveKnowledgeBufferExport(
+    document: UnifiedDocument,
+    exportKind: NonNullable<ExportHistoryItem["exportKind"]>,
+    defaultPath: string,
+    filterName: string,
+    extensions: string[],
+    content: Buffer
+  ): Promise<KnowledgeExportResult> {
+    return saveKnowledgeExport(document, exportKind, defaultPath, filterName, extensions, content);
+  }
+
+  async function saveKnowledgeExport(
+    document: UnifiedDocument,
+    exportKind: NonNullable<ExportHistoryItem["exportKind"]>,
+    defaultPath: string,
+    filterName: string,
+    extensions: string[],
+    content: Buffer
+  ): Promise<KnowledgeExportResult> {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: "Export",
+      defaultPath,
+      filters: [{ name: filterName, extensions }]
+    });
+    if (result.canceled || !result.filePath) {
+      return { ok: false, canceled: true, exportKind };
+    }
+    await fs.writeFile(result.filePath, content);
+    const validation = await validateKnowledgeExport(result.filePath, exportKind, document.title);
+    const historyItem = await exportHistory().add({
+      sourceType: document.sourceFormat === "pdf" ? "pdf" : "epub",
+      exportCategory: "knowledge",
+      exportKind,
+      sourceDocumentId: document.id,
+      sourceDocumentTitle: document.title,
+      sourceBookTitle: document.title,
+      sourcePath: document.sourcePath,
+      outputEpubPath: result.filePath,
+      outputPath: result.filePath,
+      validationStatus: statusToValidationStatus(validation.status),
+      targetLanguage: "knowledge",
+      model: document.analysisState?.model
+    });
+    return { ok: true, outputPath: result.filePath, exportKind, validation, historyItem };
+  }
+
+  async function validateKnowledgeExport(outputPath: string, exportKind: NonNullable<ExportHistoryItem["exportKind"]>, title: string) {
+    switch (exportKind) {
+      case "document-json":
+        return validateJsonExport(outputPath);
+      case "full-archive":
+        return validateZipExport(outputPath, ["README.md", "document.json", "analysis.md", "chat.md", "study-notes.md", "research-digest.md", "presentation-outline.md", "podcast-prep.md"]);
+      case "pptx":
+        return validatePptxExport(outputPath);
+      default:
+        return validateMarkdownExport(outputPath, title);
+    }
   }
 
   async function runManagedTranslation(book: ImportedBook, settings: TranslationSettings, options: TranslateBookOptions = {}): Promise<void> {
@@ -219,51 +301,47 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       return { cleared: true };
     })
   );
-  ipcMain.handle("export:documentMarkdown", async (_event, documentId?: string): Promise<IpcResult<string | null>> =>
+  ipcMain.handle("export:documentMarkdown", async (_event, documentId?: string): Promise<IpcResult<KnowledgeExportResult>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
-      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.md`, "Markdown", ["md"], exportCenter.documentMarkdown(document));
+      return saveKnowledgeTextExport(document, "document-markdown", `${safeFileName(document.title)}.documuse.md`, "Markdown", ["md"], exportCenter.documentMarkdown(document));
     })
   );
-  ipcMain.handle("export:documentJson", async (_event, documentId?: string): Promise<IpcResult<string | null>> =>
+  ipcMain.handle("export:documentJson", async (_event, documentId?: string): Promise<IpcResult<KnowledgeExportResult>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
-      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.json`, "JSON", ["json"], exportCenter.documentJson(document));
+      return saveKnowledgeTextExport(document, "document-json", `${safeFileName(document.title)}.documuse.json`, "JSON", ["json"], exportCenter.documentJson(document));
     })
   );
-  ipcMain.handle("export:chatMarkdown", async (_event, documentId: string): Promise<IpcResult<string | null>> =>
+  ipcMain.handle("export:chatMarkdown", async (_event, documentId: string): Promise<IpcResult<KnowledgeExportResult>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
-      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.chat.md`, "Markdown", ["md"], exportCenter.chatMarkdown(document, document.chatMessages ?? []));
+      return saveKnowledgeTextExport(document, "chat-markdown", `${safeFileName(document.title)}.chat.md`, "Markdown", ["md"], exportCenter.chatMarkdown(document, document.chatMessages ?? []));
     })
   );
-  ipcMain.handle("export:analysisMarkdown", async (_event, documentId: string): Promise<IpcResult<string | null>> =>
+  ipcMain.handle("export:analysisMarkdown", async (_event, documentId: string): Promise<IpcResult<KnowledgeExportResult>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
-      const analysis = await analysisService.getPersistedAnalysis(documentLibrary(), document.id);
-      if (!analysis) {
-        throw new Error("No analysis is available for this document.");
-      }
-      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.analysis.md`, "Markdown", ["md"], exportCenter.analysisMarkdown(analysis));
+      return saveKnowledgeTextExport(document, "analysis-markdown", `${safeFileName(document.title)}.analysis.md`, "Markdown", ["md"], exportCenter.analysisMarkdownFromDocument(document));
     })
   );
   ipcMain.handle("export:presets", (): IpcResult<ReturnType<ExportCenter["presets"]>> => ({ ok: true, data: exportCenter.presets() }));
-  ipcMain.handle("export:presetMarkdown", async (_event, documentId: string, presetId: ExportPresetId): Promise<IpcResult<string | null>> =>
+  ipcMain.handle("export:presetMarkdown", async (_event, documentId: string, presetId: ExportPresetId): Promise<IpcResult<KnowledgeExportResult>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
-      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.${presetId}.md`, "Markdown", ["md"], exportCenter.presetMarkdown(document, presetId));
+      return saveKnowledgeTextExport(document, presetId, `${safeFileName(document.title)}.${presetId}.md`, "Markdown", ["md"], exportCenter.presetMarkdown(document, presetId));
     })
   );
-  ipcMain.handle("export:fullArchive", async (_event, documentId: string): Promise<IpcResult<string | null>> =>
+  ipcMain.handle("export:fullArchive", async (_event, documentId: string): Promise<IpcResult<KnowledgeExportResult>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
-      return saveBufferWithDialog(mainWindow, `${safeFileName(document.title)}.archive.zip`, "ZIP", ["zip"], exportCenter.fullArchiveZip(document));
+      return saveKnowledgeBufferExport(document, "full-archive", `${safeFileName(document.title)}.archive.zip`, "ZIP", ["zip"], exportCenter.fullArchiveZip(document));
     })
   );
-  ipcMain.handle("export:pptx", async (_event, documentId: string): Promise<IpcResult<string | null>> =>
+  ipcMain.handle("export:pptx", async (_event, documentId: string): Promise<IpcResult<KnowledgeExportResult>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
-      return saveBufferWithDialog(mainWindow, `${safeFileName(document.title)}.baseline.pptx`, "PowerPoint", ["pptx"], exportCenter.baselinePptx(document));
+      return saveKnowledgeBufferExport(document, "pptx", `${safeFileName(document.title)}.deck.pptx`, "PowerPoint", ["pptx"], exportCenter.baselinePptx(document));
     })
   );
 
@@ -456,6 +534,11 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   });
   ipcMain.handle("exports:openFolder", async (_event, outputPath: string): Promise<IpcResult<{ opened: true }>> => {
     try {
+      const knownPaths = await exportHistory().list();
+      const isKnown = knownPaths.some((item) => outputPath === item.outputPath || outputPath === item.outputEpubPath);
+      if (!isKnown) {
+        throw new Error("Only known exported files can be opened from the app.");
+      }
       await fs.stat(outputPath);
       await shell.openPath(path.dirname(outputPath));
       return { ok: true, data: { opened: true } };

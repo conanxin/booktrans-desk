@@ -79,6 +79,7 @@ export function ExportHistoryPanel({ onMessage }: ExportHistoryPanelProps) {
               </div>
               <span>{formatDate(item.createdAt)}</span>
               <span>{item.sourceType === "pdf" ? "PDF" : "EPUB"}</span>
+              <span>{formatExportKind(item)}</span>
               <span>{formatValidationLabel(item.validationStatus)}</span>
               <span>{formatExternalValidationLabel(item.externalValidationStatus)}</span>
               <span>{item.fileExists === undefined ? "未知" : item.fileExists ? "文件存在" : "文件缺失"}</span>
@@ -107,4 +108,11 @@ export function ExportHistoryPanel({ onMessage }: ExportHistoryPanelProps) {
 function formatDate(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+}
+
+function formatExportKind(item: ExportHistoryItem): string {
+  if (item.exportCategory === "knowledge") {
+    return item.exportKind ?? "knowledge";
+  }
+  return item.exportKind ?? "translation";
 }

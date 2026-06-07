@@ -77,7 +77,7 @@ describe("ExportCenter", () => {
   });
 });
 
-function documentFixture(): UnifiedDocument {
+export function documentFixture(): UnifiedDocument {
   return {
     id: "doc",
     sourceFormat: "epub",

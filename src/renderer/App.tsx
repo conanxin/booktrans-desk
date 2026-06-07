@@ -4,7 +4,18 @@ import type { DocumentChatMessage } from "../main/chat/documentChatService.js";
 import type { AnalysisState, UnifiedDocument, UnifiedDocumentOutlineNode } from "../shared/documentModel.js";
 import { exportKindLabel, formatAnalysisStatus, formatChatSource, formatDocumentUpdatedAt, summarizeDocumentStatus } from "../shared/documentDisplayUtils.js";
 import { formatBoundingBox, getDocumentChapters, getDocumentPages, getUnitSourceHint, getUnitsForChapter, getUnitsForPage } from "../shared/documentReaderUtils.js";
-import type { ExternalEpubCheckReport, ImportedBook, ImportedDocument, ImportedPdfDocument, PdfValidationReport, TranslationProgress, TranslationSettings, ValidationReport } from "../shared/types.js";
+import type {
+  ExportHistoryItem,
+  ExternalEpubCheckReport,
+  ImportedBook,
+  ImportedDocument,
+  ImportedPdfDocument,
+  KnowledgeExportResult,
+  PdfValidationReport,
+  TranslationProgress,
+  TranslationSettings,
+  ValidationReport
+} from "../shared/types.js";
 import { BookInfoCard } from "./components/BookInfoCard.js";
 import { ChapterList } from "./components/ChapterList.js";
 import { ExportHistoryPanel } from "./components/ExportHistoryPanel.js";
@@ -55,10 +66,14 @@ export function App() {
   const [chatStatus, setChatStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [chatError, setChatError] = useState("");
   const [exportStatus, setExportStatus] = useState("");
+  const [exportingKind, setExportingKind] = useState<UnifiedExportKind | null>(null);
+  const [lastKnowledgeExport, setLastKnowledgeExport] = useState<KnowledgeExportResult | null>(null);
+  const [recentExports, setRecentExports] = useState<ExportHistoryItem[]>([]);
 
   useEffect(() => {
     void window.bookTrans.getSettings().then(setSettings);
     void refreshDocumentLibrary();
+    void refreshExportHistory();
     return window.bookTrans.onProgress((next: TranslationProgress) => {
       setProgress(next);
       setBusy(next.status === "translating" || next.status === "pending");
@@ -324,8 +339,33 @@ export function App() {
       setMessage("请先导入或选择文档。");
       return;
     }
+    setExportingKind(kind);
+    setLastKnowledgeExport(null);
+    setExportStatus(`Exporting ${unifiedExportLabel(kind)}...`);
     const result = await runUnifiedExport(currentDocument.id, kind);
     const exportLabel = unifiedExportLabel(kind);
+    setExportingKind(null);
+    const payload = result.ok ? result.data : null;
+    if (payload?.canceled) {
+      const canceledMessage = `Export canceled: ${exportLabel}`;
+      setLastKnowledgeExport(payload);
+      setExportStatus(canceledMessage);
+      setMessage(canceledMessage);
+      return;
+    }
+    const structuredMessage =
+      result.ok && payload?.ok && payload.outputPath
+        ? `Exported ${exportLabel}: ${payload.outputPath}`
+        : result.ok && payload?.error
+          ? payload.error
+          : formatIpcError(result);
+    if (payload) {
+      setLastKnowledgeExport(payload);
+    }
+    setExportStatus(structuredMessage);
+    setMessage(structuredMessage);
+    await refreshExportHistory();
+    return;
     const nextMessage = result.ok ? (result.data ? `已导出 ${exportLabel}：${result.data}` : `已取消导出 ${exportLabel}。`) : formatIpcError(result);
     setExportStatus(nextMessage);
     setMessage(nextMessage);
@@ -351,6 +391,18 @@ export function App() {
       case "pptx":
         return window.bookTrans.exportBaselinePptx(documentId);
     }
+  }
+
+  async function refreshExportHistory() {
+    const result = await window.bookTrans.listExports();
+    if (result.ok) {
+      setRecentExports((result.data ?? []).filter((item) => item.exportCategory === "knowledge").slice(0, 10));
+    }
+  }
+
+  async function openLastExportFolder(outputPath: string) {
+    const result = await window.bookTrans.openExportFolder(outputPath);
+    setMessage(result.ok ? "Opened exported file folder." : result.error ?? "Cannot open exported file folder.");
   }
 
   function acceptExportResult(result: Awaited<ReturnType<typeof window.bookTrans.exportEpub>>) {
@@ -418,7 +470,18 @@ export function App() {
               </div>
               <AnalysisPanel analysis={analysis} analysisState={currentDocument?.analysisState} status={analysisStatus} error={analysisError} onStart={startAnalysis} disabled={!currentDocument} />
               <ChatPanel messages={chatMessages} question={chatQuestion} status={chatStatus} error={chatError} onQuestion={setChatQuestion} onAsk={askDocument} onClear={clearDocumentChat} disabled={!currentDocument} />
-              <ExportPanel disabled={!currentDocument} hasAnalysis={Boolean(analysis)} hasChat={chatMessages.length > 0} status={exportStatus} onExport={exportUnified} />
+              <ExportPanel
+                disabled={!currentDocument}
+                hasAnalysis={Boolean(analysis)}
+                hasChat={chatMessages.length > 0}
+                status={exportStatus}
+                exportingKind={exportingKind}
+                lastResult={lastKnowledgeExport}
+                recentExports={recentExports}
+                onExport={exportUnified}
+                onOpenFolder={openLastExportFolder}
+                onRefreshHistory={refreshExportHistory}
+              />
             </aside>
 
             <section className="content">
@@ -922,13 +985,23 @@ function ExportPanel({
   hasAnalysis,
   hasChat,
   status,
-  onExport
+  exportingKind,
+  lastResult,
+  recentExports,
+  onExport,
+  onOpenFolder,
+  onRefreshHistory
 }: {
   disabled: boolean;
   hasAnalysis: boolean;
   hasChat: boolean;
   status: string;
+  exportingKind: UnifiedExportKind | null;
+  lastResult: KnowledgeExportResult | null;
+  recentExports: ExportHistoryItem[];
   onExport: (kind: UnifiedExportKind) => void;
+  onOpenFolder: (outputPath: string) => void;
+  onRefreshHistory: () => void;
 }) {
   return (
     <section className="panel compact-tool-panel">
@@ -936,34 +1009,34 @@ function ExportPanel({
       <h2>知识导出</h2>
       <div className="inline-actions">
         <button onClick={() => onExport("markdown")} disabled={disabled}>
-          Document Markdown
+          {exportingKind === "markdown" ? "Exporting..." : "Document Markdown"}
         </button>
         <button onClick={() => onExport("json")} disabled={disabled}>
-          Document JSON
+          {exportingKind === "json" ? "Exporting..." : "Document JSON"}
         </button>
         <button onClick={() => onExport("chat")} disabled={disabled || !hasChat}>
-          Chat Markdown
+          {exportingKind === "chat" ? "Exporting..." : "Chat Markdown"}
         </button>
         <button onClick={() => onExport("analysis")} disabled={disabled || !hasAnalysis}>
-          Analysis Markdown
+          {exportingKind === "analysis" ? "Exporting..." : "Analysis Markdown"}
         </button>
         <button onClick={() => onExport("study-notes")} disabled={disabled}>
-          Study Notes
+          {exportingKind === "study-notes" ? "Exporting..." : "Study Notes"}
         </button>
         <button onClick={() => onExport("research-digest")} disabled={disabled}>
-          Research Digest
+          {exportingKind === "research-digest" ? "Exporting..." : "Research Digest"}
         </button>
         <button onClick={() => onExport("presentation-outline")} disabled={disabled}>
-          Presentation Outline
+          {exportingKind === "presentation-outline" ? "Exporting..." : "Presentation Outline"}
         </button>
         <button onClick={() => onExport("podcast-prep")} disabled={disabled}>
-          Podcast Prep
+          {exportingKind === "podcast-prep" ? "Exporting..." : "Podcast Prep"}
         </button>
         <button onClick={() => onExport("full-archive")} disabled={disabled}>
-          Full Archive ZIP
+          {exportingKind === "full-archive" ? "Exporting..." : "Full Archive ZIP"}
         </button>
         <button onClick={() => onExport("pptx")} disabled={disabled}>
-          Baseline PPTX
+          {exportingKind === "pptx" ? "Exporting..." : "Baseline PPTX"}
         </button>
       </div>
       <div className="export-help-list">
@@ -975,6 +1048,42 @@ function ExportPanel({
         <span>Baseline PPTX: experimental minimal slide deck.</span>
       </div>
       {status ? <p className="export-status">{status}</p> : null}
+      {lastResult?.outputPath ? (
+        <div className={`export-result-card ${lastResult.validation?.status ?? "pass"}`}>
+          <strong>{unifiedExportLabelFromHistory(lastResult.exportKind)}</strong>
+          <span>{lastResult.outputPath}</span>
+          <small>{lastResult.validation?.summary ?? "Export saved."}</small>
+          {lastResult.validation?.warnings.length ? <small>Warnings: {lastResult.validation.warnings.join("; ")}</small> : null}
+          <button onClick={() => onOpenFolder(lastResult.outputPath ?? "")}>Open folder</button>
+        </div>
+      ) : lastResult?.canceled ? (
+        <div className="export-result-card canceled">
+          <strong>Export canceled</strong>
+          <span>{unifiedExportLabelFromHistory(lastResult.exportKind)}</span>
+        </div>
+      ) : null}
+      <div className="compact-history">
+        <div className="panel-title-row">
+          <strong>Recent knowledge exports</strong>
+          <button onClick={onRefreshHistory}>Refresh</button>
+        </div>
+        {recentExports.length ? (
+          recentExports.map((item) => (
+            <div className="compact-history-row" key={item.id}>
+              <div>
+                <strong>{unifiedExportLabelFromHistory(item.exportKind)}</strong>
+                <span>{formatDateTime(item.createdAt)} / {item.validationStatus}</span>
+                <small>{item.outputPath ?? item.outputEpubPath}</small>
+              </div>
+              <button onClick={() => onOpenFolder(item.outputPath ?? item.outputEpubPath)} disabled={item.fileExists === false}>
+                Open folder
+              </button>
+            </div>
+          ))
+        ) : (
+          <p className="empty-hint">No knowledge export history yet.</p>
+        )}
+      </div>
     </section>
   );
 }
@@ -1018,6 +1127,37 @@ function unifiedExportLabel(kind: UnifiedExportKind): string {
       return "Baseline PPTX";
     default:
       return exportKindLabel(kind);
+  }
+}
+
+function unifiedExportLabelFromHistory(kind: ExportHistoryItem["exportKind"]): string {
+  switch (kind) {
+    case "document-markdown":
+      return "Document Markdown";
+    case "document-json":
+      return "Document JSON";
+    case "chat-markdown":
+      return "Chat Markdown";
+    case "analysis-markdown":
+      return "Analysis Markdown";
+    case "study-notes":
+      return "Study Notes";
+    case "research-digest":
+      return "Research Digest";
+    case "presentation-outline":
+      return "Presentation Outline";
+    case "podcast-prep":
+      return "Podcast Prep";
+    case "full-archive":
+      return "Full Archive ZIP";
+    case "pptx":
+      return "Baseline PPTX";
+    case "translated-pdf":
+      return "Translated PDF";
+    case "translated-epub":
+      return "Translated EPUB";
+    default:
+      return "Export";
   }
 }
 

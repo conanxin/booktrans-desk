@@ -193,7 +193,7 @@ Result:
 
 ## Stage S7: Export Polish / Packaged Manual Validation
 
-Status: planned.
+Status: complete with BLOCKED_MANUAL click-through items.
 
 Goal:
 
@@ -208,3 +208,32 @@ Completion standard:
 - Manual export of all S6 presets is checked with synthetic EPUB/PDF.
 - Generated PPTX opens in PowerPoint/WPS/LibreOffice or limitations are documented.
 - `npm run build`, `npm test`, `npm run release:check`, and if possible `npm run pack` pass.
+
+Result:
+
+- Knowledge exports now return structured results with success, canceled, output path, validation, and history record details.
+- Save dialog defaults use clear DocuMuse-oriented filenames for Markdown, JSON, Chat Markdown, Analysis Markdown, preset Markdown, Full Archive ZIP, and Baseline PPTX.
+- Knowledge exports are recorded in the existing export history store with `exportCategory: knowledge`, concrete `exportKind`, source document metadata, output path, and validation status.
+- Markdown, JSON, Full Archive ZIP, and Baseline PPTX exports have structural validation helpers and tests.
+- The Export panel shows loading, canceled, success, validation summary, output path, open-folder action, and recent knowledge export history.
+- `exports:openFolder` is restricted to known export history paths.
+- Packaged validation is evaluated with `npm run pack`; generated package artifacts remain uncommitted.
+- Real desktop click-through and external visual opening of PPTX remain `BLOCKED_MANUAL`.
+- PDF translation remains experimental and public release remains HOLD.
+
+## Stage S8: Bilingual Markdown / HTML Export Baseline
+
+Status: planned.
+
+Goal:
+
+- Implement bilingual Markdown baseline for selected chapter/page or whole structured document where translations are available.
+- Implement bilingual HTML baseline after Markdown behavior is stable.
+- Keep bilingual PDF out of scope until layout and selected translation persistence are stronger.
+- Keep PDF translation public release as HOLD.
+
+Completion standard:
+
+- Bilingual export uses UnifiedDocument units and persisted translation versions or selected translation output.
+- EPUB and PDF source hints remain visible.
+- `npm run build`, `npm test`, and `npm run release:check` pass.

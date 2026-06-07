@@ -24,6 +24,41 @@ describe("ExportHistoryStore", () => {
     expect(await store.list()).toHaveLength(0);
   });
 
+  it("records knowledge exports while keeping translation exports compatible", async () => {
+    const file = await filePath();
+    const store = new ExportHistoryStore(file);
+    const translation = await store.add({
+      exportCategory: "translation",
+      exportKind: "translated-epub",
+      outputEpubPath: "/tmp/book.zh.epub",
+      validationStatus: "pass",
+      targetLanguage: "zh-CN",
+      sourceBookTitle: "Book"
+    });
+    const knowledge = await store.add({
+      sourceType: "epub",
+      exportCategory: "knowledge",
+      exportKind: "study-notes",
+      sourceDocumentId: "doc-1",
+      sourceDocumentTitle: "Knowledge Book",
+      sourceBookTitle: "Knowledge Book",
+      sourcePath: "/tmp/book.epub",
+      outputEpubPath: "/tmp/book.study-notes.md",
+      outputPath: "/tmp/book.study-notes.md",
+      validationStatus: "pass",
+      targetLanguage: "knowledge"
+    });
+
+    const items = await store.list();
+    expect(items.find((item) => item.id === translation.id)).toMatchObject({ exportCategory: "translation", exportKind: "translated-epub" });
+    expect(items.find((item) => item.id === knowledge.id)).toMatchObject({
+      exportCategory: "knowledge",
+      exportKind: "study-notes",
+      sourceDocumentId: "doc-1",
+      outputPath: "/tmp/book.study-notes.md"
+    });
+  });
+
   it("does not save apiKey", async () => {
     const file = await filePath();
     const store = new ExportHistoryStore(file);
@@ -61,6 +96,27 @@ describe("ExportHistoryStore", () => {
     await expect(store.removeMissing()).resolves.toBe(1);
     expect(await fs.readFile(existing, "utf8")).toBe("data");
     expect(await store.list()).toHaveLength(1);
+  });
+
+  it("refreshes knowledge export outputPath", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "documuse-knowledge-export-paths-"));
+    const existing = path.join(dir, "book.study-notes.md");
+    await fs.writeFile(existing, "# Notes", "utf8");
+    const store = new ExportHistoryStore(path.join(dir, "history.json"));
+    const item = await store.add({
+      sourceType: "epub",
+      exportCategory: "knowledge",
+      exportKind: "study-notes",
+      sourceDocumentTitle: "Book",
+      outputEpubPath: "legacy-placeholder.epub",
+      outputPath: existing,
+      validationStatus: "pass",
+      targetLanguage: "knowledge"
+    });
+
+    const refreshed = await store.refresh(item.id);
+    expect(refreshed?.fileExists).toBe(true);
+    expect(refreshed?.fileSize).toBeGreaterThan(0);
   });
 });
 

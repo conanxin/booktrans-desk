@@ -105,8 +105,9 @@ function hash(value: string): string {
 }
 
 async function refreshItem(item: ExportHistoryItem): Promise<ExportHistoryItem> {
+  const outputPath = item.outputPath ?? item.outputEpubPath;
   try {
-    const stat = await fs.stat(item.outputEpubPath);
+    const stat = await fs.stat(outputPath);
     return {
       ...item,
       fileExists: true,

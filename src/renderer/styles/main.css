@@ -693,6 +693,68 @@ small {
   overflow-wrap: anywhere;
 }
 
+.export-result-card,
+.compact-history {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--panel-muted);
+}
+
+.export-result-card.pass {
+  border-color: rgba(2, 122, 72, 0.22);
+  background: #eefaf4;
+}
+
+.export-result-card.warning,
+.export-result-card.canceled {
+  border-color: rgba(181, 71, 8, 0.22);
+  background: #fff7ed;
+}
+
+.export-result-card.fail {
+  border-color: rgba(180, 35, 24, 0.22);
+  background: #fff5f5;
+}
+
+.export-result-card span,
+.export-result-card small,
+.compact-history-row small,
+.compact-history-row span {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
+.export-result-card button,
+.compact-history-row button {
+  justify-self: start;
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+.compact-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 8px;
+}
+
+.compact-history-row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.compact-history-row div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
 .persistence-strip {
   display: flex;
   flex-wrap: wrap;
@@ -1334,7 +1396,7 @@ small {
 
 .export-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1.3fr) 145px 76px 90px 82px 80px 145px 110px 88px minmax(260px, auto);
+  grid-template-columns: minmax(220px, 1.3fr) 145px 76px 132px 90px 82px 80px 145px 110px 88px minmax(260px, auto);
   gap: 10px;
   align-items: center;
   border: 1px solid var(--border-soft);

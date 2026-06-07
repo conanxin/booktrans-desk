@@ -274,6 +274,22 @@ export interface ExportHistoryItem {
   id: string;
   jobId?: string;
   sourceType?: SourceDocumentType;
+  exportCategory?: "translation" | "knowledge";
+  exportKind?:
+    | "translated-epub"
+    | "translated-pdf"
+    | "document-markdown"
+    | "document-json"
+    | "chat-markdown"
+    | "analysis-markdown"
+    | "study-notes"
+    | "research-digest"
+    | "presentation-outline"
+    | "podcast-prep"
+    | "full-archive"
+    | "pptx";
+  sourceDocumentId?: string;
+  sourceDocumentTitle?: string;
   sourceBookTitle?: string;
   sourceEpubPath?: string;
   sourcePath?: string;
@@ -289,6 +305,24 @@ export interface ExportHistoryItem {
   fileExists?: boolean | "unknown";
   fileSize?: number;
   lastModified?: string;
+}
+
+export interface ExportValidation {
+  status: "pass" | "warning" | "fail";
+  errors: string[];
+  warnings: string[];
+  checkedFiles?: string[];
+  summary: string;
+}
+
+export interface KnowledgeExportResult {
+  ok: boolean;
+  canceled?: boolean;
+  outputPath?: string;
+  exportKind: NonNullable<ExportHistoryItem["exportKind"]>;
+  validation?: ExportValidation;
+  historyItem?: ExportHistoryItem;
+  error?: string;
 }
 
 export interface TranslationProfile {
