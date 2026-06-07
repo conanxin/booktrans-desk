@@ -1,5 +1,9 @@
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { AnalysisService } from "./analysisService.js";
+import { DocumentLibraryStore } from "../document/documentLibraryStore.js";
 import type { UnifiedDocument } from "../../shared/documentModel.js";
 
 describe("AnalysisService", () => {
@@ -17,7 +21,56 @@ describe("AnalysisService", () => {
     expect(result.sources[0]).toMatchObject({ unitId: "unit-1", pageNumber: 1 });
     expect(service.getAnalysis("doc")).toEqual(result);
   });
+
+  it("persists EPUB quick analysis into the document library", async () => {
+    const store = new DocumentLibraryStore(await tempDir());
+    const document = { ...documentFixture(), sourceFormat: "epub" as const, sourcePath: "/tmp/book.epub" };
+    await store.saveDocument(document);
+
+    const result = await new AnalysisService().startQuickAnalysisAndPersist(document, store, { provider: "mock", model: "mock-analysis" });
+    const persisted = await new AnalysisService().getPersistedAnalysis(store, document.id);
+
+    expect(result.summary).toContain("Abstract");
+    expect(persisted?.summary).toBe(result.summary);
+    expect((await store.readDocument(document.id))?.analysisState).toMatchObject({
+      status: "completed",
+      provider: "mock",
+      model: "mock-analysis"
+    });
+  });
+
+  it("persists PDF quick analysis into the document library", async () => {
+    const store = new DocumentLibraryStore(await tempDir());
+    const document = documentFixture();
+    await store.saveDocument(document);
+
+    await new AnalysisService().startQuickAnalysisAndPersist(document, store);
+    const persisted = await store.readDocument(document.id);
+
+    expect(persisted?.analysisState?.status).toBe("completed");
+    expect(persisted?.analysisState?.result?.sourceUnitIds).toEqual(["unit-1"]);
+  });
+
+  it("persists failed analysis state", async () => {
+    const store = new DocumentLibraryStore(await tempDir());
+    const document = documentFixture();
+    await store.saveDocument(document);
+    const service = new AnalysisService();
+    service.startQuickAnalysis = () => {
+      throw new Error("analysis fixture failure");
+    };
+
+    await expect(service.startQuickAnalysisAndPersist(document, store)).rejects.toThrow("analysis fixture failure");
+    expect((await store.readDocument(document.id))?.analysisState).toMatchObject({
+      status: "failed",
+      error: "analysis fixture failure"
+    });
+  });
 });
+
+async function tempDir(): Promise<string> {
+  return fs.mkdtemp(path.join(os.tmpdir(), "booktrans-analysis-"));
+}
 
 function documentFixture(): UnifiedDocument {
   return {

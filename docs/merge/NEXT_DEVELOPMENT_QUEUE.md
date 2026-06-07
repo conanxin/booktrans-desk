@@ -111,7 +111,7 @@ Result:
 
 ## Stage S4: Persistent Analysis / Chat State
 
-Status: planned.
+Status: complete.
 
 Goal:
 
@@ -126,3 +126,30 @@ Completion standard:
 - `npm run build`, `npm test`, and `npm run release:check` pass.
 - Existing EPUB translation and PDF experimental translation flows remain unchanged.
 - PDF translation remains HOLD for public release.
+
+Result:
+
+- UnifiedDocument snapshots now carry `analysisState` and `chatMessages`.
+- `analysis:start`, `analysis:get`, `chat:ask`, `chat:list`, and `chat:clear` use the local document library as the source of truth.
+- Markdown/JSON/Chat Markdown/Analysis Markdown exports can use persisted analysis and chat state.
+- The workspace shows analysis status, chat message count, and document updated time.
+- Chat history can be cleared from the UI and the change is persisted.
+
+## Stage S5: Real Desktop Validation / Reading UX Polish
+
+Status: planned.
+
+Goal:
+
+- Run manual desktop validation with non-sensitive EPUB and text PDF fixtures.
+- Confirm analysis/chat persistence across real app restart.
+- Polish reader affordances for long EPUB chapters and multi-page PDFs.
+- Improve source display for chat and analysis panels.
+- Keep PDF translation public release as HOLD.
+
+Completion standard:
+
+- Manual EPUB import, analysis, chat, restart/reopen, and export pass.
+- Manual text PDF import, analysis, chat, restart/reopen, and export pass.
+- `npm run build`, `npm test`, and `npm run release:check` pass.
+- `npm run pack` is evaluated if the validation window allows.

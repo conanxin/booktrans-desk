@@ -43,6 +43,63 @@ describe("DocumentLibraryStore", () => {
     expect(raw).not.toContain("apiKey");
     expect(raw).not.toContain("authorization");
   });
+
+  it("updates analysis state and touches updatedAt", async () => {
+    const store = new DocumentLibraryStore(await tempDir());
+    await store.saveDocument(documentFixture("doc-analysis", "Analysis"));
+    const before = await store.readDocument("doc-analysis");
+
+    const updated = await store.updateDocumentAnalysis("doc-analysis", {
+      status: "completed",
+      mode: "quick",
+      result: {
+        summary: "Persisted summary",
+        keyPoints: ["Point"],
+        sourceUnitIds: ["unit-1"]
+      },
+      completedAt: "2024-01-02T00:00:00.000Z"
+    });
+
+    expect(updated.analysisState?.status).toBe("completed");
+    expect(updated.analysisState?.result?.summary).toBe("Persisted summary");
+    expect(updated.updatedAt).not.toBe(before?.updatedAt);
+    expect((await store.readDocument("doc-analysis"))?.analysisState?.result?.sourceUnitIds).toEqual(["unit-1"]);
+  });
+
+  it("appends and clears persisted chat messages", async () => {
+    const store = new DocumentLibraryStore(await tempDir());
+    await store.saveDocument(documentFixture("doc-chat", "Chat"));
+
+    await store.appendDocumentChatMessages("doc-chat", [
+      { id: "m1", documentId: "doc-chat", role: "user", content: "Question", createdAt: "2024-01-01T00:00:00.000Z" },
+      {
+        id: "m2",
+        documentId: "doc-chat",
+        role: "assistant",
+        content: "Answer",
+        createdAt: "2024-01-01T00:00:01.000Z",
+        sources: [{ unitId: "unit-1", sourceHint: "Chapter 1", chapterTitle: "Chapter 1", quote: "Quote", score: 1 }]
+      }
+    ]);
+
+    expect((await store.readDocument("doc-chat"))?.chatMessages).toHaveLength(2);
+    await store.clearDocumentChatMessages("doc-chat");
+    expect((await store.readDocument("doc-chat"))?.chatMessages).toEqual([]);
+  });
+
+  it("normalizes old snapshots without analysis or chat fields", async () => {
+    const dir = await tempDir();
+    const store = new DocumentLibraryStore(dir);
+    const oldDocument = documentFixture("doc-old-shape", "Old Shape");
+    delete oldDocument.analysisState;
+    delete oldDocument.chatMessages;
+    await fs.writeFile(path.join(dir, "doc-old-shape.json"), JSON.stringify({ document: oldDocument }, null, 2), "utf8");
+
+    const read = await store.readDocument("doc-old-shape");
+
+    expect(read?.analysisState).toMatchObject({ status: "idle", mode: "quick" });
+    expect(read?.chatMessages).toEqual([]);
+  });
 });
 
 async function tempDir(): Promise<string> {

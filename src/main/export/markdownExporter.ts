@@ -1,4 +1,4 @@
-import type { DocumentAnalysisRecord } from "../analysis/analysisService.js";
+import { analysisStateToRecord, type DocumentAnalysisRecord } from "../analysis/analysisService.js";
 import type { DocumentChatMessage } from "../chat/documentChatService.js";
 import type { UnifiedDocument, UnifiedDocumentOutlineNode } from "../../shared/documentModel.js";
 import { getUnitSourceHint } from "../../shared/documentReaderUtils.js";
@@ -17,6 +17,12 @@ export function unifiedDocumentToMarkdown(document: UnifiedDocument): string {
     "## Outline",
     ...outlineLines(document.outline),
     "",
+    "## Analysis",
+    ...persistedAnalysisLines(document),
+    "",
+    "## Chat History",
+    ...persistedChatLines(document),
+    "",
     "## Content",
     ...document.units.map((unit) => {
       const source = [getUnitSourceHint(unit), unit.pageNumber ? `page ${unit.pageNumber}` : undefined, unit.role].filter(Boolean).join(", ");
@@ -24,6 +30,39 @@ export function unifiedDocumentToMarkdown(document: UnifiedDocument): string {
     })
   ];
   return lines.join("\n");
+}
+
+function persistedAnalysisLines(document: UnifiedDocument): string[] {
+  const analysis = analysisStateToRecord(document, document.analysisState);
+  if (!analysis) {
+    return [`Status: ${document.analysisState?.status ?? "idle"}`];
+  }
+  return [
+    `Status: ${document.analysisState?.status ?? analysis.status}`,
+    `Completed at: ${document.analysisState?.completedAt ?? analysis.analyzedAt}`,
+    `Provider: ${document.analysisState?.provider ?? "unknown"}`,
+    `Model: ${document.analysisState?.model ?? "unknown"}`,
+    "",
+    "### One Sentence Summary",
+    analysis.oneSentenceSummary,
+    "",
+    "### Summary",
+    analysis.summary,
+    "",
+    "### Key Points",
+    ...(analysis.keyPoints.length ? analysis.keyPoints.map((point) => `- ${point}`) : ["- None"]),
+    "",
+    "### Keywords",
+    analysis.keywords.length ? analysis.keywords.join(", ") : "None"
+  ];
+}
+
+function persistedChatLines(document: UnifiedDocument): string[] {
+  const messages = document.chatMessages ?? [];
+  if (!messages.length) {
+    return ["- None"];
+  }
+  return messages.map((message) => `- ${message.role}: ${message.content.replace(/\s+/g, " ").trim()}`);
 }
 
 export function chatToMarkdown(title: string, messages: DocumentChatMessage[]): string {

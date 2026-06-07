@@ -1,4 +1,5 @@
-import type { UnifiedDocument } from "../../shared/documentModel.js";
+import type { AnalysisState, UnifiedAnalysisResult, UnifiedDocument } from "../../shared/documentModel.js";
+import type { DocumentLibraryStore } from "../document/documentLibraryStore.js";
 import { documentKindPromptHint } from "./analysisPrompts.js";
 
 export interface AnalysisSource {
@@ -6,6 +7,7 @@ export interface AnalysisSource {
   pageNumber?: number;
   chapterId?: string;
   chapterTitle?: string;
+  role?: string;
   quote: string;
 }
 
@@ -54,6 +56,7 @@ export class AnalysisService {
         pageNumber: unit.pageNumber,
         chapterId: unit.chapterId,
         chapterTitle: unit.chapterTitle,
+        role: unit.role,
         quote: trimQuote(unit.text)
       })),
       analyzedAt: createdAt,
@@ -63,9 +66,114 @@ export class AnalysisService {
     return record;
   }
 
+  async startQuickAnalysisAndPersist(document: UnifiedDocument, store: DocumentLibraryStore, metadata: { provider?: string; model?: string } = {}): Promise<DocumentAnalysisRecord> {
+    const startedAt = new Date().toISOString();
+    await store.updateDocumentAnalysis(document.id, {
+      status: "running",
+      mode: "quick",
+      startedAt,
+      updatedAt: startedAt,
+      provider: metadata.provider,
+      model: metadata.model
+    });
+
+    try {
+      const record = this.startQuickAnalysis(document);
+      await store.updateDocumentAnalysis(document.id, recordToAnalysisState(record, metadata));
+      return record;
+    } catch (error) {
+      const failedAt = new Date().toISOString();
+      await store.updateDocumentAnalysis(document.id, {
+        status: "failed",
+        mode: "quick",
+        error: error instanceof Error ? error.message : "Analysis failed.",
+        startedAt,
+        updatedAt: failedAt,
+        provider: metadata.provider,
+        model: metadata.model
+      });
+      throw error;
+    }
+  }
+
   getAnalysis(documentId: string): DocumentAnalysisRecord | null {
     return this.records.get(documentId) ?? null;
   }
+
+  async getPersistedAnalysis(store: DocumentLibraryStore, documentId: string): Promise<DocumentAnalysisRecord | null> {
+    const document = await store.readDocument(documentId);
+    if (!document) {
+      return this.getAnalysis(documentId);
+    }
+    return analysisStateToRecord(document, document.analysisState) ?? this.getAnalysis(documentId);
+  }
+}
+
+export function recordToAnalysisState(record: DocumentAnalysisRecord, metadata: { provider?: string; model?: string } = {}): AnalysisState {
+  return {
+    status: "completed",
+    mode: record.mode,
+    result: recordToUnifiedResult(record),
+    startedAt: record.createdAt,
+    completedAt: record.analyzedAt,
+    updatedAt: record.analyzedAt,
+    provider: metadata.provider,
+    model: metadata.model
+  };
+}
+
+export function analysisStateToRecord(document: UnifiedDocument, state: AnalysisState | undefined): DocumentAnalysisRecord | null {
+  if (!state?.result || state.status !== "completed") {
+    return null;
+  }
+  const result = state.result;
+  const analyzedAt = result.analyzedAt ?? state.completedAt ?? state.updatedAt ?? document.updatedAt;
+  const createdAt = result.createdAt ?? state.startedAt ?? analyzedAt;
+  return {
+    id: result.id ?? `analysis-${document.id}`,
+    documentId: result.documentId ?? document.id,
+    mode: result.mode === "full" ? "quick" : "quick",
+    status: "completed",
+    title: result.title ?? document.title,
+    oneSentenceSummary: result.oneSentenceSummary ?? result.summary ?? "",
+    summary: result.summary ?? result.oneSentenceSummary ?? "",
+    keyPoints: result.keyPoints ?? [],
+    keywords: result.keywords ?? [],
+    documentKind: result.documentType ?? document.documentKind?.kind,
+    language: result.language ?? (typeof document.metadata.language === "string" ? document.metadata.language : undefined),
+    promptHint: result.promptHint ?? documentKindPromptHint(document),
+    sources: (result.sources ?? []).map((source) => ({
+      unitId: source.unitId,
+      pageNumber: source.pageNumber,
+      chapterId: source.chapterId,
+      chapterTitle: source.chapterTitle,
+      role: typeof source.role === "string" ? source.role : undefined,
+      quote: source.quote ?? ""
+    })),
+    analyzedAt,
+    createdAt
+  };
+}
+
+function recordToUnifiedResult(record: DocumentAnalysisRecord): UnifiedAnalysisResult {
+  return {
+    id: record.id,
+    documentId: record.documentId,
+    mode: record.mode,
+    status: record.status,
+    title: record.title,
+    oneSentenceSummary: record.oneSentenceSummary,
+    summary: record.summary,
+    keyPoints: record.keyPoints,
+    keywords: record.keywords,
+    documentType: record.documentKind,
+    language: record.language,
+    promptHint: record.promptHint,
+    sources: record.sources,
+    sourceUnitIds: record.sources.map((source) => source.unitId),
+    analyzedAt: record.analyzedAt,
+    createdAt: record.createdAt
+  };
 }
 
 function summarize(text: string, title: string): string {

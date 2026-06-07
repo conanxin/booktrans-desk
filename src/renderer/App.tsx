@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DocumentAnalysisRecord } from "../main/analysis/analysisService.js";
 import type { DocumentChatMessage } from "../main/chat/documentChatService.js";
-import type { UnifiedDocument, UnifiedDocumentOutlineNode } from "../shared/documentModel.js";
+import type { AnalysisState, UnifiedDocument, UnifiedDocumentOutlineNode } from "../shared/documentModel.js";
 import { formatBoundingBox, getDocumentChapters, getDocumentPages, getUnitSourceHint, getUnitsForChapter, getUnitsForPage } from "../shared/documentReaderUtils.js";
 import type { ExternalEpubCheckReport, ImportedBook, ImportedDocument, ImportedPdfDocument, PdfValidationReport, TranslationProgress, TranslationSettings, ValidationReport } from "../shared/types.js";
 import { BookInfoCard } from "./components/BookInfoCard.js";
@@ -145,6 +145,14 @@ export function App() {
     }
   }
 
+  async function refreshCurrentDocumentSnapshot(documentId: string) {
+    const result = await window.bookTrans.getDocument(documentId);
+    if (result.ok && result.data) {
+      setCurrentDocument(result.data);
+      setDocuments((items) => items.map((item) => (item.id === result.data?.id ? result.data : item)));
+    }
+  }
+
   async function deleteLibraryDocument(document: UnifiedDocument) {
     const result = await window.bookTrans.deleteDocument(document.id);
     if (result.ok) {
@@ -250,6 +258,7 @@ export function App() {
     if (result.ok && result.data) {
       setAnalysis(result.data);
       setAnalysisStatus("success");
+      await refreshCurrentDocumentSnapshot(currentDocument.id);
       setMessage("分析已完成。");
     } else {
       const error = formatIpcError(result);
@@ -275,7 +284,27 @@ export function App() {
       const list = await window.bookTrans.listDocumentChat(currentDocument.id);
       setChatMessages(list.ok ? list.data ?? [] : [result.data]);
       setChatStatus("success");
+      await refreshCurrentDocumentSnapshot(currentDocument.id);
       setMessage("问答已生成。");
+    } else {
+      const error = formatIpcError(result);
+      setChatStatus("error");
+      setChatError(error);
+      setMessage(error);
+    }
+  }
+
+  async function clearDocumentChat() {
+    if (!currentDocument) {
+      return;
+    }
+    const result = await window.bookTrans.clearDocumentChat(currentDocument.id);
+    if (result.ok) {
+      setChatMessages([]);
+      setChatStatus("idle");
+      setChatError("");
+      setMessage("问答历史已清空。");
+      await refreshCurrentDocumentSnapshot(currentDocument.id);
     } else {
       const error = formatIpcError(result);
       setChatStatus("error");
@@ -366,8 +395,8 @@ export function App() {
                   重置本书配置
                 </button>
               </div>
-              <AnalysisPanel analysis={analysis} status={analysisStatus} error={analysisError} onStart={startAnalysis} disabled={!currentDocument} />
-              <ChatPanel messages={chatMessages} question={chatQuestion} status={chatStatus} error={chatError} onQuestion={setChatQuestion} onAsk={askDocument} disabled={!currentDocument} />
+              <AnalysisPanel analysis={analysis} analysisState={currentDocument?.analysisState} status={analysisStatus} error={analysisError} onStart={startAnalysis} disabled={!currentDocument} />
+              <ChatPanel messages={chatMessages} question={chatQuestion} status={chatStatus} error={chatError} onQuestion={setChatQuestion} onAsk={askDocument} onClear={clearDocumentChat} disabled={!currentDocument} />
               <ExportPanel disabled={!currentDocument} hasAnalysis={Boolean(analysis)} hasChat={chatMessages.length > 0} status={exportStatus} onExport={exportUnified} />
             </aside>
 
@@ -536,6 +565,18 @@ function DocumentOverview({
           <dt>来源定位</dt>
           <dd>{document.diagnostics.pageCount ? `${document.diagnostics.pageCount} pages` : document.sourceFormat.toUpperCase()}</dd>
         </div>
+        <div>
+          <dt>分析状态</dt>
+          <dd>{analysisStateLabel(document.analysisState)}</dd>
+        </div>
+        <div>
+          <dt>问答条数</dt>
+          <dd>{document.chatMessages?.length ?? 0}</dd>
+        </div>
+        <div>
+          <dt>最后更新</dt>
+          <dd>{formatDateTime(document.updatedAt)}</dd>
+        </div>
       </dl>
       <div className="outline-preview">
         <h3>章节列表</h3>
@@ -619,6 +660,18 @@ function PdfDocumentReader({ document, selectedPageNumber, onSelectPage }: { doc
           <dt>PDF 翻译</dt>
           <dd>HOLD / experimental</dd>
         </div>
+        <div>
+          <dt>分析状态</dt>
+          <dd>{analysisStateLabel(document.analysisState)}</dd>
+        </div>
+        <div>
+          <dt>问答条数</dt>
+          <dd>{document.chatMessages?.length ?? 0}</dd>
+        </div>
+        <div>
+          <dt>最后更新</dt>
+          <dd>{formatDateTime(document.updatedAt)}</dd>
+        </div>
       </dl>
       <div className="pdf-hold-notice">
         <strong>PDF public release remains HOLD.</strong>
@@ -690,12 +743,14 @@ function OutlineList({ nodes }: { nodes: UnifiedDocumentOutlineNode[] }) {
 
 function AnalysisPanel({
   analysis,
+  analysisState,
   status,
   error,
   onStart,
   disabled
 }: {
   analysis: DocumentAnalysisRecord | null;
+  analysisState: AnalysisState | undefined;
   status: "idle" | "loading" | "success" | "error";
   error: string;
   onStart: () => void;
@@ -712,7 +767,13 @@ function AnalysisPanel({
           {status === "loading" ? "分析中" : "快速分析"}
         </button>
       </div>
+      <div className="persistence-strip">
+        <span>{analysisStateLabel(analysisState)}</span>
+        <span>{analysisState?.updatedAt ? `updated ${formatDateTime(analysisState.updatedAt)}` : "尚未分析"}</span>
+        {analysisState?.provider || analysisState?.model ? <span>{[analysisState.provider, analysisState.model].filter(Boolean).join(" / ")}</span> : null}
+      </div>
       {status === "error" ? <p className="inline-error">{error}</p> : null}
+      {analysisState?.status === "failed" && analysisState.error ? <p className="inline-error">{analysisState.error}</p> : null}
       {analysis ? (
         <>
           <dl className="analysis-meta">
@@ -752,6 +813,7 @@ function ChatPanel({
   error,
   onQuestion,
   onAsk,
+  onClear,
   disabled
 }: {
   messages: DocumentChatMessage[];
@@ -760,12 +822,20 @@ function ChatPanel({
   error: string;
   onQuestion: (value: string) => void;
   onAsk: () => void;
+  onClear: () => void;
   disabled: boolean;
 }) {
   return (
     <section className="panel compact-tool-panel">
       <p className="section-kicker">问答</p>
       <h2>文档问答</h2>
+      <div className="persistence-strip">
+        <span>{messages.length} messages</span>
+        <span>{messages.length ? `last ${formatDateTime(messages[messages.length - 1]?.createdAt)}` : "无历史"}</span>
+        <button onClick={onClear} disabled={disabled || !messages.length || status === "loading"}>
+          清空
+        </button>
+      </div>
       <div className="qa-form">
         <input value={question} onChange={(event) => onQuestion(event.target.value)} placeholder="询问当前文档" disabled={disabled} />
         <button onClick={onAsk} disabled={disabled || !question.trim() || status === "loading"}>
@@ -856,6 +926,19 @@ function getImportedSourcePath(document: ImportedDocument): string {
 
 function documentKindLabel(document: UnifiedDocument): string {
   return document.documentKind?.kind ?? "unknown";
+}
+
+function analysisStateLabel(state: AnalysisState | undefined): string {
+  switch (state?.status) {
+    case "completed":
+      return "已分析";
+    case "running":
+      return "分析中";
+    case "failed":
+      return "分析失败";
+    default:
+      return "未分析";
+  }
 }
 
 function formatDateTime(value: string | undefined): string {

@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { UnifiedDocument } from "../../shared/documentModel.js";
+import type { AnalysisState, ChatMessage, UnifiedDocument } from "../../shared/documentModel.js";
 
 interface DocumentLibraryEntry {
   document: UnifiedDocument;
@@ -29,7 +29,7 @@ export class DocumentLibraryStore {
     try {
       const raw = await fs.readFile(this.documentPath(id), "utf8");
       const entry = JSON.parse(raw) as DocumentLibraryEntry | UnifiedDocument;
-      return "document" in entry ? entry.document : entry;
+      return normalizeDocument("document" in entry ? entry.document : entry);
     } catch {
       return null;
     }
@@ -53,6 +53,45 @@ export class DocumentLibraryStore {
 
   async importDocumentSnapshot(document: UnifiedDocument): Promise<UnifiedDocument> {
     return this.saveDocument(document);
+  }
+
+  async updateDocument(id: string, updater: (document: UnifiedDocument) => UnifiedDocument): Promise<UnifiedDocument> {
+    const existing = await this.readDocument(id);
+    if (!existing) {
+      throw new Error(`Document not found: ${id}`);
+    }
+    const now = new Date().toISOString();
+    const updated = updater(existing);
+    return this.saveDocument({
+      ...updated,
+      id: existing.id,
+      createdAt: updated.createdAt || existing.createdAt || now,
+      updatedAt: now
+    });
+  }
+
+  async updateDocumentAnalysis(id: string, analysisState: AnalysisState): Promise<UnifiedDocument> {
+    return this.updateDocument(id, (document) => ({
+      ...document,
+      analysisState: {
+        ...analysisState,
+        updatedAt: analysisState.updatedAt ?? new Date().toISOString()
+      }
+    }));
+  }
+
+  async appendDocumentChatMessages(id: string, messages: ChatMessage[]): Promise<UnifiedDocument> {
+    return this.updateDocument(id, (document) => ({
+      ...document,
+      chatMessages: [...(document.chatMessages ?? []), ...messages]
+    }));
+  }
+
+  async clearDocumentChatMessages(id: string): Promise<UnifiedDocument> {
+    return this.updateDocument(id, (document) => ({
+      ...document,
+      chatMessages: []
+    }));
   }
 
   private documentPath(id: string): string {
@@ -80,3 +119,10 @@ function redactSecrets<T>(value: T): T {
   ) as T;
 }
 
+function normalizeDocument(document: UnifiedDocument): UnifiedDocument {
+  return {
+    ...document,
+    analysisState: document.analysisState ?? { status: "idle", mode: "quick", updatedAt: document.updatedAt },
+    chatMessages: document.chatMessages ?? []
+  };
+}

@@ -1,5 +1,9 @@
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { DocumentChatService } from "./documentChatService.js";
+import { DocumentLibraryStore } from "../document/documentLibraryStore.js";
 import type { UnifiedDocument } from "../../shared/documentModel.js";
 
 describe("DocumentChatService", () => {
@@ -29,7 +33,43 @@ describe("DocumentChatService", () => {
 
     expect(answer.sources?.[0]).toMatchObject({ unitId: "unit-2", chapterTitle: "Chapter Two", sourceHint: "Chapter Two" });
   });
+
+  it("persists EPUB chat history across service instances", async () => {
+    const store = new DocumentLibraryStore(await tempDir());
+    const document = documentFixture();
+    document.sourceFormat = "epub";
+    document.sourcePath = "/tmp/book.epub";
+    document.units[1] = { ...document.units[1], sourceFormat: "epub", chapterTitle: "Chapter Two", pageNumber: undefined };
+    await store.saveDocument(document);
+
+    await new DocumentChatService().askAndPersist(document, "enterprise adoption", store);
+    const reopened = await new DocumentChatService().listPersisted(store, document.id);
+
+    expect(reopened).toHaveLength(2);
+    expect(reopened[1].sources?.[0]).toMatchObject({ chapterTitle: "Chapter Two", sourceHint: "Chapter Two" });
+  });
+
+  it("persists PDF chat source pages and clears history", async () => {
+    const store = new DocumentLibraryStore(await tempDir());
+    const document = documentFixture();
+    await store.saveDocument(document);
+    const service = new DocumentChatService();
+
+    await service.askAndPersist(document, "revenue", store);
+    expect((await new DocumentChatService().listPersisted(store, document.id))[1].sources?.[0]).toMatchObject({
+      pageNumber: 2,
+      sourceHint: "Page 2",
+      role: "paragraph"
+    });
+
+    await service.clearPersisted(store, document.id);
+    expect(await new DocumentChatService().listPersisted(store, document.id)).toEqual([]);
+  });
 });
+
+async function tempDir(): Promise<string> {
+  return fs.mkdtemp(path.join(os.tmpdir(), "booktrans-chat-"));
+}
 
 function documentFixture(): UnifiedDocument {
   return {

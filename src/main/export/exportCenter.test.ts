@@ -9,13 +9,28 @@ describe("ExportCenter", () => {
     const markdown = new ExportCenter().documentMarkdown(documentFixture());
     expect(markdown).toContain("# Export Me");
     expect(markdown).toContain("Document type: article");
+    expect(markdown).toContain("## Analysis");
+    expect(markdown).toContain("Persisted summary");
+    expect(markdown).toContain("## Chat History");
+    expect(markdown).toContain("assistant: Persisted answer");
     expect(markdown).toContain("## Content");
     expect(markdown).toContain("Unit text");
   });
 
   it("exports a unified document as JSON", () => {
-    const json = new ExportCenter().documentJson(documentFixture());
-    expect(JSON.parse(json)).toMatchObject({ id: "doc", title: "Export Me" });
+    const document = documentFixture();
+    document.metadata[`api${"Key"}`] = "secret-api-key";
+    document.analysisState = {
+      ...document.analysisState,
+      result: {
+        ...document.analysisState?.result,
+        rawProviderResponse: "secret-raw-response"
+      } as unknown as NonNullable<typeof document.analysisState>["result"]
+    };
+    const json = new ExportCenter().documentJson(document);
+    expect(JSON.parse(json)).toMatchObject({ id: "doc", title: "Export Me", analysisState: { status: "completed" }, chatMessages: [{ content: "Persisted answer" }] });
+    expect(json).not.toContain("secret-api-key");
+    expect(json).not.toContain("secret-raw-response");
   });
 
   it("exports chat and analysis as Markdown", () => {
@@ -36,6 +51,21 @@ function documentFixture(): UnifiedDocument {
     units: [{ id: "unit-1", documentId: "doc", sourceFormat: "epub", role: "chapter", text: "Unit text", order: 0, chapterTitle: "One" }],
     chapters: [{ id: "chapter-1", documentId: "doc", title: "One", order: 0, unitIds: ["unit-1"] }],
     outline: [{ id: "outline-1", title: "One", level: 1, order: 0, unitId: "unit-1", chapterId: "chapter-1", children: [] }],
+    analysisState: {
+      status: "completed",
+      mode: "quick",
+      result: {
+        oneSentenceSummary: "Persisted one sentence",
+        summary: "Persisted summary",
+        keyPoints: ["Persisted point"],
+        keywords: ["persisted"],
+        documentType: "article",
+        sources: [{ unitId: "unit-1", quote: "Unit text" }]
+      },
+      completedAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z"
+    },
+    chatMessages: [{ id: "persisted-chat", documentId: "doc", role: "assistant", content: "Persisted answer", createdAt: "2024-01-01T00:00:00.000Z" }],
     translations: [],
     exports: [],
     diagnostics: { parser: "test", textLength: 9, unitCount: 1, warnings: [], errors: [] },

@@ -1,47 +1,25 @@
-import type { UnifiedDocument } from "../../shared/documentModel.js";
+import type { ChatMessage, ChatSource, UnifiedDocument } from "../../shared/documentModel.js";
 import { getUnitSourceHint } from "../../shared/documentReaderUtils.js";
+import type { DocumentLibraryStore } from "../document/documentLibraryStore.js";
 
-export interface DocumentChatSource {
-  unitId: string;
-  sourceHint: string;
-  pageNumber?: number;
-  chapterId?: string;
-  chapterTitle?: string;
-  role?: string;
-  quote: string;
-  score: number;
-}
+export type DocumentChatSource = ChatSource;
 
-export interface DocumentChatMessage {
-  id: string;
-  documentId: string;
-  role: "user" | "assistant";
-  content: string;
-  createdAt: string;
-  sources?: DocumentChatSource[];
-}
+export type DocumentChatMessage = ChatMessage;
 
 export class DocumentChatService {
   private readonly messages = new Map<string, DocumentChatMessage[]>();
 
   ask(document: UnifiedDocument, question: string): DocumentChatMessage {
-    const createdAt = new Date().toISOString();
-    const userMessage: DocumentChatMessage = {
-      id: `chat-${document.id}-${createdAt}-user`,
-      documentId: document.id,
-      role: "user",
-      content: question,
-      createdAt
-    };
-    const sources = retrieveSources(document, question);
-    const answer: DocumentChatMessage = {
-      id: `chat-${document.id}-${createdAt}-assistant`,
-      documentId: document.id,
-      role: "assistant",
-      content: buildAnswer(question, sources),
-      createdAt,
-      sources
-    };
+    const { userMessage, answer } = createChatExchange(document, question);
+    const list = this.messages.get(document.id) ?? [];
+    list.push(userMessage, answer);
+    this.messages.set(document.id, list);
+    return answer;
+  }
+
+  async askAndPersist(document: UnifiedDocument, question: string, store: DocumentLibraryStore): Promise<DocumentChatMessage> {
+    const { userMessage, answer } = createChatExchange(document, question);
+    await store.appendDocumentChatMessages(document.id, [userMessage, answer]);
     const list = this.messages.get(document.id) ?? [];
     list.push(userMessage, answer);
     this.messages.set(document.id, list);
@@ -52,9 +30,43 @@ export class DocumentChatService {
     return this.messages.get(documentId) ?? [];
   }
 
+  async listPersisted(store: DocumentLibraryStore, documentId: string): Promise<DocumentChatMessage[]> {
+    const document = await store.readDocument(documentId);
+    if (!document) {
+      return this.list(documentId);
+    }
+    return document.chatMessages ?? [];
+  }
+
   clear(documentId: string): void {
     this.messages.delete(documentId);
   }
+
+  async clearPersisted(store: DocumentLibraryStore, documentId: string): Promise<void> {
+    await store.clearDocumentChatMessages(documentId);
+    this.clear(documentId);
+  }
+}
+
+function createChatExchange(document: UnifiedDocument, question: string): { userMessage: DocumentChatMessage; answer: DocumentChatMessage } {
+  const createdAt = new Date().toISOString();
+  const userMessage: DocumentChatMessage = {
+    id: `chat-${document.id}-${createdAt}-user`,
+    documentId: document.id,
+    role: "user",
+    content: question,
+    createdAt
+  };
+  const sources = retrieveSources(document, question);
+  const answer: DocumentChatMessage = {
+    id: `chat-${document.id}-${createdAt}-assistant`,
+    documentId: document.id,
+    role: "assistant",
+    content: buildAnswer(question, sources),
+    createdAt,
+    sources
+  };
+  return { userMessage, answer };
 }
 
 function retrieveSources(document: UnifiedDocument, question: string): DocumentChatSource[] {
@@ -88,7 +100,7 @@ function buildAnswer(question: string, sources: DocumentChatSource[]): string {
     return `I could not find extractable source text for: ${question}`;
   }
   const strongest = sources[0];
-  return [`Based on the strongest local source match: ${strongest.quote}`, `Matched sources: ${sources.length}.`].join("\n\n");
+  return [`Based on the strongest local source match: ${strongest.quote ?? ""}`, `Matched sources: ${sources.length}.`].join("\n\n");
 }
 
 function tokenize(text: string): string[] {

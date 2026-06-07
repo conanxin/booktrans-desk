@@ -186,20 +186,38 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   });
 
   ipcMain.handle("analysis:start", async (_event, documentId?: string) =>
-    withIpcResult(async () => analysisService.startQuickAnalysis(await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId)))
+    withIpcResult(async () => {
+      const library = documentLibrary();
+      const document = await resolveUnifiedDocument(library, currentUnifiedDocument, documentId);
+      const settings = getSettings();
+      const analysis = await analysisService.startQuickAnalysisAndPersist(document, library, { provider: settings.providerPreset, model: settings.model });
+      currentUnifiedDocument = await library.readDocument(document.id);
+      return analysis;
+    })
   );
-  ipcMain.handle("analysis:get", (_event, documentId: string): IpcResult<ReturnType<AnalysisService["getAnalysis"]>> => ({
-    ok: true,
-    data: analysisService.getAnalysis(documentId)
-  }));
+  ipcMain.handle("analysis:get", async (_event, documentId: string): Promise<IpcResult<ReturnType<AnalysisService["getAnalysis"]>>> =>
+    withIpcResult(() => analysisService.getPersistedAnalysis(documentLibrary(), documentId))
+  );
   ipcMain.handle("chat:ask", async (_event, documentId: string | undefined, question: string) =>
-    withIpcResult(async () => chatService.ask(await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId), question))
+    withIpcResult(async () => {
+      const library = documentLibrary();
+      const document = await resolveUnifiedDocument(library, currentUnifiedDocument, documentId);
+      const answer = await chatService.askAndPersist(document, question, library);
+      currentUnifiedDocument = await library.readDocument(document.id);
+      return answer;
+    })
   );
-  ipcMain.handle("chat:list", (_event, documentId: string) => ({ ok: true, data: chatService.list(documentId) }));
-  ipcMain.handle("chat:clear", (_event, documentId: string): IpcResult<{ cleared: true }> => {
-    chatService.clear(documentId);
-    return { ok: true, data: { cleared: true } };
-  });
+  ipcMain.handle("chat:list", async (_event, documentId: string): Promise<IpcResult<ReturnType<DocumentChatService["list"]>>> =>
+    withIpcResult(() => chatService.listPersisted(documentLibrary(), documentId))
+  );
+  ipcMain.handle("chat:clear", async (_event, documentId: string): Promise<IpcResult<{ cleared: true }>> =>
+    withIpcResult(async () => {
+      const library = documentLibrary();
+      await chatService.clearPersisted(library, documentId);
+      currentUnifiedDocument = currentUnifiedDocument?.id === documentId ? await library.readDocument(documentId) : currentUnifiedDocument;
+      return { cleared: true };
+    })
+  );
   ipcMain.handle("export:documentMarkdown", async (_event, documentId?: string): Promise<IpcResult<string | null>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
@@ -215,13 +233,13 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   ipcMain.handle("export:chatMarkdown", async (_event, documentId: string): Promise<IpcResult<string | null>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
-      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.chat.md`, "Markdown", ["md"], exportCenter.chatMarkdown(document, chatService.list(document.id)));
+      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.chat.md`, "Markdown", ["md"], exportCenter.chatMarkdown(document, document.chatMessages ?? []));
     })
   );
   ipcMain.handle("export:analysisMarkdown", async (_event, documentId: string): Promise<IpcResult<string | null>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
-      const analysis = analysisService.getAnalysis(document.id);
+      const analysis = await analysisService.getPersistedAnalysis(documentLibrary(), document.id);
       if (!analysis) {
         throw new Error("No analysis is available for this document.");
       }
@@ -522,17 +540,14 @@ async function resolveUnifiedDocument(
   currentDocument: UnifiedDocument | null,
   documentId?: string
 ): Promise<UnifiedDocument> {
-  if (!documentId && currentDocument) {
-    return currentDocument;
-  }
-  if (documentId && currentDocument?.id === documentId) {
-    return currentDocument;
-  }
   if (documentId) {
     const document = await store.readDocument(documentId);
     if (document) {
       return document;
     }
+  }
+  if (!documentId && currentDocument) {
+    return currentDocument;
   }
   throw new Error("No unified document is available for this operation.");
 }
