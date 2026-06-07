@@ -4,7 +4,7 @@
 
 Current recommendation: **NO_MERGE_YET**.
 
-The `merge-documuse-studio` branch is a strong code-complete internal alpha candidate, but it should not be merged to `master` until S11 real Windows desktop click-through validation is complete and the current packaging blocker is resolved.
+The `merge-documuse-studio` branch is a strong code-complete internal alpha candidate, but it should not be merged to `master` until real Windows desktop click-through validation is complete. S13 cleared the prior packaging blocker in the current environment, but the manual click-through gate remains open.
 
 ## S11 Outcome
 
@@ -32,6 +32,20 @@ S12 addressed the major product-shell feedback:
 
 S12 improves merge-branch product coherence, but it does not clear the S11 manual validation blockers.
 
+## S13 Rerun Outcome
+
+S13 cleared the packaging/process-lock blocker in the current environment:
+
+- build: PASS
+- test: PASS, 52 test files / 211 tests
+- release:check: PASS
+- pack: PASS, generated ignored `release\win-unpacked\BookTrans Desk.exe`
+- dev startup smoke: PASS, Vite ready, TypeScript watch 0 errors, Electron process observed
+- packaged app startup smoke: PASS at process/window level, `BookTrans Desk.exe` launched and responded
+- real desktop click-through: still `BLOCKED_MANUAL`
+
+Result: keep `NO_MERGE_YET` because the actual EPUB/PDF file picker, reading, export, restart persistence, and external-open workflows still require human desktop validation.
+
 ## Current Branch Strengths
 
 - Maintains the existing BookTrans Desk Electron shell, IPC boundaries, EPUB translation engine, retry/resume jobs, export history, and packaging setup.
@@ -46,7 +60,7 @@ S12 improves merge-branch product coherence, but it does not clear the S11 manua
 ## Current Risks
 
 - Real Windows desktop click-through remains `BLOCKED_MANUAL`.
-- S11 pack is currently blocked by an environment/process lock around `release\win-unpacked`.
+- S11 pack blocker was cleared in S13, but it should still be monitored because it appeared process-lock/environment related.
 - Packaged UI needs direct human validation after the merge work.
 - The redesigned workspace shell needs real Windows click-through validation.
 - PPTX baseline has structural validation but still needs visual validation in PowerPoint/WPS/LibreOffice.
@@ -67,12 +81,12 @@ S12 improves merge-branch product coherence, but it does not clear the S11 manua
   - HTML in a browser
   - Markdown in an editor
   - JSON in a parser
-- Packaged app launch from `release/win-unpacked`.
+- Packaged app launch from `release/win-unpacked` with real file picker/export interactions.
 - Visible confirmation that PDF translation is still experimental/HOLD.
 
 ## Merge-to-master Checklist
 
-- [ ] S11 manual Windows validation complete.
+- [ ] Real manual Windows validation complete.
 - [ ] No generated exports committed.
 - [ ] No release artifacts committed.
 - [ ] No real user EPUB/PDF files committed.
@@ -80,7 +94,7 @@ S12 improves merge-branch product coherence, but it does not clear the S11 manua
 - [ ] `npm run build` passes.
 - [ ] `npm test` passes.
 - [ ] `npm run release:check` passes.
-- [ ] `npm run pack` passes if package metadata changes.
+- [x] `npm run pack` passes in S13 rerun.
 - [ ] README and handoff clearly state release status.
 - [ ] Product metadata rename decision made.
 

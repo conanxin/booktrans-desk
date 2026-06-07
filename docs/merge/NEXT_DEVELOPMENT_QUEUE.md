@@ -367,7 +367,7 @@ Result:
 
 ## Stage S13: Blocker Fixes / Manual Validation Rerun
 
-Status: next.
+Status: complete with `BLOCKED_MANUAL` click-through items.
 
 Goal:
 
@@ -383,9 +383,23 @@ Completion standard:
 - Export external open checks are recorded.
 - Merge readiness is updated based on blocker status.
 
+Result:
+
+- `npm run build` passed.
+- `npm test` passed, 52 test files / 211 tests.
+- `npm run release:check` passed.
+- `npm run pack` passed in the S13 rerun and generated ignored `release\win-unpacked\BookTrans Desk.exe`.
+- Dev smoke passed: Vite ready, TypeScript watch 0 errors, Electron process observed.
+- Packaged app startup smoke passed at process/window level: `BookTrans Desk.exe` launched, had a main window handle, and was responding.
+- S12 workspace shell review passed at source/UI structure level: top bar is no longer a translation wizard, left rail is document/task focused, center is reader focused, right panel carries AI/Export/Translation/Details.
+- Real EPUB/PDF import, file picker, save dialog, restart persistence, and external open checks remain `BLOCKED_MANUAL`.
+- Merge decision remains `NO_MERGE_YET`.
+- Internal alpha readiness remains `BLOCKED_BY_MANUAL_VALIDATION`.
+- PDF translation remains experimental and public release remains HOLD.
+
 ## Stage S14: Selected Units UX / Translation Version Picker Polish
 
-Status: planned after S13 validation.
+Status: planned after human click-through validation, or after a dedicated S14 manual validation pass if manual testing remains the primary blocker.
 
 Goal:
 

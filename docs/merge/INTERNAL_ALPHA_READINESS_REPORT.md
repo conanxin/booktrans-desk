@@ -2,7 +2,7 @@
 
 ## Summary
 
-DocuMuse Studio merge branch is code-ready for internal alpha consideration, but S11 did not clear the manual validation gate. It is not ready for merge to `master`, internal alpha tagging, or public release until the packaging blocker and real Windows click-through validation are resolved.
+DocuMuse Studio merge branch is code-ready for internal alpha consideration, but it has not cleared the real Windows click-through gate. S13 cleared the prior packaging blocker in the current environment, but the branch is still not ready for merge to `master`, internal alpha tagging, or public release until manual desktop workflows are completed.
 
 ## Automated Validation
 
@@ -27,9 +27,19 @@ S12 UX validation result:
 - Dev smoke: Vite ready, TypeScript watch 0 errors, Electron processes observed.
 - Real desktop click-through: still pending.
 
+S13 blocker/manual validation rerun result:
+
+- `npm run build`: passed.
+- `npm test`: passed, 52 test files / 211 tests.
+- `npm run release:check`: passed.
+- `npm run pack`: passed and generated ignored `release\win-unpacked\BookTrans Desk.exe`.
+- Dev smoke: Vite ready, TypeScript watch 0 errors, Electron process observed.
+- Packaged startup smoke: `BookTrans Desk.exe` launched, exposed a main window handle, and was responding.
+- Real desktop click-through: still `BLOCKED_MANUAL`.
+
 ## Pack Status
 
-Prior S7 and S10 packaged validation preparation passed `npm run pack`. S11 pack did not complete because electron-builder became blocked around ignored `release\win-unpacked` output. Release artifacts remain uncommitted.
+Prior S7 and S10 packaged validation preparation passed `npm run pack`. S11 pack did not complete because electron-builder became blocked around ignored `release\win-unpacked` output. S13 rerun passed `npm run pack` and produced `release\win-unpacked\BookTrans Desk.exe`; release artifacts remain ignored and uncommitted.
 
 ## Functional Readiness Matrix
 
@@ -61,7 +71,7 @@ Prior S7 and S10 packaged validation preparation passed `npm run pack`. S11 pack
 - Save dialogs for all export categories.
 - External opening of exported EPUB/ZIP/PPTX/HTML/Markdown/JSON.
 - Packaged app click-through from `release/win-unpacked`.
-- S11 pack completion from a clean Windows session.
+- Human-operated click-through against the packaged app.
 
 ## PDF Translation HOLD
 
@@ -72,7 +82,7 @@ PDF translation is still experimental. It may be used internally for page-level 
 - Code readiness: high.
 - Product-shell readiness: improved by S12 UX refactor.
 - Automated validation: pass for build/test/release:check.
-- Packaged validation: blocked in S11 by process/file lock.
+- Packaged validation: S13 pack and startup smoke passed; human packaged click-through pending.
 - Manual UI validation: blocked/pending.
 - Internal alpha readiness: blocked by manual validation.
 - Public release readiness: no.
@@ -80,9 +90,7 @@ PDF translation is still experimental. It may be used internally for page-level 
 
 ## Recommendation
 
-Proceed with an S12 blocker-fix and validation-rerun stage:
+Proceed with a human desktop validation pass:
 
-- clear stale dev/electron-builder processes
-- rerun `npm run pack` from a fresh PowerShell session
 - complete the real Windows desktop click-through checklist
 - then revisit internal alpha readiness and merge-to-master preparation

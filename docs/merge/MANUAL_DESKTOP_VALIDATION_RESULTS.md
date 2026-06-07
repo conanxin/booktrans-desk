@@ -174,3 +174,53 @@ All PDF real desktop items remain `BLOCKED_MANUAL` because the user did not comp
 - Internal alpha readiness: `BLOCKED_BY_MANUAL_VALIDATION`.
 - Public release: `NO`.
 - PDF translation public release: `HOLD`.
+
+## S13 Rerun Addendum
+
+- Date: 2026-06-07
+- Branch: `merge-documuse-studio`
+- Commit under validation: `1ff11c6 refactor: redesign DocuMuse Studio workspace shell`
+- Synthetic EPUB: `temp/manual-fixtures/synthetic-reading.epub`
+- Synthetic PDF: `temp/manual-fixtures/synthetic-paper.pdf`
+- Fixture status: present and ignored by git.
+- Public release: not created.
+- PDF translation public release: HOLD.
+
+### S13 Command Results
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `git checkout merge-documuse-studio` | PASS | Already on branch. |
+| `git pull` | PASS | Already up to date with `origin/merge-documuse-studio`. |
+| `git status` | PASS | Clean before S13 docs. |
+| `npm run build` | PASS | TypeScript and Vite build passed. |
+| `npm test` | PASS | 52 test files / 211 tests passed. |
+| `npm run release:check` | PASS | Build, tests, audit, and repository safety scan passed. |
+| `npm run pack` | PASS | Generated ignored `release\win-unpacked\BookTrans Desk.exe`. |
+
+### S13 Dev / Packaged Smoke
+
+| Item | Result | Notes |
+| --- | --- | --- |
+| Dev Vite ready | PASS | Vite ready on `http://127.0.0.1:5173/`. |
+| Dev TypeScript watch | PASS | `Found 0 errors. Watching for file changes.` |
+| Dev Electron process | PASS_PROCESS_SMOKE | Electron process observed. |
+| Packaged exe generated | PASS | `release\win-unpacked\BookTrans Desk.exe`. |
+| Packaged exe ignored | PASS | `release/` remains ignored by `.gitignore`. |
+| Packaged app process launch | PASS_PROCESS_SMOKE | Process started, main window handle existed, process was responding. |
+| Real interactive click-through | BLOCKED_MANUAL | File picker, save dialog, restart persistence, and external-open checks require a human-operated desktop session. |
+
+### S13 Workspace Shell Review
+
+| Area | Result | Notes |
+| --- | --- | --- |
+| Top bar | PASS_SOURCE_REVIEW | No global translation wizard remains in the renderer shell. |
+| Left rail | PASS_SOURCE_REVIEW | Left rail is limited to import, document library, selected document, and task status. |
+| Main workspace | PASS_SOURCE_REVIEW | Center stage is reader-focused for EPUB/PDF. |
+| Right context panel | PASS_SOURCE_REVIEW | AI, Export, Translation, and Details tabs are present. |
+| Translation positioning | PASS_SOURCE_REVIEW | Translation is contextualized as a task capability. |
+| PDF HOLD | PASS_SOURCE_REVIEW | PDF translation is labeled `Experimental / HOLD` in the Translation context. |
+
+### S13 Manual Items
+
+EPUB/PDF real import, reading, export, restart persistence, and external-open checks remain `BLOCKED_MANUAL`. This addendum does not convert any unperformed real desktop item to PASS.

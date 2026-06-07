@@ -4,7 +4,7 @@
 
 - Severity: blocker
 - Area: packaging
-- Status: open
+- Status: fixed in S13 rerun
 - Steps to reproduce:
   1. Run `npm run pack`.
   2. Observe electron-builder packaging `release\win-unpacked`.
@@ -24,6 +24,8 @@
 - Notes:
   - Prior S10 pack passed, so this may be environment/process-lock related rather than a product code regression.
   - No generated release artifacts are committed.
+  - S13 rerun cleared this blocker in the current environment: `npm run pack` completed and generated `release\win-unpacked\BookTrans Desk.exe`.
+  - `release/` remained ignored and no release artifact was committed.
 
 ## S11-002
 
