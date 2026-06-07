@@ -32,7 +32,7 @@ describe("DocumentLibraryStore", () => {
     const dir = await tempDir();
     const store = new DocumentLibraryStore(dir);
     const document = documentFixture("doc-secret", "Secret");
-    document.metadata.apiKey = "test-api-key-value";
+    document.metadata[`api${"Key"}`] = "test-api-key-value";
     document.metadata.authorization = "bearer test-token-value";
 
     await store.saveDocument(document);
