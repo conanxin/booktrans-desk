@@ -58,6 +58,10 @@ The Phase 3A PDF MVP remains suitable for internal automated validation only. It
 
 Real PDF translation testing after this record found output contamination from MiniMax-M3, including `<think>` reasoning, assistant prompt commentary, English explanations, and noisy PDF title metadata. Phase 3B adds provider preset hardening, output sanitizing, validation, repair retry, PDF export quality blocking, title cleanup, and layout improvements. This does not change the manual validation decision: PDF remains HOLD.
 
+## Phase 3C Follow-up
+
+Real packaged UI testing confirmed the app can open and import PDFs, but MiniMax-M3 PDF translation start failed with a raw `Translation canceled` IPC message. Phase 3C adds structured error codes, fresh cancellation state, PDF chunk diagnostics, provider error mapping, and model connection testing. PDF remains HOLD.
+
 ## Next Steps
 
 - Run the packed app in a visible Windows desktop session.

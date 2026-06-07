@@ -68,3 +68,7 @@ This fix is required before further PDF testing, but it does not make PDF ready 
 - Confirm no `<think>`, `Translation:`, `The user wants`, or English prompt commentary appears in exported content.
 - Open the exported PDF in at least one external reader.
 - Keep PDF release status HOLD until visible UI and reader validation pass.
+
+## Phase 3C Follow-up
+
+Real packaged UI testing then found PDF translation start failures reported as raw `Translation canceled` IPC errors. Phase 3C adds structured cancellation/provider/PDF chunk diagnostics and a MiniMax connection test. PDF remains HOLD.

@@ -10,6 +10,8 @@ Automated PDF import, translation, validation, and export tests pass, and the pa
 
 Phase 3B adds output quality protection after real testing found MiniMax reasoning and prompt commentary in translated PDFs. The app now disables MiniMax thinking output, sanitizes and validates model output, retries invalid chunks, and blocks PDF export if polluted translated text remains. PDF release status is still HOLD until a real manual workflow passes.
 
+Phase 3C adds diagnostics for real MiniMax PDF translation startup failures. Raw `Translation canceled` IPC errors are mapped to structured codes and Chinese messages, PDF chunking is checked before provider calls, and a model connection test is available. PDF release status remains HOLD.
+
 ## Supported
 
 - Import PDFs with copyable/extractable text.

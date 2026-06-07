@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Translator } from "../src/shared/types.js";
-import { TRANSLATION_FAILURE_PLACEHOLDER, translateWithQualityGate } from "../src/main/translate/translateWithQualityGate.js";
+import { translateWithQualityGate } from "../src/main/translate/translateWithQualityGate.js";
 
 class SequenceTranslator implements Translator {
   calls: Array<{ text: string; repair?: boolean }> = [];
@@ -26,7 +26,6 @@ describe("translateWithQualityGate", () => {
 
   it("does not return polluted output after retries fail", async () => {
     const translator = new SequenceTranslator(["<think>a</think>The user wants", "Let me translate", "Translation:"]);
-    const translated = await translateWithQualityGate(translator, "hello");
-    expect(translated).toBe(TRANSLATION_FAILURE_PLACEHOLDER);
+    await expect(translateWithQualityGate(translator, "hello")).rejects.toMatchObject({ code: "TRANSLATION_OUTPUT_INVALID" });
   });
 });

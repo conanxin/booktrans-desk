@@ -10,6 +10,7 @@ import type {
   TranslationJobSummary,
   TranslationProgress,
   TranslationSettings,
+  TranslatorConnectionTestResult,
   ValidationReport
 } from "../shared/types.js";
 
@@ -20,8 +21,10 @@ const api = {
   importEpub: (): Promise<ImportedDocument | null> => ipcRenderer.invoke("book:import"),
   getSettings: (): Promise<TranslationSettings> => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings: TranslationSettings): Promise<TranslationSettings> => ipcRenderer.invoke("settings:save", settings),
-  startTranslation: (settings: TranslationSettings): Promise<void> => ipcRenderer.invoke("translation:start", settings),
+  startTranslation: (settings: TranslationSettings): Promise<IpcResult<{ completed: true }>> => ipcRenderer.invoke("translation:start", settings),
   cancelTranslation: (): Promise<void> => ipcRenderer.invoke("translation:cancel"),
+  testTranslatorConnection: (settings: TranslationSettings): Promise<IpcResult<TranslatorConnectionTestResult>> =>
+    ipcRenderer.invoke("translator:testConnection", settings),
   clearJobCache: (): Promise<void> => ipcRenderer.invoke("translation:clear-cache"),
   exportEpub: (): Promise<ExportedDocumentResult> => ipcRenderer.invoke("book:export"),
   saveValidationMarkdown: (

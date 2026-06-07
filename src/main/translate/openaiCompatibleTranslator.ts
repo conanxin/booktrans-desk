@@ -1,5 +1,6 @@
 import type { ProviderPreset, TranslationRequestContext, TranslationSettings, Translator } from "../../shared/types.js";
 import { buildTranslationPrompt } from "./buildTranslationPrompt.js";
+import { createTranslationError, sanitizeErrorText, TranslationError } from "./translationErrors.js";
 
 interface ChatCompletionResponse {
   choices?: Array<{ message?: { content?: unknown } }>;
@@ -39,11 +40,12 @@ export class OpenAICompatibleTranslator implements Translator {
       try {
         return await this.requestTranslation(text, signal, context);
       } catch (error) {
-        if (isAbortError(error) || signal?.aborted) {
-          throw new Error("Translation cancelled.");
+        const normalized = normalizeProviderError(error, signal);
+        if (normalized.code === "USER_CANCELLED") {
+          throw normalized;
         }
-        lastError = sanitizeError(error);
-        if (attempt >= MAX_ATTEMPTS || !isRetryableError(error)) {
+        lastError = normalized;
+        if (attempt >= MAX_ATTEMPTS || !isRetryableError(normalized)) {
           throw lastError;
         }
         await delay(backoffMs(attempt), signal);
@@ -78,17 +80,27 @@ export class OpenAICompatibleTranslator implements Translator {
       try {
         data = (await response.json()) as ChatCompletionResponse;
       } catch (error) {
-        throw new Error(`Translation response JSON could not be parsed: ${messageOf(error)}`);
+        throw new TranslationError("PROVIDER_REQUEST_FAILED", "Translation response JSON could not be parsed.", sanitizeErrorText(messageOf(error)));
       }
 
       const translated = data.choices?.[0]?.message?.content;
       if (typeof translated !== "string") {
-        throw new Error("Translation response message content was not a string.");
+        throw createTranslationError("PROVIDER_REQUEST_FAILED", "Translation response message content was not a string.");
       }
       if (!translated.trim()) {
-        throw new Error("Translation response message content was empty.");
+        throw createTranslationError("PROVIDER_REQUEST_FAILED", "Translation response message content was empty.");
       }
       return translated;
+    } catch (error) {
+      if (isAbortError(error)) {
+        if (signal?.aborted) {
+          throw createTranslationError("USER_CANCELLED", error);
+        }
+        if (timeoutController.signal.aborted) {
+          throw createTranslationError("PROVIDER_TIMEOUT", error);
+        }
+      }
+      throw error;
     } finally {
       clearTimeout(timeout);
     }
@@ -129,7 +141,10 @@ class HttpTranslationError extends Error {
 }
 
 function isRetryableError(error: unknown): boolean {
-  return error instanceof HttpTranslationError && RETRY_STATUS.has(error.status);
+  if (error instanceof HttpTranslationError) {
+    return RETRY_STATUS.has(error.status);
+  }
+  return error instanceof TranslationError && (error.code === "PROVIDER_RATE_LIMITED" || error.code === "PROVIDER_TIMEOUT" || error.code === "PROVIDER_REQUEST_FAILED");
 }
 
 async function safeReadBody(response: Response): Promise<string> {
@@ -163,7 +178,7 @@ function delay(ms: number, signal?: AbortSignal): Promise<void> {
       "abort",
       () => {
         clearTimeout(timeout);
-        reject(new Error("Translation cancelled."));
+        reject(createTranslationError("USER_CANCELLED"));
       },
       { once: true }
     );
@@ -176,7 +191,7 @@ function backoffMs(attempt: number): number {
 
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
-    throw new Error("Translation cancelled.");
+    throw createTranslationError("USER_CANCELLED");
   }
 }
 
@@ -184,12 +199,30 @@ function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
-function sanitizeError(error: unknown): Error {
-  return new Error(sanitizeText(messageOf(error)));
+function normalizeProviderError(error: unknown, signal?: AbortSignal): TranslationError {
+  if (error instanceof TranslationError) {
+    return error;
+  }
+  if (signal?.aborted) {
+    return createTranslationError("USER_CANCELLED", error);
+  }
+  if (error instanceof HttpTranslationError) {
+    if (error.status === 401 || error.status === 403) {
+      return createTranslationError("PROVIDER_AUTH_FAILED", error.message);
+    }
+    if (error.status === 429) {
+      return createTranslationError("PROVIDER_RATE_LIMITED", error.message);
+    }
+    return createTranslationError("PROVIDER_REQUEST_FAILED", error.message);
+  }
+  if (isAbortError(error)) {
+    return createTranslationError("PROVIDER_REQUEST_FAILED", error);
+  }
+  return createTranslationError("PROVIDER_REQUEST_FAILED", error);
 }
 
 function sanitizeText(text: string): string {
-  return text.replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, "Bearer [redacted]");
+  return sanitizeErrorText(text);
 }
 
 function messageOf(error: unknown): string {

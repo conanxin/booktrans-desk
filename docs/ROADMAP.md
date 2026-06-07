@@ -143,6 +143,16 @@
 - Improve translated PDF title cleanup, A4 layout, Chinese font candidates, measured wrapping, and overflow prevention.
 - PDF support remains HOLD until real visible UI and reader validation pass.
 
+## Phase 3C PDF Translation Start Failure Diagnostics
+
+- Status: current diagnostics target `v0.3.2-pdf-diagnostics-fix`.
+- Fix real MiniMax-M3 PDF translation startup failure reporting raw `Translation canceled`.
+- Add structured translation error codes, provider error mapping, timeout/auth/rate-limit separation, and UI-friendly Chinese errors.
+- Add fresh cancellation state per job so old cancelled signals cannot contaminate new jobs.
+- Add PDF chunk planning diagnostics and explicit no-text/chunking failure codes.
+- Add MiniMax connection test in settings.
+- PDF support remains HOLD until real MiniMax PDF workflow and external reader validation pass.
+
 ## Phase 3 Local Library Management
 
 - Multi-book local library.

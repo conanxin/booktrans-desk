@@ -27,9 +27,9 @@ describe("OpenAICompatibleTranslator", () => {
   });
 
   it("throws on an empty response", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ choices: [{ message: { content: "" } }] })));
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse({ choices: [{ message: { content: "" } }] }))));
     const translator = new OpenAICompatibleTranslator(settings, 1_000);
-    await expect(translator.translate("hello")).rejects.toThrow("empty");
+    await expect(translator.translate("hello")).rejects.toMatchObject({ code: "PROVIDER_REQUEST_FAILED" });
   });
 
   it("cancels an in-flight request", async () => {
@@ -45,7 +45,7 @@ describe("OpenAICompatibleTranslator", () => {
     const controller = new AbortController();
     const promise = translator.translate("hello", controller.signal);
     controller.abort();
-    await expect(promise).rejects.toThrow("cancelled");
+    await expect(promise).rejects.toMatchObject({ code: "USER_CANCELLED" });
   });
 });
 

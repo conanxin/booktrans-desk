@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-lightgrey)](.github/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.3.1--translation--quality--fix-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.3.2--pdf--diagnostics--fix-orange)](CHANGELOG.md)
 
 BookTrans Desk is an open source desktop alpha for translating reflowable EPUB books into Simplified Chinese with an OpenAI-compatible API. It is local-first: no telemetry, no account system, no cloud sync, and no bundled commercial EPUB content.
 
@@ -11,6 +11,8 @@ Phase 3A status: `v0.3.0-pdf-translation-mvp` adds an internal MVP for copyable 
 Phase 3A-V manual PDF validation status: HOLD. Automatic build, test, audit, release check, pack, and dist passed, and the packed executable passed a process smoke check, but visible packaged UI validation and exported PDF external reader-open validation were blocked by the current environment.
 
 Phase 3B status: `v0.3.1-translation-quality-fix` hardens MiniMax/OpenAI-compatible translation output with a strict prompt, MiniMax thinking disabled, output sanitizing, validation, retry, PDF export quality blocking, cleaned PDF titles, and safer PDF wrapping. PDF support remains HOLD until real UI and external reader validation pass.
+
+Phase 3C status: `v0.3.2-pdf-diagnostics-fix` fixes PDF translation start diagnostics after real MiniMax testing reported raw `Translation canceled` errors. It adds structured error codes, fresh cancellation state per job, PDF chunk diagnostics, provider error mapping, MiniMax connection testing, and friendly UI error messages. PDF support remains HOLD.
 
 > Alpha warning: this project is still intended for technical testers. Keep backups of original EPUB files and review provider privacy terms before translating private or copyrighted content.
 
@@ -130,6 +132,7 @@ PDF support: text PDFs only. Scanned PDFs, image-only PDFs, encrypted PDFs, OCR,
 - [Phase 3A PDF Translation MVP Report](docs/PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md)
 - [Phase 3A Manual PDF Validation Report](docs/PHASE_3A_MANUAL_PDF_VALIDATION_REPORT.md)
 - [Phase 3B Translation Output Quality Fix Report](docs/PHASE_3B_TRANSLATION_OUTPUT_QUALITY_FIX_REPORT.md)
+- [Phase 3C PDF Translation Failure Diagnostics Report](docs/PHASE_3C_PDF_TRANSLATION_FAILURE_DIAGNOSTICS_REPORT.md)
 - [Windows Unsigned Warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md)
 - [RC Burn-down](docs/releases/RC_BURNDOWN.md)
 - [Roadmap](docs/ROADMAP.md)

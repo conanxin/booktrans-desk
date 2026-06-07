@@ -4,6 +4,8 @@ Phase 3A adds a first PDF translation MVP for text PDFs.
 
 Phase 3B adds translation output quality hardening after real testing found model reasoning and prompt commentary in exported PDFs.
 
+Phase 3C adds startup diagnostics after real MiniMax testing found raw `Translation canceled` errors at the translation start/provider-call stage.
+
 ## Scope
 
 Supported flow:
@@ -48,6 +50,19 @@ Each chunk now runs through:
 3. output validation,
 4. repair retry up to two times,
 5. visible failed-chunk placeholder if the output remains invalid.
+
+Before provider calls, the PDF pipeline builds a chunk plan. If no extractable text exists it returns `PDF_NO_TEXT`; if text exists but no chunks can be generated it returns `PDF_CHUNKING_FAILED`.
+
+Provider and cancellation failures are mapped to structured codes:
+
+- `USER_CANCELLED`
+- `PROVIDER_AUTH_FAILED`
+- `PROVIDER_RATE_LIMITED`
+- `PROVIDER_TIMEOUT`
+- `PROVIDER_REQUEST_FAILED`
+- `TRANSLATION_OUTPUT_INVALID`
+
+Diagnostic logs include page count, text length, chunk count, provider preset, model, request text length, and error code. They do not include API keys, Authorization headers, full source text, or full translations.
 
 The unit model is:
 

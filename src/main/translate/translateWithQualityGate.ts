@@ -1,5 +1,6 @@
 import type { TranslationQualityProgress, Translator } from "../../shared/types.js";
 import { sanitizeTranslationOutput } from "./sanitizeTranslationOutput.js";
+import { createTranslationError } from "./translationErrors.js";
 import { validateTranslationOutput } from "./validateTranslationOutput.js";
 
 export const TRANSLATION_FAILURE_PLACEHOLDER = "【本段翻译失败，请重试。】";
@@ -59,7 +60,10 @@ export async function translateWithQualityGate(
   emitStats(stats, callbacks);
 
   const finalValidation = validateTranslationOutput(sourceText, lastCleaned);
-  return finalValidation.ok && lastCleaned ? lastCleaned : TRANSLATION_FAILURE_PLACEHOLDER;
+  if (finalValidation.ok && lastCleaned) {
+    return lastCleaned;
+  }
+  throw createTranslationError("TRANSLATION_OUTPUT_INVALID", finalValidation.errors.join(", ") || "quality gate rejected translation output");
 }
 
 export function createStats(): MutableQualityStats {

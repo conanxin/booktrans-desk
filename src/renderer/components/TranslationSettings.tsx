@@ -6,11 +6,12 @@ interface TranslationSettingsProps {
   settings: TranslationSettings;
   busy: boolean;
   onSave: (settings: TranslationSettings) => void;
+  onTestConnection?: (settings: TranslationSettings) => void;
   glossaryCount?: number;
   defaultOpen?: boolean;
 }
 
-export function TranslationSettingsPanel({ settings, busy, onSave, glossaryCount = 0, defaultOpen = false }: TranslationSettingsProps) {
+export function TranslationSettingsPanel({ settings, busy, onSave, onTestConnection, glossaryCount = 0, defaultOpen = false }: TranslationSettingsProps) {
   const [draft, setDraft] = useState(settings);
 
   useEffect(() => {
@@ -71,13 +72,7 @@ export function TranslationSettingsPanel({ settings, busy, onSave, glossaryCount
         </label>
         <label>
           <span>API 密钥</span>
-          <input
-            type="password"
-            value={draft.apiKey}
-            onChange={(event) => update("apiKey", event.target.value)}
-            disabled={busy}
-            autoComplete="off"
-          />
+          <input type="password" value={draft.apiKey} onChange={(event) => update("apiKey", event.target.value)} disabled={busy} autoComplete="off" />
           <small>API 密钥仅保存在本机，不会写入任务缓存或诊断包。</small>
         </label>
         <label>
@@ -113,17 +108,17 @@ export function TranslationSettingsPanel({ settings, busy, onSave, glossaryCount
           />
         </label>
         <label className="check-row">
-          <input
-            type="checkbox"
-            checked={Boolean(draft.useMock)}
-            onChange={(event) => update("useMock", event.target.checked)}
-            disabled={busy}
-          />
+          <input type="checkbox" checked={Boolean(draft.useMock)} onChange={(event) => update("useMock", event.target.checked)} disabled={busy} />
           <span>使用模拟翻译器</span>
         </label>
         <button onClick={() => onSave(draft)} disabled={busy}>
           保存设置
         </button>
+        {onTestConnection ? (
+          <button type="button" onClick={() => onTestConnection(draft)} disabled={busy}>
+            测试模型连接
+          </button>
+        ) : null}
       </div>
     </details>
   );

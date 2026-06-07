@@ -4,6 +4,17 @@ export type ExternalValidationStatus = ValidationStatus | "unavailable";
 export type TranslationStyle = "faithful" | "fluent" | "academic" | "popular";
 export type ProviderPreset = "openai-compatible" | "minimax";
 export type SourceDocumentType = "epub" | "pdf";
+export type TranslationErrorCode =
+  | "USER_CANCELLED"
+  | "PDF_NO_TEXT"
+  | "PDF_CHUNKING_FAILED"
+  | "PROVIDER_REQUEST_FAILED"
+  | "PROVIDER_AUTH_FAILED"
+  | "PROVIDER_RATE_LIMITED"
+  | "PROVIDER_TIMEOUT"
+  | "TRANSLATION_OUTPUT_INVALID"
+  | "TRANSLATION_QUALITY_GATE_BLOCKED"
+  | "UNKNOWN_TRANSLATION_ERROR";
 
 export interface BookMetadata {
   title: string;
@@ -210,6 +221,13 @@ export interface IpcResult<T> {
   ok: boolean;
   data?: T;
   error?: string;
+  code?: TranslationErrorCode;
+}
+
+export interface TranslatorConnectionTestResult {
+  status: "success" | "auth_failed" | "timeout" | "invalid_response" | "failed";
+  message: string;
+  code?: TranslationErrorCode;
 }
 
 export interface JobChapterDetail {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ExternalEpubCheckReport, ImportedBook, ImportedDocument, ImportedPdfDocument, TranslationProgress, TranslationSettings, ValidationReport, PdfValidationReport } from "../shared/types.js";
+import type { ExternalEpubCheckReport, ImportedBook, ImportedDocument, ImportedPdfDocument, PdfValidationReport, TranslationProgress, TranslationSettings, ValidationReport } from "../shared/types.js";
 import { BookInfoCard } from "./components/BookInfoCard.js";
 import { ChapterList } from "./components/ChapterList.js";
 import { ExportHistoryPanel } from "./components/ExportHistoryPanel.js";
@@ -8,6 +8,7 @@ import { JobManagerPanel } from "./components/JobManagerPanel.js";
 import { ProgressPanel } from "./components/ProgressPanel.js";
 import { TranslationSettingsPanel } from "./components/TranslationSettings.js";
 import { ValidationReportPanel } from "./components/ValidationReportPanel.js";
+import { formatIpcError, sanitizeRendererError } from "./errorMapping.js";
 
 const emptyProgress: TranslationProgress = {
   translatedChunks: 0,
@@ -57,21 +58,22 @@ export function App() {
   async function importBook() {
     setMessage("");
     const imported = await window.bookTrans.importEpub();
-    if (imported) {
-      setBook(imported);
-      setProgress(emptyProgress);
-      setCanExport(false);
-      setValidation(null);
-      setExternalValidation(undefined);
-      if (isEpub(imported) && imported.loadedProfile) {
-        const saved = await window.bookTrans.getSettings();
-        setSettings(saved);
-        setMessage(`已导入《${imported.metadata.title}》，并自动载入本书的翻译配置。`);
-      } else if (isPdf(imported)) {
-        setMessage(imported.isScannedLike ? "已导入 PDF，但它可能是扫描版或图片型 PDF，当前版本暂不支持 OCR。" : `已导入 PDF：${imported.title ?? imported.filePath}。`);
-      } else {
-        setMessage(`已导入《${imported.metadata.title}》。`);
-      }
+    if (!imported) {
+      return;
+    }
+    setBook(imported);
+    setProgress(emptyProgress);
+    setCanExport(false);
+    setValidation(null);
+    setExternalValidation(undefined);
+    if (isEpub(imported) && imported.loadedProfile) {
+      const saved = await window.bookTrans.getSettings();
+      setSettings(saved);
+      setMessage(`已导入《${imported.metadata.title}》，并自动载入本书的翻译配置。`);
+    } else if (isPdf(imported)) {
+      setMessage(imported.isScannedLike ? "已导入 PDF，但它可能是扫描版或图片型 PDF，当前版本暂不支持 OCR。" : `已导入 PDF：${imported.title ?? imported.filePath}`);
+    } else {
+      setMessage(`已导入《${imported.metadata.title}》。`);
     }
   }
 
@@ -81,9 +83,15 @@ export function App() {
     setMessage("设置已保存到本机。");
   }
 
+  async function testTranslatorConnection(nextSettings: TranslationSettings) {
+    setMessage("正在测试模型连接...");
+    const result = await window.bookTrans.testTranslatorConnection(nextSettings);
+    setMessage(result.ok && result.data ? result.data.message : formatIpcError(result));
+  }
+
   async function startTranslation() {
     if (!book) {
-      setMessage("请先导入一本 EPUB。");
+      setMessage("请先导入 EPUB 或 PDF。");
       return;
     }
     setBusy(true);
@@ -92,10 +100,14 @@ export function App() {
     setExternalValidation(undefined);
     setMessage(isPdf(book) ? "PDF 翻译任务已开始。" : "EPUB 翻译任务已开始。");
     try {
-      await window.bookTrans.startTranslation(settings);
+      const result = await window.bookTrans.startTranslation(settings);
+      if (!result.ok) {
+        setMessage(formatIpcError(result));
+        return;
+      }
       setMessage(isPdf(book) ? "PDF 翻译已完成，可以导出 PDF。" : "EPUB 翻译已完成，可以导出 EPUB。");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "翻译失败。");
+      setMessage(sanitizeRendererError(error instanceof Error ? error.message : "翻译失败。"));
     } finally {
       setBusy(false);
     }
@@ -116,7 +128,7 @@ export function App() {
         setMessage(`已导出：${result.outputPath}`);
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "导出失败。");
+      setMessage(sanitizeRendererError(error instanceof Error ? error.message : "导出失败。"));
     }
   }
 
@@ -179,7 +191,7 @@ export function App() {
           <section className="workspace-grid">
             <aside className="sidebar">
               <ImportPanel onImport={importBook} busy={busy} />
-              <TranslationSettingsPanel settings={settings} onSave={saveSettings} busy={busy} glossaryCount={glossaryCount} />
+              <TranslationSettingsPanel settings={settings} onSave={saveSettings} onTestConnection={testTranslatorConnection} busy={busy} glossaryCount={glossaryCount} />
               <div className="actions">
                 <button className="primary" onClick={startTranslation} disabled={!book || busy || (isPdf(book) && book.isScannedLike)}>
                   {currentDocumentType === "pdf" ? "开始翻译 PDF" : "开始翻译 EPUB"}
@@ -202,10 +214,10 @@ export function App() {
               </div>
             </aside>
 
-          <section className="content">
-            <BookInfoCard book={book} />
+            <section className="content">
+              <BookInfoCard book={book} />
               <ChapterList document={book} progress={progress.chapters} />
-            <ProgressPanel progress={progress} percent={percent} message={message} validation={validation} />
+              <ProgressPanel progress={progress} percent={percent} message={message} validation={validation} />
               <ValidationReportPanel report={validation} externalReport={externalValidation} title={getDocumentTitle(book)} onMessage={setMessage} />
             </section>
           </section>
@@ -229,7 +241,7 @@ export function App() {
 
       {activeTab === "settings" ? (
         <section className="settings-layout">
-          <TranslationSettingsPanel settings={settings} onSave={saveSettings} busy={busy} glossaryCount={glossaryCount} defaultOpen />
+          <TranslationSettingsPanel settings={settings} onSave={saveSettings} onTestConnection={testTranslatorConnection} busy={busy} glossaryCount={glossaryCount} defaultOpen />
           <section className="panel">
             <h2>隐私与安全</h2>
             <p className="muted">

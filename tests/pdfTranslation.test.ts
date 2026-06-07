@@ -31,7 +31,7 @@ describe("PDF translation", () => {
 
     await expect(
       translatePdf(pdf, { baseUrl: "", apiKey: "", model: "mock", useMock: true, style: "faithful" }, new AbortController().signal, () => undefined)
-    ).rejects.toThrow("OCR");
+    ).rejects.toMatchObject({ code: "PDF_NO_TEXT" });
 
     await fs.rm(fixtures.dir, { recursive: true, force: true });
   });

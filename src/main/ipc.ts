@@ -1,8 +1,10 @@
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import type {
   ExportHistoryItem,
+  ExportedDocumentResult,
   ExportedEpubResult,
   ExportedPdfResult,
   ExternalEpubCheckReport,
@@ -14,31 +16,36 @@ import type {
   PdfTranslationJobResult,
   TranslationJobResult,
   TranslationProfile,
+  TranslationProgress,
   TranslationSettings,
+  TranslatorConnectionTestResult,
   ValidationReport
 } from "../shared/types.js";
 import { validationReportToMarkdown } from "../shared/validationReport.js";
 import { getSettings, saveSettings } from "./config/settings.js";
-import { createExportHistoryStore, normalizeExternalStatus, normalizeValidationStatus } from "./export/exportHistoryStore.js";
 import { createDiagnosticBundle, defaultDiagnosticBundleName } from "./diagnostics/createDiagnosticBundle.js";
-import { readEpub } from "./epub/readEpub.js";
 import { runExternalEpubCheck } from "./epub/runExternalEpubCheck.js";
+import { readEpub } from "./epub/readEpub.js";
 import { validateEpub } from "./epub/validateEpub.js";
 import { writeTranslatedEpub } from "./epub/writeTranslatedEpub.js";
+import { createExportHistoryStore, normalizeExternalStatus, normalizeValidationStatus } from "./export/exportHistoryStore.js";
 import { exportTranslatedPdf } from "./pdf/exportTranslatedPdf.js";
 import { readPdf } from "./pdf/readPdf.js";
 import { translatePdf } from "./pdf/translatePdf.js";
 import { validatePdf } from "./pdf/validatePdf.js";
 import { createTranslationProfileStore, getBookFingerprint } from "./profile/translationProfileStore.js";
 import { translateBook, type TranslateBookOptions } from "./translationJob.js";
+import { TranslationCancellationManager } from "./translate/cancellation.js";
 import { JobManager, sanitizeError } from "./translate/jobManager.js";
+import { createTranslationError, normalizeTranslationError, toDiagnosticLines } from "./translate/translationErrors.js";
 import { createTranslationJobStore } from "./translate/translationJobStore.js";
+import { testTranslatorConnection } from "./translate/testTranslatorConnection.js";
 
 let currentBook: ImportedBook | null = null;
 let currentPdf: ImportedPdfDocument | null = null;
 let lastResult: TranslationJobResult | null = null;
 let lastPdfResult: PdfTranslationJobResult | null = null;
-let activeController: AbortController | null = null;
+const cancellation = new TranslationCancellationManager();
 
 export function registerIpc(mainWindow: BrowserWindow): void {
   const store = () => createTranslationJobStore(app.getPath("userData"));
@@ -84,32 +91,28 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   }
 
   async function runManagedTranslation(book: ImportedBook, settings: TranslationSettings, options: TranslateBookOptions = {}): Promise<void> {
-    if (activeController) {
-      throw new Error("A translation task is already running.");
+    if (cancellation.active) {
+      throw createTranslationError("UNKNOWN_TRANSLATION_ERROR", "A translation task is already running.");
     }
-    activeController = new AbortController();
+    const running = cancellation.start(`epub-${crypto.randomUUID()}`);
+    let lastProgress: TranslationProgress | null = null;
     try {
       currentBook = book;
       lastResult = await translateBook(
         book,
         settings,
-        activeController.signal,
+        running.abortController.signal,
         (progress) => {
+          lastProgress = progress;
           mainWindow.webContents.send("translation:progress", progress);
         },
         { ...options, userDataDir: app.getPath("userData") }
       );
     } catch (error) {
-      mainWindow.webContents.send("translation:progress", {
-        translatedChunks: 0,
-        totalChunks: 0,
-        status: activeController.signal.aborted ? "cancelled" : "failed",
-        chapters: [],
-        log: [sanitizeError(error)]
-      });
+      emitFailureProgress(mainWindow, error, lastProgress, running.abortController.signal.aborted);
       throw error;
     } finally {
-      activeController = null;
+      cancellation.clear(running.jobId);
     }
   }
 
@@ -153,39 +156,53 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   ipcMain.handle("settings:get", () => getSettings());
   ipcMain.handle("settings:save", (_event, settings: TranslationSettings) => saveSettings(settings));
 
-  ipcMain.handle("translation:start", async (_event, settings: TranslationSettings) => {
+  ipcMain.handle("translator:testConnection", async (_event, settings: TranslationSettings): Promise<IpcResult<TranslatorConnectionTestResult>> => {
+    try {
+      const result = await testTranslatorConnection(settings);
+      return { ok: result.status === "success", data: result, error: result.status === "success" ? undefined : result.message, code: result.code };
+    } catch (error) {
+      const normalized = normalizeTranslationError(error);
+      return { ok: false, error: normalized.message, code: normalized.code };
+    }
+  });
+
+  ipcMain.handle("translation:start", async (_event, settings: TranslationSettings): Promise<IpcResult<{ completed: true }>> => {
     if (currentPdf) {
-      if (activeController) {
-        throw new Error("A translation task is already running.");
+      if (cancellation.active) {
+        const error = createTranslationError("UNKNOWN_TRANSLATION_ERROR", "A translation task is already running.");
+        return { ok: false, error: error.message, code: error.code };
       }
-      activeController = new AbortController();
+      const running = cancellation.start(`pdf-${crypto.randomUUID()}`);
+      let lastProgress: TranslationProgress | null = null;
       try {
-        lastPdfResult = await translatePdf(currentPdf, settings, activeController.signal, (progress) => {
+        lastPdfResult = await translatePdf(currentPdf, settings, running.abortController.signal, (progress) => {
+          lastProgress = progress;
           mainWindow.webContents.send("translation:progress", progress);
         });
+        return { ok: true, data: { completed: true } };
       } catch (error) {
-        mainWindow.webContents.send("translation:progress", {
-          documentType: "pdf",
-          translatedChunks: 0,
-          totalChunks: 0,
-          status: activeController.signal.aborted ? "cancelled" : "failed",
-          chapters: [],
-          log: [sanitizeError(error)]
-        });
-        throw error;
+        emitFailureProgress(mainWindow, error, lastProgress, running.abortController.signal.aborted, "pdf");
+        const normalized = normalizeTranslationError(error);
+        return { ok: false, error: normalized.message, code: normalized.code };
       } finally {
-        activeController = null;
+        cancellation.clear(running.jobId);
       }
-      return;
     }
     if (!currentBook) {
-      throw new Error("请先导入 EPUB 或 PDF。");
+      const error = createTranslationError("UNKNOWN_TRANSLATION_ERROR", "请先导入 EPUB 或 PDF。");
+      return { ok: false, error: error.message, code: error.code };
     }
-    await runManagedTranslation(currentBook, settings);
+    try {
+      await runManagedTranslation(currentBook, settings);
+      return { ok: true, data: { completed: true } };
+    } catch (error) {
+      const normalized = normalizeTranslationError(error);
+      return { ok: false, error: normalized.message, code: normalized.code };
+    }
   });
 
   ipcMain.handle("translation:cancel", () => {
-    activeController?.abort();
+    cancellation.cancel();
   });
 
   ipcMain.handle("translation:clear-cache", async () => {
@@ -194,7 +211,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     lastPdfResult = null;
   });
 
-  ipcMain.handle("book:export", async (): Promise<ExportedEpubResult | ExportedPdfResult> => {
+  ipcMain.handle("book:export", async (): Promise<ExportedDocumentResult> => {
     if (lastPdfResult) {
       const outputPath = await exportTranslatedPdf(lastPdfResult.document, lastPdfResult.translatedPages, getSettings());
       const validation = await validatePdf(outputPath);
@@ -214,21 +231,21 @@ export function registerIpc(mainWindow: BrowserWindow): void {
   ipcMain.handle(
     "validation:saveMarkdown",
     async (_event, report: ValidationReport | PdfValidationReport, externalValidation: ExternalEpubCheckReport | undefined, title: string): Promise<IpcResult<string | null>> => {
-    try {
-      const safeTitle = (title || "book").replace(/[\\/:*?"<>|]+/g, "_").trim() || "book";
-      const result = await dialog.showSaveDialog(mainWindow, {
-        title: "Save validation report",
-        defaultPath: `${safeTitle}.validation-report.md`,
-        filters: [{ name: "Markdown", extensions: ["md"] }]
-      });
-      if (result.canceled || !result.filePath) {
-        return { ok: true, data: null };
+      try {
+        const safeTitle = (title || "book").replace(/[\\/:*?"<>|]+/g, "_").trim() || "book";
+        const result = await dialog.showSaveDialog(mainWindow, {
+          title: "Save validation report",
+          defaultPath: `${safeTitle}.validation-report.md`,
+          filters: [{ name: "Markdown", extensions: ["md"] }]
+        });
+        if (result.canceled || !result.filePath) {
+          return { ok: true, data: null };
+        }
+        await fs.writeFile(result.filePath, reportToMarkdown(report, externalValidation, `${safeTitle} Validation Report`), "utf8");
+        return { ok: true, data: result.filePath };
+      } catch (error) {
+        return { ok: false, error: sanitizeError(error) };
       }
-      await fs.writeFile(result.filePath, reportToMarkdown(report, externalValidation, `${safeTitle} Validation Report`), "utf8");
-      return { ok: true, data: result.filePath };
-    } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
-    }
     }
   );
 
@@ -251,7 +268,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       await runManagedTranslation(book, settings, { jobId });
       return { ok: true, data: jobId };
     } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
+      return toIpcError(error);
     }
   });
 
@@ -262,7 +279,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       await runManagedTranslation(book, settings, { jobId, retryFailed: true });
       return { ok: true, data: jobId };
     } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
+      return toIpcError(error);
     }
   });
 
@@ -273,7 +290,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       await runManagedTranslation(book, settings, { jobId, chapterIds: [chapterId] });
       return { ok: true, data: jobId };
     } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
+      return toIpcError(error);
     }
   });
 
@@ -292,30 +309,18 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       await recordExport(outputPath, validation, externalValidation, book, getSettings(), jobId);
       return { ok: true, data: { outputPath, validation, externalValidation } };
     } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
+      return toIpcError(error);
     }
   });
 
-  ipcMain.handle("exports:list", async (): Promise<IpcResult<ExportHistoryItem[]>> => {
-    try {
-      return { ok: true, data: await exportHistory().list() };
-    } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
-    }
-  });
-  ipcMain.handle("exports:get", async (_event, id: string): Promise<IpcResult<ExportHistoryItem | null>> => {
-    try {
-      return { ok: true, data: await exportHistory().get(id) };
-    } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
-    }
-  });
+  ipcMain.handle("exports:list", async (): Promise<IpcResult<ExportHistoryItem[]>> => withIpcResult(() => exportHistory().list()));
+  ipcMain.handle("exports:get", async (_event, id: string): Promise<IpcResult<ExportHistoryItem | null>> => withIpcResult(() => exportHistory().get(id)));
   ipcMain.handle("exports:delete", async (_event, id: string): Promise<IpcResult<{ deleted: true }>> => {
     try {
       await exportHistory().delete(id);
       return { ok: true, data: { deleted: true } };
     } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
+      return toIpcError(error);
     }
   });
   ipcMain.handle("exports:clear", async (): Promise<IpcResult<{ cleared: true }>> => {
@@ -323,28 +328,16 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       await exportHistory().clear();
       return { ok: true, data: { cleared: true } };
     } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
+      return toIpcError(error);
     }
   });
-  ipcMain.handle("exports:refresh", async (_event, id: string): Promise<IpcResult<ExportHistoryItem | null>> => {
-    try {
-      return { ok: true, data: await exportHistory().refresh(id) };
-    } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
-    }
-  });
-  ipcMain.handle("exports:refreshAll", async (): Promise<IpcResult<ExportHistoryItem[]>> => {
-    try {
-      return { ok: true, data: await exportHistory().refreshAll() };
-    } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
-    }
-  });
+  ipcMain.handle("exports:refresh", async (_event, id: string): Promise<IpcResult<ExportHistoryItem | null>> => withIpcResult(() => exportHistory().refresh(id)));
+  ipcMain.handle("exports:refreshAll", async (): Promise<IpcResult<ExportHistoryItem[]>> => withIpcResult(() => exportHistory().refreshAll()));
   ipcMain.handle("exports:removeMissing", async (): Promise<IpcResult<{ removed: number }>> => {
     try {
       return { ok: true, data: { removed: await exportHistory().removeMissing() } };
     } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
+      return toIpcError(error);
     }
   });
   ipcMain.handle("exports:openFolder", async (_event, outputPath: string): Promise<IpcResult<{ opened: true }>> => {
@@ -353,17 +346,13 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       await shell.openPath(path.dirname(outputPath));
       return { ok: true, data: { opened: true } };
     } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
+      return toIpcError(error);
     }
   });
 
-  ipcMain.handle("profiles:getByFingerprint", async (_event, bookFingerprint: string): Promise<IpcResult<TranslationProfile | null>> => {
-    try {
-      return { ok: true, data: await profileStore().getByFingerprint(bookFingerprint) };
-    } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
-    }
-  });
+  ipcMain.handle("profiles:getByFingerprint", async (_event, bookFingerprint: string): Promise<IpcResult<TranslationProfile | null>> =>
+    withIpcResult(() => profileStore().getByFingerprint(bookFingerprint))
+  );
   ipcMain.handle("profiles:save", async (_event, settings: TranslationSettings): Promise<IpcResult<TranslationProfile>> => {
     try {
       if (!currentBook) {
@@ -374,7 +363,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       currentBook.bookFingerprint = profile.bookFingerprint;
       return { ok: true, data: profile };
     } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
+      return toIpcError(error);
     }
   });
   ipcMain.handle("profiles:delete", async (): Promise<IpcResult<{ deleted: true }>> => {
@@ -386,7 +375,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       currentBook.loadedProfile = undefined;
       return { ok: true, data: { deleted: true } };
     } catch (error) {
-      return { ok: false, error: sanitizeError(error) };
+      return toIpcError(error);
     }
   });
 
@@ -415,10 +404,46 @@ export function registerIpc(mainWindow: BrowserWindow): void {
         });
         return { ok: true, data: result.filePath };
       } catch (error) {
-        return { ok: false, error: sanitizeError(error) };
+        return toIpcError(error);
       }
     }
   );
+}
+
+function emitFailureProgress(
+  mainWindow: BrowserWindow,
+  error: unknown,
+  lastProgress: TranslationProgress | null,
+  wasUserCancelled: boolean,
+  documentType?: "epub" | "pdf"
+): void {
+  const normalized = wasUserCancelled ? createTranslationError("USER_CANCELLED", error) : normalizeTranslationError(error);
+  mainWindow.webContents.send("translation:progress", {
+    documentType: lastProgress?.documentType ?? documentType,
+    currentChapter: lastProgress?.currentChapter,
+    currentPage: lastProgress?.currentPage,
+    translatedPages: lastProgress?.translatedPages,
+    totalPages: lastProgress?.totalPages,
+    translatedChunks: lastProgress?.translatedChunks ?? 0,
+    totalChunks: lastProgress?.totalChunks ?? 0,
+    status: normalized.code === "USER_CANCELLED" ? "cancelled" : "failed",
+    chapters: lastProgress?.chapters ?? [],
+    log: [...(lastProgress?.log ?? []), ...toDiagnosticLines(normalized)],
+    quality: lastProgress?.quality
+  } satisfies TranslationProgress);
+}
+
+async function withIpcResult<T>(action: () => Promise<T>): Promise<IpcResult<T>> {
+  try {
+    return { ok: true, data: await action() };
+  } catch (error) {
+    return toIpcError(error);
+  }
+}
+
+function toIpcError<T = never>(error: unknown): IpcResult<T> {
+  const normalized = normalizeTranslationError(error);
+  return { ok: false, error: normalized.message, code: normalized.code };
 }
 
 function reportToMarkdown(

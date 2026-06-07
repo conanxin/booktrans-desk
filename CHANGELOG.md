@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased / v0.3.1-translation-quality-fix
+## Unreleased / v0.3.2-pdf-diagnostics-fix
+
+- Fix PDF translation start failures being misreported as raw `Translation canceled` IPC errors.
+- Add structured translation error codes and Chinese UI error mapping.
+- Separate user cancellation from provider timeout, auth failure, rate limit, network failure, invalid output, and PDF chunking failures.
+- Add fresh cancellation state per running translation job.
+- Add PDF chunk planning diagnostics and explicit `PDF_NO_TEXT` / `PDF_CHUNKING_FAILED` handling.
+- Add MiniMax/OpenAI-compatible model connection test without storing API keys or job state.
+- Preserve progress totals on failure instead of overwriting them with `0 / 0`.
+- Keep PDF release decision as HOLD pending real MiniMax workflow and external reader validation.
+
+## v0.3.1-translation-quality-fix
 
 - Add MiniMax Token Plan provider preset with request body `thinking.type = disabled`.
 - Replace the translation prompt with a strict translation-engine protocol and source text isolation.
