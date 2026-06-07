@@ -4,7 +4,20 @@
 
 Current recommendation: **NO_MERGE_YET**.
 
-The `merge-documuse-studio` branch is a strong internal alpha candidate, but it should not be merged to `master` until S11 real Windows desktop click-through validation is complete.
+The `merge-documuse-studio` branch is a strong code-complete internal alpha candidate, but it should not be merged to `master` until S11 real Windows desktop click-through validation is complete and the current packaging blocker is resolved.
+
+## S11 Outcome
+
+S11 did not clear the merge gate:
+
+- build: PASS
+- test: PASS after rerun, 52 test files / 211 tests
+- release:check: PASS
+- dev process smoke: PASS
+- pack: BLOCKED by process/file lock in `release\win-unpacked`
+- real desktop click-through: BLOCKED_MANUAL
+
+Result: keep `NO_MERGE_YET`.
 
 ## Current Branch Strengths
 
@@ -20,6 +33,7 @@ The `merge-documuse-studio` branch is a strong internal alpha candidate, but it 
 ## Current Risks
 
 - Real Windows desktop click-through remains `BLOCKED_MANUAL`.
+- S11 pack is currently blocked by an environment/process lock around `release\win-unpacked`.
 - Packaged UI needs direct human validation after the merge work.
 - PPTX baseline has structural validation but still needs visual validation in PowerPoint/WPS/LibreOffice.
 - Bilingual HTML should be opened in a real browser with generated synthetic fixtures.
@@ -85,6 +99,6 @@ Only tag after manual validation results are recorded.
 ## Final Recommendation
 
 - Merge decision: **NO_MERGE_YET**
-- Internal alpha decision: **INTERNAL_ALPHA_CANDIDATE_AFTER_MANUAL_VALIDATION**
+- Internal alpha decision: **BLOCKED_BY_MANUAL_VALIDATION**
 - Public release decision: **NO_PUBLIC_RELEASE**
 - PDF translation release decision: **HOLD**

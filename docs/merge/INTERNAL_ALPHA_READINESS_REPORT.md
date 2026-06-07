@@ -2,7 +2,7 @@
 
 ## Summary
 
-DocuMuse Studio merge branch is code-ready for internal alpha consideration, but not ready for merge to `master` or public release until S11 real Windows desktop validation is complete.
+DocuMuse Studio merge branch is code-ready for internal alpha consideration, but S11 did not clear the manual validation gate. It is not ready for merge to `master`, internal alpha tagging, or public release until the packaging blocker and real Windows click-through validation are resolved.
 
 ## Automated Validation
 
@@ -12,11 +12,16 @@ Baseline before S10 documentation:
 - `npm test`: passed, 52 test files / 211 tests.
 - `npm run release:check`: passed.
 
-S10 final validation must be recorded in `PHASE_S10_PRODUCT_FRAMING_READINESS_REPORT.md`.
+S11 validation result:
+
+- `npm run build`: passed.
+- `npm test`: transient failures were observed in packaged output path and PDF fixture/pdfjs timing checks; immediate reruns passed, 52 test files / 211 tests.
+- `npm run release:check`: passed.
+- `npm run pack`: blocked by process/file lock and timeout around `release\win-unpacked`.
 
 ## Pack Status
 
-Prior S7 packaged validation preparation passed `npm run pack`. S10 may re-run pack as an optional documentation-stage check. Release artifacts must remain uncommitted.
+Prior S7 and S10 packaged validation preparation passed `npm run pack`. S11 pack did not complete because electron-builder became blocked around ignored `release\win-unpacked` output. Release artifacts remain uncommitted.
 
 ## Functional Readiness Matrix
 
@@ -47,6 +52,7 @@ Prior S7 packaged validation preparation passed `npm run pack`. S10 may re-run p
 - Save dialogs for all export categories.
 - External opening of exported EPUB/ZIP/PPTX/HTML/Markdown/JSON.
 - Packaged app click-through from `release/win-unpacked`.
+- S11 pack completion from a clean Windows session.
 
 ## PDF Translation HOLD
 
@@ -55,12 +61,18 @@ PDF translation is still experimental. It may be used internally for page-level 
 ## Release Readiness
 
 - Code readiness: high.
-- Automated validation: pass.
+- Automated validation: pass for build/test/release:check.
+- Packaged validation: blocked in S11 by process/file lock.
 - Manual UI validation: blocked/pending.
-- Internal alpha readiness: conditional after manual click-through.
+- Internal alpha readiness: blocked by manual validation.
 - Public release readiness: no.
-- Merge-to-master readiness: no, pending S11.
+- Merge-to-master readiness: no.
 
 ## Recommendation
 
-Proceed with S11 manual Windows validation. If S11 passes, prepare S13 PR / merge-to-master planning and decide whether package metadata should remain BookTrans Desk or become DocuMuse Studio.
+Proceed with an S12 blocker-fix and validation-rerun stage:
+
+- clear stale dev/electron-builder processes
+- rerun `npm run pack` from a fresh PowerShell session
+- complete the real Windows desktop click-through checklist
+- then revisit internal alpha readiness and merge-to-master preparation

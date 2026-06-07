@@ -304,7 +304,7 @@ Result:
 
 ## Stage S11: Manual Windows Click-through Validation
 
-Status: next.
+Status: complete with blockers.
 
 Goal:
 
@@ -320,9 +320,40 @@ Completion standard:
 - Packaged app flow checked from `npm run pack`.
 - No release artifacts or generated exports are committed.
 
-## Stage S12: Selected Units UX / Translation Version Picker Polish
+Result:
 
-Status: planned.
+- `npm install`: passed, 0 vulnerabilities.
+- `npm run build`: passed.
+- `npm test`: passed after rerun, 52 test files / 211 tests.
+- `npm run release:check`: passed.
+- Dev process smoke passed: Vite ready, TypeScript 0 errors, Electron processes observed.
+- `npm run pack`: blocked by process/file lock and timeout around `release\win-unpacked`.
+- Real desktop click-through remains `BLOCKED_MANUAL`.
+- Merge decision remains `NO_MERGE_YET`.
+- Internal alpha readiness is `BLOCKED_BY_MANUAL_VALIDATION`.
+- PDF translation remains experimental and public release remains HOLD.
+
+## Stage S12: Blocker Fixes / Manual Validation Rerun
+
+Status: next.
+
+Goal:
+
+- Resolve S11 packaging blocker from a clean Windows session.
+- Complete real EPUB/PDF desktop click-through.
+- Record PASS/FAIL/BLOCKED results without fabricating manual validation.
+- Keep PDF translation public release as HOLD.
+
+Completion standard:
+
+- `npm run pack` completes and produces `release\win-unpacked\BookTrans Desk.exe`.
+- EPUB and PDF checklists are executed in a real Windows desktop window.
+- Export external open checks are recorded.
+- Merge readiness is updated based on blocker status.
+
+## Stage S13: Selected Units UX / Translation Version Picker Polish
+
+Status: planned after S12 validation.
 
 Goal:
 
@@ -331,9 +362,9 @@ Goal:
 - Improve selected EPUB chapter translation beyond text-unit snapshot baseline.
 - Keep existing translated EPUB export compatible.
 
-## Stage S13: PR / Merge-to-master Preparation
+## Stage S14: PR / Merge-to-master Preparation
 
-Status: planned after S11.
+Status: planned after manual validation.
 
 Goal:
 
