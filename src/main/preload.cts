@@ -16,6 +16,7 @@ import type {
 import type { UnifiedDocument } from "../shared/documentModel.js";
 import type { DocumentAnalysisRecord } from "./analysis/analysisService.js";
 import type { DocumentChatMessage } from "./chat/documentChatService.js";
+import type { ExportPresetDefinition, ExportPresetId } from "./export/exportPresets.js";
 
 const electron = require("electron") as typeof import("electron");
 const { contextBridge, ipcRenderer } = electron;
@@ -34,6 +35,10 @@ const api = {
   exportDocumentJson: (documentId?: string): Promise<IpcResult<string | null>> => ipcRenderer.invoke("export:documentJson", documentId),
   exportChatMarkdown: (documentId: string): Promise<IpcResult<string | null>> => ipcRenderer.invoke("export:chatMarkdown", documentId),
   exportAnalysisMarkdown: (documentId: string): Promise<IpcResult<string | null>> => ipcRenderer.invoke("export:analysisMarkdown", documentId),
+  listExportPresets: (): Promise<IpcResult<ExportPresetDefinition[]>> => ipcRenderer.invoke("export:presets"),
+  exportPresetMarkdown: (documentId: string, presetId: ExportPresetId): Promise<IpcResult<string | null>> => ipcRenderer.invoke("export:presetMarkdown", documentId, presetId),
+  exportFullArchive: (documentId: string): Promise<IpcResult<string | null>> => ipcRenderer.invoke("export:fullArchive", documentId),
+  exportBaselinePptx: (documentId: string): Promise<IpcResult<string | null>> => ipcRenderer.invoke("export:pptx", documentId),
   getSettings: (): Promise<TranslationSettings> => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings: TranslationSettings): Promise<TranslationSettings> => ipcRenderer.invoke("settings:save", settings),
   startTranslation: (settings: TranslationSettings): Promise<IpcResult<{ completed: true }>> => ipcRenderer.invoke("translation:start", settings),

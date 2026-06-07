@@ -23,6 +23,8 @@ const emptyProgress: TranslationProgress = {
   log: []
 };
 
+type UnifiedExportKind = "markdown" | "json" | "chat" | "analysis" | "study-notes" | "research-digest" | "presentation-outline" | "podcast-prep" | "full-archive" | "pptx";
+
 export function App() {
   const [book, setBook] = useState<ImportedDocument | null>(null);
   const [settings, setSettings] = useState<TranslationSettings>({
@@ -317,23 +319,38 @@ export function App() {
     }
   }
 
-  async function exportUnified(kind: "markdown" | "json" | "chat" | "analysis") {
+  async function exportUnified(kind: UnifiedExportKind) {
     if (!currentDocument) {
       setMessage("请先导入或选择文档。");
       return;
     }
-    const result =
-      kind === "markdown"
-        ? await window.bookTrans.exportDocumentMarkdown(currentDocument.id)
-        : kind === "json"
-          ? await window.bookTrans.exportDocumentJson(currentDocument.id)
-          : kind === "chat"
-            ? await window.bookTrans.exportChatMarkdown(currentDocument.id)
-            : await window.bookTrans.exportAnalysisMarkdown(currentDocument.id);
-    const exportLabel = exportKindLabel(kind);
+    const result = await runUnifiedExport(currentDocument.id, kind);
+    const exportLabel = unifiedExportLabel(kind);
     const nextMessage = result.ok ? (result.data ? `已导出 ${exportLabel}：${result.data}` : `已取消导出 ${exportLabel}。`) : formatIpcError(result);
     setExportStatus(nextMessage);
     setMessage(nextMessage);
+  }
+
+  async function runUnifiedExport(documentId: string, kind: UnifiedExportKind) {
+    switch (kind) {
+      case "markdown":
+        return window.bookTrans.exportDocumentMarkdown(documentId);
+      case "json":
+        return window.bookTrans.exportDocumentJson(documentId);
+      case "chat":
+        return window.bookTrans.exportChatMarkdown(documentId);
+      case "analysis":
+        return window.bookTrans.exportAnalysisMarkdown(documentId);
+      case "study-notes":
+      case "research-digest":
+      case "presentation-outline":
+      case "podcast-prep":
+        return window.bookTrans.exportPresetMarkdown(documentId, kind);
+      case "full-archive":
+        return window.bookTrans.exportFullArchive(documentId);
+      case "pptx":
+        return window.bookTrans.exportBaselinePptx(documentId);
+    }
   }
 
   function acceptExportResult(result: Awaited<ReturnType<typeof window.bookTrans.exportEpub>>) {
@@ -911,7 +928,7 @@ function ExportPanel({
   hasAnalysis: boolean;
   hasChat: boolean;
   status: string;
-  onExport: (kind: "markdown" | "json" | "chat" | "analysis") => void;
+  onExport: (kind: UnifiedExportKind) => void;
 }) {
   return (
     <section className="panel compact-tool-panel">
@@ -930,6 +947,32 @@ function ExportPanel({
         <button onClick={() => onExport("analysis")} disabled={disabled || !hasAnalysis}>
           Analysis Markdown
         </button>
+        <button onClick={() => onExport("study-notes")} disabled={disabled}>
+          Study Notes
+        </button>
+        <button onClick={() => onExport("research-digest")} disabled={disabled}>
+          Research Digest
+        </button>
+        <button onClick={() => onExport("presentation-outline")} disabled={disabled}>
+          Presentation Outline
+        </button>
+        <button onClick={() => onExport("podcast-prep")} disabled={disabled}>
+          Podcast Prep
+        </button>
+        <button onClick={() => onExport("full-archive")} disabled={disabled}>
+          Full Archive ZIP
+        </button>
+        <button onClick={() => onExport("pptx")} disabled={disabled}>
+          Baseline PPTX
+        </button>
+      </div>
+      <div className="export-help-list">
+        <span>Study Notes: reading notes with Q&A highlights.</span>
+        <span>Research Digest: findings, limitations, and sources.</span>
+        <span>Presentation Outline: slide-style outline.</span>
+        <span>Podcast Prep: questions, segments, and quotes.</span>
+        <span>Full Archive: ZIP with all baseline knowledge files.</span>
+        <span>Baseline PPTX: experimental minimal slide deck.</span>
       </div>
       {status ? <p className="export-status">{status}</p> : null}
     </section>
@@ -957,6 +1000,25 @@ function getImportedSourcePath(document: ImportedDocument): string {
 
 function documentKindLabel(document: UnifiedDocument): string {
   return document.documentKind?.kind ?? "unknown";
+}
+
+function unifiedExportLabel(kind: UnifiedExportKind): string {
+  switch (kind) {
+    case "study-notes":
+      return "Study Notes";
+    case "research-digest":
+      return "Research Digest";
+    case "presentation-outline":
+      return "Presentation Outline";
+    case "podcast-prep":
+      return "Podcast Prep";
+    case "full-archive":
+      return "Full Archive ZIP";
+    case "pptx":
+      return "Baseline PPTX";
+    default:
+      return exportKindLabel(kind);
+  }
 }
 
 function analysisStateLabel(state: AnalysisState | undefined): string {

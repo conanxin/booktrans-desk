@@ -36,6 +36,7 @@ import { readEpub } from "./epub/readEpub.js";
 import { validateEpub } from "./epub/validateEpub.js";
 import { writeTranslatedEpub } from "./epub/writeTranslatedEpub.js";
 import { ExportCenter } from "./export/exportCenter.js";
+import type { ExportPresetId } from "./export/exportPresets.js";
 import { createExportHistoryStore, normalizeExternalStatus, normalizeValidationStatus } from "./export/exportHistoryStore.js";
 import { exportTranslatedPdf } from "./pdf/exportTranslatedPdf.js";
 import { readPdf } from "./pdf/readPdf.js";
@@ -244,6 +245,25 @@ export function registerIpc(mainWindow: BrowserWindow): void {
         throw new Error("No analysis is available for this document.");
       }
       return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.analysis.md`, "Markdown", ["md"], exportCenter.analysisMarkdown(analysis));
+    })
+  );
+  ipcMain.handle("export:presets", (): IpcResult<ReturnType<ExportCenter["presets"]>> => ({ ok: true, data: exportCenter.presets() }));
+  ipcMain.handle("export:presetMarkdown", async (_event, documentId: string, presetId: ExportPresetId): Promise<IpcResult<string | null>> =>
+    withIpcResult(async () => {
+      const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
+      return saveTextWithDialog(mainWindow, `${safeFileName(document.title)}.${presetId}.md`, "Markdown", ["md"], exportCenter.presetMarkdown(document, presetId));
+    })
+  );
+  ipcMain.handle("export:fullArchive", async (_event, documentId: string): Promise<IpcResult<string | null>> =>
+    withIpcResult(async () => {
+      const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
+      return saveBufferWithDialog(mainWindow, `${safeFileName(document.title)}.archive.zip`, "ZIP", ["zip"], exportCenter.fullArchiveZip(document));
+    })
+  );
+  ipcMain.handle("export:pptx", async (_event, documentId: string): Promise<IpcResult<string | null>> =>
+    withIpcResult(async () => {
+      const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
+      return saveBufferWithDialog(mainWindow, `${safeFileName(document.title)}.baseline.pptx`, "PowerPoint", ["pptx"], exportCenter.baselinePptx(document));
     })
   );
 
@@ -604,6 +624,25 @@ async function saveTextWithDialog(
     return null;
   }
   await fs.writeFile(result.filePath, content, "utf8");
+  return result.filePath;
+}
+
+async function saveBufferWithDialog(
+  mainWindow: BrowserWindow,
+  defaultPath: string,
+  filterName: string,
+  extensions: string[],
+  content: Buffer
+): Promise<string | null> {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: "Export",
+    defaultPath,
+    filters: [{ name: filterName, extensions }]
+  });
+  if (result.canceled || !result.filePath) {
+    return null;
+  }
+  await fs.writeFile(result.filePath, content);
   return result.filePath;
 }
 

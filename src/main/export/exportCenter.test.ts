@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import AdmZip from "adm-zip";
 import { ExportCenter } from "./exportCenter.js";
 import type { DocumentAnalysisRecord } from "../analysis/analysisService.js";
 import type { DocumentChatMessage } from "../chat/documentChatService.js";
@@ -37,6 +38,42 @@ describe("ExportCenter", () => {
     const center = new ExportCenter();
     expect(center.chatMarkdown(documentFixture(), chatFixture())).toContain("unit-1, page 1");
     expect(center.analysisMarkdown(analysisFixture())).toContain("## Key Points");
+  });
+
+  it("lists and builds knowledge export presets", () => {
+    const center = new ExportCenter();
+    expect(center.presets().map((preset) => preset.id)).toEqual(["study-notes", "research-digest", "presentation-outline", "podcast-prep"]);
+    expect(center.presetMarkdown(documentFixture(), "study-notes")).toContain("## Personal Notes");
+    expect(center.presetMarkdown(documentFixture(), "research-digest")).toContain("## Key Findings");
+    expect(center.presetMarkdown(documentFixture(), "presentation-outline")).toContain("## Slide 1:");
+    expect(center.presetMarkdown({ ...documentFixture(), chatMessages: [] }, "podcast-prep")).toContain("## Discussion Questions");
+  });
+
+  it("builds a full archive ZIP with expected files", () => {
+    const zip = new AdmZip(new ExportCenter().fullArchiveZip(documentFixture()));
+    const names = zip.getEntries().map((entry) => entry.entryName).sort();
+
+    expect(names).toEqual([
+      "README.md",
+      "analysis.md",
+      "chat.md",
+      "document.json",
+      "podcast-prep.md",
+      "presentation-outline.md",
+      "research-digest.md",
+      "study-notes.md"
+    ].sort());
+    expect(zip.getEntry("document.json")?.getData().toString("utf8")).not.toContain("secret-api-key");
+  });
+
+  it("builds a baseline PPTX buffer with slide parts", () => {
+    const buffer = new ExportCenter().baselinePptx(documentFixture());
+    const zip = new AdmZip(buffer);
+
+    expect(buffer.length).toBeGreaterThan(1000);
+    expect(zip.getEntry("ppt/presentation.xml")).toBeTruthy();
+    expect(zip.getEntry("ppt/slides/slide1.xml")).toBeTruthy();
+    expect(zip.getEntry("ppt/slides/slide6.xml")).toBeTruthy();
   });
 });
 

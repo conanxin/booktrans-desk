@@ -166,7 +166,7 @@ Result:
 
 ## Stage S6: Export System Expansion / PPTX Migration Baseline
 
-Status: planned.
+Status: complete.
 
 Goal:
 
@@ -181,3 +181,30 @@ Completion standard:
 - Markdown/JSON exports remain stable.
 - PPTX migration either lands as a small baseline or stays documented as deferred.
 - `npm run build`, `npm test`, and `npm run release:check` pass.
+
+Result:
+
+- Added export preset builders for Study Notes, Research Digest, Presentation Outline, and Podcast Prep.
+- Added Full Archive ZIP baseline with README, safe document JSON, analysis/chat Markdown, and all preset Markdown files.
+- Added Baseline PPTX export without introducing `pptxgenjs`; the implementation writes a small OpenXML slide deck using the existing ZIP dependency.
+- Added IPC/preload export handlers for presets, full archive, and baseline PPTX.
+- Expanded the renderer Export panel with additional export buttons and visible preset descriptions.
+- PDF translation remains experimental and public release remains HOLD.
+
+## Stage S7: Export Polish / Packaged Manual Validation
+
+Status: planned.
+
+Goal:
+
+- Manually validate export dialogs in a real desktop window.
+- Open generated ZIP and PPTX in external tools.
+- Improve export history integration for unified document exports.
+- Add optional bilingual Markdown/HTML export planning.
+- Keep PDF translation public release as HOLD.
+
+Completion standard:
+
+- Manual export of all S6 presets is checked with synthetic EPUB/PDF.
+- Generated PPTX opens in PowerPoint/WPS/LibreOffice or limitations are documented.
+- `npm run build`, `npm test`, `npm run release:check`, and if possible `npm run pack` pass.
