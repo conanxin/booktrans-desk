@@ -59,6 +59,7 @@ describe("releaseCheckCore", () => {
     const withoutPdfLimitations = requiredDocs.filter((file: string) => file !== "docs/PDF_SUPPORT_LIMITATIONS.md");
     const withoutReleasePolicy = requiredDocs.filter((file: string) => file !== "docs/releases/RELEASE_DECISION_POLICY.md");
     const withoutPdfReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md");
+    const withoutManualPdfValidationReport = requiredDocs.filter((file: string) => file !== "docs/PHASE_3A_MANUAL_PDF_VALIDATION_REPORT.md");
     expect(check(withoutReaderResults, {}).failures.some((failure: string) => failure.includes("MANUAL_READER_VALIDATION_RESULTS.md"))).toBe(true);
     expect(check(withoutChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.6-public-alpha-prep.md"))).toBe(true);
     expect(check(withoutFinalChecksums, {}).failures.some((failure: string) => failure.includes("RELEASE_CHECKSUMS_v0.2.8-public-alpha.md"))).toBe(true);
@@ -74,6 +75,9 @@ describe("releaseCheckCore", () => {
     expect(check(withoutPdfLimitations, {}).failures.some((failure: string) => failure.includes("PDF_SUPPORT_LIMITATIONS.md"))).toBe(true);
     expect(check(withoutReleasePolicy, {}).failures.some((failure: string) => failure.includes("RELEASE_DECISION_POLICY.md"))).toBe(true);
     expect(check(withoutPdfReport, {}).failures.some((failure: string) => failure.includes("PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md"))).toBe(true);
+    expect(
+      check(withoutManualPdfValidationReport, {}).failures.some((failure: string) => failure.includes("PHASE_3A_MANUAL_PDF_VALIDATION_REPORT.md"))
+    ).toBe(true);
   });
 
 

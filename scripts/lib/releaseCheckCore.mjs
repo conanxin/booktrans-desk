@@ -46,6 +46,7 @@ export const requiredDocs = [
   "docs/PHASE_2_12_WHITE_SCREEN_HOTFIX_REPORT.md",
   "docs/PHASE_2_14_CHINESE_UI_REDESIGN_REPORT.md",
   "docs/PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md",
+  "docs/PHASE_3A_MANUAL_PDF_VALIDATION_REPORT.md",
   "scripts/github-labels.json"
 ];
 

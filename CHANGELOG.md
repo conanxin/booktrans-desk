@@ -9,6 +9,7 @@
 - Update Chinese UI to import EPUB / PDF and switch page/chapters plus export labels by document type.
 - Add synthetic PDF fixture tests for import, translation, export, validation, and history safety.
 - Add PDF support and release-gate documentation.
+- Record Phase 3A-V manual PDF workflow validation as HOLD because visible packaged UI and external PDF reader-open validation were blocked by the current environment.
 
 ## v0.2.14-chinese-ui-redesign
 

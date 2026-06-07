@@ -125,6 +125,14 @@
 - Keep OCR, exact layout preservation, bilingual export, table handling, selected page translation, encrypted PDF handling, and batch PDF translation on the roadmap.
 - Public PDF release requires packaged UI visible PASS plus exported PDF reader-open PASS.
 
+## Phase 3A-V Manual PDF Workflow Validation
+
+- Status: HOLD.
+- Automatic validation, pack, and dist passed for `v0.3.0-pdf-translation-mvp`.
+- The packed Windows executable passed a process smoke check, but visible UI confirmation was blocked by the current environment.
+- Manual PDF import, translation, export, and external reader-open validation were not completed.
+- Next gate is a real Windows desktop validation session before any public PDF release decision.
+
 ## Phase 3 Local Library Management
 
 - Multi-book local library.
@@ -150,5 +158,6 @@
 ## Current Format Scope
 
 - Current target: reflowable EPUB.
-- Not supported: fixed-layout EPUB, DRM EPUB, PDF, MOBI, and AZW3.
+- PDF support is internal MVP only for copyable text PDFs.
+- Not supported: fixed-layout EPUB, DRM EPUB, scanned/image-only PDF OCR, encrypted PDF, MOBI, and AZW3.
 - Out of current scope: Calibre integration, batch translation, book library database, user login, cloud sync, online reader, paid systems, plugins, and auto publishing.

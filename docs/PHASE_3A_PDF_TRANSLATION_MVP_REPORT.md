@@ -21,6 +21,14 @@
 
 Internal MVP / HOLD for public PDF release until visible packaged UI validation and reader-open validation for exported PDFs are completed.
 
+## Phase 3A-V Manual Validation Update
+
+- Automatic validation, pack, and dist were rerun successfully.
+- The packed Windows executable passed a process smoke check.
+- Visible packaged UI validation was blocked by the current environment.
+- Manual PDF import, translation, export, and external reader-open validation were blocked.
+- Final decision remains HOLD.
+
 ## Security Check
 
 - PDF fixtures are generated in temporary directories during tests.

@@ -8,6 +8,8 @@ BookTrans Desk is an open source desktop alpha for translating reflowable EPUB b
 
 Phase 3A status: `v0.3.0-pdf-translation-mvp` adds an internal MVP for copyable text PDF import, translation, reflowed PDF export, and lightweight PDF validation. Scanned/image-only PDFs are detected but OCR is not supported.
 
+Phase 3A-V manual PDF validation status: HOLD. Automatic build, test, audit, release check, pack, and dist passed, and the packed executable passed a process smoke check, but visible packaged UI validation and exported PDF external reader-open validation were blocked by the current environment.
+
 > Alpha warning: this project is still intended for technical testers. Keep backups of original EPUB files and review provider privacy terms before translating private or copyrighted content.
 
 > Windows unsigned warning: current Windows alpha packages are unsigned. Download only from the project GitHub Release page, verify checksums when provided, or build from source.
@@ -124,6 +126,7 @@ PDF support: text PDFs only. Scanned PDFs, image-only PDFs, encrypted PDFs, OCR,
 - [PDF Translation Pipeline](docs/PDF_TRANSLATION_PIPELINE.md)
 - [PDF Support Limitations](docs/PDF_SUPPORT_LIMITATIONS.md)
 - [Phase 3A PDF Translation MVP Report](docs/PHASE_3A_PDF_TRANSLATION_MVP_REPORT.md)
+- [Phase 3A Manual PDF Validation Report](docs/PHASE_3A_MANUAL_PDF_VALIDATION_REPORT.md)
 - [Windows Unsigned Warning](docs/releases/WINDOWS_UNSIGNED_WARNING.md)
 - [RC Burn-down](docs/releases/RC_BURNDOWN.md)
 - [Roadmap](docs/ROADMAP.md)

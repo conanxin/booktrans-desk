@@ -2,6 +2,12 @@
 
 Current PDF support is an MVP for text PDFs only.
 
+## Validation Status
+
+Phase 3A-V decision: HOLD.
+
+Automated PDF import, translation, validation, and export tests pass, and the packed executable passed a process smoke check. Visible packaged UI validation and exported PDF external reader-open validation were blocked by the current environment, so no public PDF release readiness is claimed.
+
 ## Supported
 
 - Import PDFs with copyable/extractable text.
@@ -32,6 +38,8 @@ Complex multi-column, table-heavy, formula-heavy, or poster-like PDFs may transl
 
 ## Roadmap
 
+- Visible packaged UI validation.
+- Exported PDF external reader-open validation.
 - OCR.
 - Bilingual side-by-side export.
 - Layout-aware translation.
