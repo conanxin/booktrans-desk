@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { AnalysisState, ChatMessage, UnifiedDocument } from "../../shared/documentModel.js";
+import type { AnalysisState, ChatMessage, TranslationScope, TranslationVersion, UnifiedDocument } from "../../shared/documentModel.js";
+import { findLatestMatchingTranslationVersion } from "../translate/translationVersionService.js";
 
 interface DocumentLibraryEntry {
   document: UnifiedDocument;
@@ -92,6 +93,30 @@ export class DocumentLibraryStore {
       ...document,
       chatMessages: []
     }));
+  }
+
+  async addTranslationVersion(id: string, version: TranslationVersion): Promise<UnifiedDocument> {
+    return this.updateDocument(id, (document) => ({
+      ...document,
+      translations: [...(document.translations ?? []).filter((item) => item.id !== version.id), version]
+    }));
+  }
+
+  async updateTranslationVersion(id: string, versionId: string, updater: (version: TranslationVersion) => TranslationVersion): Promise<UnifiedDocument> {
+    return this.updateDocument(id, (document) => ({
+      ...document,
+      translations: (document.translations ?? []).map((version) => (version.id === versionId ? updater(version) : version))
+    }));
+  }
+
+  async listTranslationVersions(id: string): Promise<TranslationVersion[]> {
+    const document = await this.readDocument(id);
+    return [...(document?.translations ?? [])].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  }
+
+  async getLatestTranslationVersion(id: string, scope: TranslationScope = { type: "full" }): Promise<TranslationVersion | null> {
+    const document = await this.readDocument(id);
+    return document ? findLatestMatchingTranslationVersion(document, scope) ?? null : null;
   }
 
   private documentPath(id: string): string {

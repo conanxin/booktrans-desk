@@ -7,7 +7,7 @@ import { buildFullArchiveZip } from "./fullArchiveExporter.js";
 import { analysisToMarkdown, chatToMarkdown, unifiedDocumentToMarkdown } from "./markdownExporter.js";
 import { unifiedDocumentToJson } from "./jsonExporter.js";
 import { buildBaselinePptx } from "./pptxExporter.js";
-import type { BilingualExportScope, BilingualHtmlLayout } from "../../shared/types.js";
+import type { BilingualExportOptions, BilingualExportScope, BilingualHtmlLayout } from "../../shared/types.js";
 import { bilingualDocumentToMarkdown } from "./bilingualMarkdownExporter.js";
 import { bilingualDocumentToHtml } from "./bilingualHtmlExporter.js";
 
@@ -52,11 +52,11 @@ export class ExportCenter {
     return buildBaselinePptx(document);
   }
 
-  bilingualMarkdown(document: UnifiedDocument, scope: BilingualExportScope): string {
-    return bilingualDocumentToMarkdown(document, scope);
+  bilingualMarkdown(document: UnifiedDocument, scope: BilingualExportScope, options: Pick<BilingualExportOptions, "translationVersionId" | "translationResolution"> = {}): string {
+    return bilingualDocumentToMarkdown(document, scope, options);
   }
 
-  bilingualHtml(document: UnifiedDocument, scope: BilingualExportScope, layout: BilingualHtmlLayout = "side-by-side"): string {
-    return bilingualDocumentToHtml(document, scope, layout);
+  bilingualHtml(document: UnifiedDocument, scope: BilingualExportScope, layout: BilingualHtmlLayout = "side-by-side", options: Pick<BilingualExportOptions, "translationVersionId" | "translationResolution"> = {}): string {
+    return bilingualDocumentToHtml(document, scope, layout, options);
   }
 }

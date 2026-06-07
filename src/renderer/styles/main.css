@@ -755,6 +755,40 @@ small {
   min-width: 0;
 }
 
+.translation-version-panel,
+.translation-version-list,
+.translation-version-row {
+  display: grid;
+  gap: 8px;
+}
+
+.translation-version-panel {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--panel-muted);
+}
+
+.translation-version-panel select {
+  width: 100%;
+}
+
+.translation-version-row {
+  border-top: 1px solid var(--border-soft);
+  padding-top: 8px;
+}
+
+.translation-version-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.translation-version-row span,
+.translation-version-row small {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
 .persistence-strip {
   display: flex;
   flex-wrap: wrap;

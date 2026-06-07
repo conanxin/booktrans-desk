@@ -42,6 +42,23 @@ describe("bilingualDocumentToMarkdown", () => {
     expect(markdown).toContain("第二段译文");
     expect(markdown).not.toContain("First original");
   });
+
+  it("supports specific translation version and no-translation fallback", () => {
+    const document = documentFixture();
+    document.translations = [
+      version("full-version", { type: "full" }, "unit-1", "Full version text", "2024-01-01T00:00:00.000Z"),
+      version("chapter-version", { type: "chapter", chapterId: "chapter-1" }, "unit-1", "Chapter version text", "2024-01-02T00:00:00.000Z")
+    ];
+
+    const latest = bilingualDocumentToMarkdown(document, { type: "chapter", chapterId: "chapter-1" });
+    const specific = bilingualDocumentToMarkdown(document, { type: "chapter", chapterId: "chapter-1" }, { translationVersionId: "full-version", translationResolution: "specific" });
+    const none = bilingualDocumentToMarkdown(document, { type: "chapter", chapterId: "chapter-1" }, { translationResolution: "none" });
+
+    expect(latest).toContain("Chapter version text");
+    expect(specific).toContain("Full version text");
+    expect(none).toContain("Translation version: missing fallback");
+    expect(none).toContain("暂无译文");
+  });
 });
 
 export function documentFixture(): UnifiedDocument {
@@ -67,5 +84,34 @@ export function documentFixture(): UnifiedDocument {
     diagnostics: { parser: "test", textLength: 42, unitCount: 3, warnings: [], errors: [] },
     createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z"
+  };
+}
+
+function version(id: string, scope: NonNullable<UnifiedDocument["translations"][number]["scope"]>, unitId: string, translatedText: string, updatedAt: string): UnifiedDocument["translations"][number] {
+  const record = {
+    unitId,
+    sourceUnitId: unitId,
+    sourceText: "Source",
+    translatedText,
+    status: "translated" as const,
+    source: "manual" as const,
+    updatedAt
+  };
+  return {
+    id,
+    documentId: "doc-bilingual",
+    label: id,
+    sourceFormat: "epub",
+    source: "manual",
+    scope,
+    targetLanguage: "zh-CN",
+    status: "completed",
+    translatedUnitCount: 1,
+    totalUnitCount: 1,
+    missingUnitCount: 0,
+    units: [record],
+    unitTranslations: [record],
+    createdAt: updatedAt,
+    updatedAt
   };
 }

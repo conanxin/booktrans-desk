@@ -70,3 +70,21 @@ S8 implemented the recommended baseline:
 - Add user-facing translation-version selection when multiple versions exist.
 - Improve selected unit UI beyond chapter/page selection.
 - Keep bilingual PDF deferred.
+
+## S9 Implementation Result
+
+S9 strengthened the translation-version layer:
+
+- `TranslationVersion` now supports explicit source, scope, status, provider/model/style, job id, unit counts, and translated unit records.
+- EPUB full translation and export paths can refresh persisted `epub-translation` snapshots.
+- EPUB retry/resume paths use the completed job result when available; single-result jobs can become scoped chapter versions, while broader job results refresh the full version.
+- PDF snapshots remain internal and are marked `pdf-experimental`; PDF public release remains HOLD.
+- Bilingual Markdown/HTML export can resolve latest matching versions, a specific selected version, or a no-translation placeholder mode.
+- The workspace UI exposes translation versions and selected chapter/page translation actions.
+
+## Remaining Follow-Up After S9
+
+- Improve EPUB XHTML-preserving selected chapter translation; the S9 selected chapter baseline translates text units for snapshot/export use.
+- Add richer selected-unit multi-select UI.
+- Add translation version diff/compare tools.
+- Keep bilingual PDF deferred until PDF translation validation is ready.

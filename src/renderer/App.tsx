@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DocumentAnalysisRecord } from "../main/analysis/analysisService.js";
 import type { DocumentChatMessage } from "../main/chat/documentChatService.js";
+import type { TranslationVersionSummary } from "../main/translate/translationVersionService.js";
 import type { AnalysisState, UnifiedDocument, UnifiedDocumentOutlineNode } from "../shared/documentModel.js";
 import { exportKindLabel, formatAnalysisStatus, formatChatSource, formatDocumentUpdatedAt, summarizeDocumentStatus } from "../shared/documentDisplayUtils.js";
 import { formatBoundingBox, getDocumentChapters, getDocumentPages, getUnitSourceHint, getUnitsForChapter, getUnitsForPage } from "../shared/documentReaderUtils.js";
@@ -84,6 +85,9 @@ export function App() {
   const [exportingKind, setExportingKind] = useState<UnifiedExportKind | null>(null);
   const [lastKnowledgeExport, setLastKnowledgeExport] = useState<KnowledgeExportResult | null>(null);
   const [recentExports, setRecentExports] = useState<ExportHistoryItem[]>([]);
+  const [translationVersions, setTranslationVersions] = useState<TranslationVersionSummary[]>([]);
+  const [selectedTranslationVersionId, setSelectedTranslationVersionId] = useState<string>("latest");
+  const [translationVersionStatus, setTranslationVersionStatus] = useState("");
 
   useEffect(() => {
     void window.bookTrans.getSettings().then(setSettings);
@@ -144,6 +148,9 @@ export function App() {
       setChatMessages([]);
       setChatStatus("idle");
       setChatError("");
+      setTranslationVersions([]);
+      setSelectedTranslationVersionId("latest");
+      setTranslationVersionStatus("");
       return;
     }
     const sourcePath = imported ? getImportedSourcePath(imported) : currentDocument?.sourcePath;
@@ -166,6 +173,8 @@ export function App() {
     setChatStatus("idle");
     setChatError("");
     setExportStatus("");
+    setSelectedTranslationVersionId("latest");
+    setTranslationVersionStatus("");
     const existingAnalysis = await window.bookTrans.getAnalysis(document.id);
     setAnalysis(existingAnalysis.ok ? existingAnalysis.data ?? null : null);
     if (existingAnalysis.ok && existingAnalysis.data) {
@@ -176,6 +185,7 @@ export function App() {
     if (existingChat.ok && existingChat.data?.length) {
       setChatStatus("success");
     }
+    await refreshTranslationVersions(document.id);
   }
 
   async function refreshCurrentDocumentSnapshot(documentId: string) {
@@ -199,6 +209,9 @@ export function App() {
         setChatMessages([]);
         setChatStatus("idle");
         setChatError("");
+        setTranslationVersions([]);
+        setSelectedTranslationVersionId("latest");
+        setTranslationVersionStatus("");
       }
       setMessage(`已删除文档快照：${document.title}`);
       await refreshDocumentLibrary();
@@ -234,6 +247,10 @@ export function App() {
       if (!result.ok) {
         setMessage(formatIpcError(result));
         return;
+      }
+      if (currentDocument) {
+        await refreshCurrentDocumentSnapshot(currentDocument.id);
+        await refreshTranslationVersions(currentDocument.id);
       }
       setMessage(isPdf(book) ? "PDF 翻译已完成，可以导出 PDF。" : "EPUB 翻译已完成，可以导出 EPUB。");
     } catch (error) {
@@ -406,13 +423,13 @@ export function App() {
       case "pptx":
         return window.bookTrans.exportBaselinePptx(documentId);
       case "bilingual-markdown-full":
-        return window.bookTrans.exportBilingualMarkdown(documentId, { type: "full" });
+        return window.bookTrans.exportBilingualMarkdown(documentId, { type: "full" }, selectedTranslationOptions());
       case "bilingual-markdown-selected":
-        return window.bookTrans.exportBilingualMarkdown(documentId, selectedBilingualScope());
+        return window.bookTrans.exportBilingualMarkdown(documentId, selectedBilingualScope(), selectedTranslationOptions());
       case "bilingual-html-full":
-        return window.bookTrans.exportBilingualHtml(documentId, { type: "full" }, "side-by-side");
+        return window.bookTrans.exportBilingualHtml(documentId, { type: "full" }, "side-by-side", selectedTranslationOptions());
       case "bilingual-html-selected":
-        return window.bookTrans.exportBilingualHtml(documentId, selectedBilingualScope(), "side-by-side");
+        return window.bookTrans.exportBilingualHtml(documentId, selectedBilingualScope(), "side-by-side", selectedTranslationOptions());
     }
   }
 
@@ -426,10 +443,50 @@ export function App() {
     return { type: "full" };
   }
 
+  function selectedTranslationOptions() {
+    if (selectedTranslationVersionId === "none") {
+      return { translationResolution: "none" as const };
+    }
+    if (selectedTranslationVersionId && selectedTranslationVersionId !== "latest") {
+      return { translationResolution: "specific" as const, translationVersionId: selectedTranslationVersionId };
+    }
+    return { translationResolution: "latest" as const };
+  }
+
   async function refreshExportHistory() {
     const result = await window.bookTrans.listExports();
     if (result.ok) {
       setRecentExports((result.data ?? []).filter((item) => item.exportCategory === "knowledge").slice(0, 10));
+    }
+  }
+
+  async function refreshTranslationVersions(documentId = currentDocument?.id) {
+    if (!documentId) {
+      setTranslationVersions([]);
+      return;
+    }
+    const result = await window.bookTrans.listTranslationVersions(documentId);
+    if (result.ok) {
+      setTranslationVersions(result.data ?? []);
+    }
+  }
+
+  async function translateCurrentSelection() {
+    if (!currentDocument) {
+      return;
+    }
+    setTranslationVersionStatus("Translating selected scope...");
+    const result =
+      currentDocument.sourceFormat === "pdf"
+        ? await window.bookTrans.translateCurrentPageExperimental(currentDocument.id, selectedPageNumber ?? 1)
+        : await window.bookTrans.translateCurrentChapter(currentDocument.id, selectedChapterId ?? currentDocument.chapters[0]?.id ?? "");
+    if (result.ok && result.data) {
+      setTranslationVersionStatus(`Saved translation version: ${result.data.label}`);
+      setSelectedTranslationVersionId(result.data.id);
+      await refreshTranslationVersions(currentDocument.id);
+      await refreshCurrentDocumentSnapshot(currentDocument.id);
+    } else {
+      setTranslationVersionStatus(formatIpcError(result));
     }
   }
 
@@ -511,9 +568,16 @@ export function App() {
                 exportingKind={exportingKind}
                 lastResult={lastKnowledgeExport}
                 recentExports={recentExports}
+                translationVersions={translationVersions}
+                selectedTranslationVersionId={selectedTranslationVersionId}
+                translationVersionStatus={translationVersionStatus}
+                documentFormat={currentDocument?.sourceFormat}
                 onExport={exportUnified}
                 onOpenFolder={openLastExportFolder}
                 onRefreshHistory={refreshExportHistory}
+                onSelectTranslationVersion={setSelectedTranslationVersionId}
+                onTranslateSelection={translateCurrentSelection}
+                onRefreshTranslationVersions={() => void refreshTranslationVersions()}
               />
             </aside>
 
@@ -1021,9 +1085,16 @@ function ExportPanel({
   exportingKind,
   lastResult,
   recentExports,
+  translationVersions,
+  selectedTranslationVersionId,
+  translationVersionStatus,
+  documentFormat,
   onExport,
   onOpenFolder,
-  onRefreshHistory
+  onRefreshHistory,
+  onSelectTranslationVersion,
+  onTranslateSelection,
+  onRefreshTranslationVersions
 }: {
   disabled: boolean;
   hasAnalysis: boolean;
@@ -1032,9 +1103,16 @@ function ExportPanel({
   exportingKind: UnifiedExportKind | null;
   lastResult: KnowledgeExportResult | null;
   recentExports: ExportHistoryItem[];
+  translationVersions: TranslationVersionSummary[];
+  selectedTranslationVersionId: string;
+  translationVersionStatus: string;
+  documentFormat?: UnifiedDocument["sourceFormat"];
   onExport: (kind: UnifiedExportKind) => void;
   onOpenFolder: (outputPath: string) => void;
   onRefreshHistory: () => void;
+  onSelectTranslationVersion: (versionId: string) => void;
+  onTranslateSelection: () => void;
+  onRefreshTranslationVersions: () => void;
 }) {
   return (
     <section className="panel compact-tool-panel">
@@ -1094,6 +1172,39 @@ function ExportPanel({
         <span>Bilingual exports pair original units with available translations.</span>
         <span>Missing translations are shown as explicit placeholders, never fabricated.</span>
         <span>PDF bilingual export does not change PDF translation HOLD status.</span>
+      </div>
+      <div className="translation-version-panel">
+        <div className="panel-title-row">
+          <strong>Translation versions</strong>
+          <button onClick={onRefreshTranslationVersions} disabled={disabled}>Refresh</button>
+        </div>
+        <select value={selectedTranslationVersionId} onChange={(event) => onSelectTranslationVersion(event.target.value)} disabled={disabled}>
+          <option value="latest">Latest matching translation</option>
+          <option value="none">No translation / placeholders</option>
+          {translationVersions.map((version) => (
+            <option value={version.id} key={version.id}>
+              {version.label} · {version.translatedUnitCount}/{version.totalUnitCount}
+            </option>
+          ))}
+        </select>
+        <button onClick={onTranslateSelection} disabled={disabled}>
+          {documentFormat === "pdf" ? "Experimental translate current page" : "Translate current chapter"}
+        </button>
+        {documentFormat === "pdf" ? <small className="muted">PDF translation remains experimental / HOLD.</small> : null}
+        {translationVersionStatus ? <p className="export-status">{translationVersionStatus}</p> : null}
+        {translationVersions.length ? (
+          <div className="translation-version-list">
+            {translationVersions.slice(0, 5).map((version) => (
+              <div className="translation-version-row" key={version.id}>
+                <strong>{version.label}</strong>
+                <span>{formatTranslationScopeLabel(version.scope)} / {version.status} / {version.translatedUnitCount}/{version.totalUnitCount}</span>
+                <small>{version.source}{version.model ? ` / ${version.model}` : ""} / {formatDateTime(version.updatedAt)}</small>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-hint">No persisted translation versions yet.</p>
+        )}
       </div>
       {status ? <p className="export-status">{status}</p> : null}
       {lastResult?.outputPath ? (
@@ -1223,6 +1334,19 @@ function unifiedExportLabelFromHistory(kind: ExportHistoryItem["exportKind"]): s
     default:
       return "Export";
   }
+}
+
+function formatTranslationScopeLabel(scope: TranslationVersionSummary["scope"]): string {
+  if (scope.type === "chapter") {
+    return `chapter:${scope.chapterId ?? "unknown"}`;
+  }
+  if (scope.type === "page") {
+    return `page:${scope.pageNumber ?? "unknown"}`;
+  }
+  if (scope.type === "units") {
+    return `units:${scope.unitIds?.length ?? 0}`;
+  }
+  return "full";
 }
 
 function analysisStateLabel(state: AnalysisState | undefined): string {

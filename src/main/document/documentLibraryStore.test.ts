@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { DocumentLibraryStore } from "./documentLibraryStore.js";
-import type { UnifiedDocument } from "../../shared/documentModel.js";
+import type { TranslationVersion, UnifiedDocument } from "../../shared/documentModel.js";
 
 describe("DocumentLibraryStore", () => {
   it("saves, lists, reads, and deletes documents", async () => {
@@ -100,6 +100,32 @@ describe("DocumentLibraryStore", () => {
     expect(read?.analysisState).toMatchObject({ status: "idle", mode: "quick" });
     expect(read?.chatMessages).toEqual([]);
   });
+
+  it("adds and lists translation versions with latest matching scope", async () => {
+    const store = new DocumentLibraryStore(await tempDir());
+    const document = documentFixture("doc-translations", "Translations");
+    document.chapters = [{ id: "chapter-1", documentId: document.id, title: "One", order: 0, unitIds: ["unit-1"] }];
+    await store.saveDocument(document);
+
+    await store.addTranslationVersion(document.id, translationVersion(document.id, "full-version", { type: "full" }, "2024-01-01T00:00:00.000Z"));
+    await store.addTranslationVersion(document.id, translationVersion(document.id, "chapter-version", { type: "chapter", chapterId: "chapter-1" }, "2024-01-02T00:00:00.000Z"));
+
+    const versions = await store.listTranslationVersions(document.id);
+    expect(versions.map((version) => version.id)).toEqual(["chapter-version", "full-version"]);
+    await expect(store.getLatestTranslationVersion(document.id, { type: "chapter", chapterId: "chapter-1" })).resolves.toMatchObject({ id: "chapter-version" });
+    await expect(store.getLatestTranslationVersion(document.id, { type: "page", pageNumber: 2 })).resolves.toMatchObject({ id: "full-version" });
+  });
+
+  it("normalizes old snapshots without translations", async () => {
+    const dir = await tempDir();
+    const store = new DocumentLibraryStore(dir);
+    const oldDocument = documentFixture("doc-old-translations", "Old Translation Shape") as Partial<UnifiedDocument>;
+    delete oldDocument.translations;
+    await fs.writeFile(path.join(dir, "doc-old-translations.json"), JSON.stringify({ document: oldDocument }, null, 2), "utf8");
+
+    const read = await store.readDocument("doc-old-translations");
+    expect(read?.translations).toEqual([]);
+  });
 });
 
 async function tempDir(): Promise<string> {
@@ -126,6 +152,46 @@ function documentFixture(id: string, title: string, updatedAt = "2024-01-01T00:0
       errors: []
     },
     createdAt: "2024-01-01T00:00:00.000Z",
+    updatedAt
+  };
+}
+
+function translationVersion(documentId: string, id: string, scope: TranslationVersion["scope"], updatedAt: string): TranslationVersion {
+  return {
+    id,
+    documentId,
+    label: id,
+    sourceFormat: "epub",
+    source: "manual",
+    scope,
+    targetLanguage: "zh-CN",
+    status: "completed",
+    translatedUnitCount: 1,
+    totalUnitCount: 1,
+    missingUnitCount: 0,
+    units: [
+      {
+        unitId: "unit-1",
+        sourceUnitId: "unit-1",
+        sourceText: "Source",
+        translatedText: "Translated",
+        status: "translated",
+        source: "manual",
+        updatedAt
+      }
+    ],
+    unitTranslations: [
+      {
+        unitId: "unit-1",
+        sourceUnitId: "unit-1",
+        sourceText: "Source",
+        translatedText: "Translated",
+        status: "translated",
+        source: "manual",
+        updatedAt
+      }
+    ],
+    createdAt: updatedAt,
     updatedAt
   };
 }

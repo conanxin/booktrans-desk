@@ -1,9 +1,9 @@
 import type { UnifiedDocument } from "../../shared/documentModel.js";
-import type { BilingualExportScope } from "../../shared/types.js";
+import type { BilingualExportOptions, BilingualExportScope } from "../../shared/types.js";
 import { buildBilingualPayload, formatTranslationSummary, MISSING_TRANSLATION_PLACEHOLDER } from "./bilingualExportCore.js";
 
-export function bilingualDocumentToMarkdown(document: UnifiedDocument, scope: BilingualExportScope): string {
-  const payload = buildBilingualPayload(document, scope);
+export function bilingualDocumentToMarkdown(document: UnifiedDocument, scope: BilingualExportScope, options: Pick<BilingualExportOptions, "translationVersionId" | "translationResolution"> = {}): string {
+  const payload = buildBilingualPayload(document, scope, options);
   const lines = [
     `# ${document.title} · 双语导出`,
     "",
@@ -12,6 +12,7 @@ export function bilingualDocumentToMarkdown(document: UnifiedDocument, scope: Bi
     `- Scope: ${payload.scopeLabel}`,
     `- Generated at: ${payload.generatedAt}`,
     `- Translation summary: ${formatTranslationSummary(payload.summary)}`,
+    payload.translationVersionLabel ? `- Translation version: ${payload.translationVersionLabel}` : "- Translation version: missing fallback",
     "",
     "---",
     "",

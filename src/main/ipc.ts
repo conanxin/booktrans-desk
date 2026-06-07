@@ -16,6 +16,7 @@ import type {
   IpcResult,
   KnowledgeExportResult,
   BilingualExportScope,
+  BilingualExportOptions,
   BilingualHtmlLayout,
   PdfValidationReport,
   PdfTranslationJobResult,
@@ -26,7 +27,7 @@ import type {
   TranslatorConnectionTestResult,
   ValidationReport
 } from "../shared/types.js";
-import type { TranslationVersion, UnifiedDocument } from "../shared/documentModel.js";
+import type { TranslationScope, UnifiedDocument } from "../shared/documentModel.js";
 import { fromImportedBook, fromImportedPdfDocument } from "../shared/documentAdapters.js";
 import { validationReportToMarkdown } from "../shared/validationReport.js";
 import { getSettings, saveSettings } from "./config/settings.js";
@@ -35,7 +36,7 @@ import { detectDocumentKindForDocument } from "./document/documentKindDetector.j
 import { extractOutline } from "./document/outlineExtractor.js";
 import { createDiagnosticBundle, defaultDiagnosticBundleName } from "./diagnostics/createDiagnosticBundle.js";
 import { runExternalEpubCheck } from "./epub/runExternalEpubCheck.js";
-import { extractBodyText, readEpub } from "./epub/readEpub.js";
+import { readEpub } from "./epub/readEpub.js";
 import { validateEpub } from "./epub/validateEpub.js";
 import { writeTranslatedEpub } from "./epub/writeTranslatedEpub.js";
 import { ExportCenter } from "./export/exportCenter.js";
@@ -58,7 +59,16 @@ import { validatePdf } from "./pdf/validatePdf.js";
 import { createTranslationProfileStore, getBookFingerprint } from "./profile/translationProfileStore.js";
 import { translateBook, type TranslateBookOptions } from "./translationJob.js";
 import { TranslationCancellationManager } from "./translate/cancellation.js";
+import { createTranslator } from "./translate/translator.js";
 import { JobManager, sanitizeError } from "./translate/jobManager.js";
+import {
+  buildTranslationVersionForSelectedUnits,
+  buildTranslationVersionFromEpubResult,
+  buildTranslationVersionFromPdfResult,
+  findLatestMatchingTranslationVersion,
+  mergeTranslationVersion,
+  summarizeTranslationVersion
+} from "./translate/translationVersionService.js";
 import { createTranslationError, normalizeTranslationError, toDiagnosticLines } from "./translate/translationErrors.js";
 import { createTranslationJobStore } from "./translate/translationJobStore.js";
 import { testTranslatorConnection } from "./translate/testTranslatorConnection.js";
@@ -72,6 +82,8 @@ const cancellation = new TranslationCancellationManager();
 
 interface KnowledgeExportMetadata {
   exportScope?: string;
+  translationVersionId?: string;
+  translationVersionLabel?: string;
   translationStatusSummary?: string;
 }
 
@@ -181,6 +193,8 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       outputPath: result.filePath,
       validationStatus: statusToValidationStatus(validation.status),
       exportScope: metadata.exportScope,
+      translationVersionId: metadata.translationVersionId,
+      translationVersionLabel: metadata.translationVersionLabel,
       translationStatusSummary: metadata.translationStatusSummary,
       targetLanguage: "knowledge",
       model: document.analysisState?.model
@@ -213,85 +227,33 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     if (!document) {
       return;
     }
-    const translatedByChapterId = new Map(result.translatedChapters.map((chapter) => [chapter.chapterId, extractBodyText(chapter.html)]));
-    const now = new Date().toISOString();
-    const version: TranslationVersion = {
-      id: `translation-${crypto.randomUUID()}`,
-      documentId: document.id,
-      jobId: result.jobId,
-      source: "epub-translation",
-      provider: settings.providerPreset,
-      model: settings.useMock ? "mock" : settings.model,
-      style: settings.style,
-      targetLanguage: "zh-CN",
-      status: "completed",
-      unitTranslations: document.units.map((unit) => {
-        const originalChapterId = typeof unit.metadata?.originalChapterId === "string" ? unit.metadata.originalChapterId : undefined;
-        const translatedText = originalChapterId ? translatedByChapterId.get(originalChapterId) : undefined;
-        return {
-          unitId: unit.id,
-          sourceUnitId: unit.id,
-          sourceText: unit.text,
-          translatedText,
-          status: translatedText ? "completed" : "missing",
-          source: translatedText ? "epub-translation" : "missing",
-          updatedAt: now
-        };
-      }),
-      createdAt: now,
-      updatedAt: now
-    };
-    currentUnifiedDocument = await library.updateDocument(document.id, (existing) => ({
-      ...existing,
-      translations: [...(existing.translations ?? []).filter((item) => item.jobId !== result.jobId), version]
-    }));
+    const version = buildTranslationVersionFromEpubResult(document, result, settings, inferEpubResultScope(result));
+    currentUnifiedDocument = await library.updateDocument(document.id, (existing) => mergeTranslationVersion(existing, version));
   }
 
   async function persistPdfTranslationSnapshot(document: UnifiedDocument, result: PdfTranslationJobResult, settings: TranslationSettings): Promise<UnifiedDocument> {
-    const translatedByParagraphId = new Map<string, string>();
-    for (const page of result.translatedPages) {
-      for (const paragraph of page.paragraphs) {
-        if (paragraph.id && paragraph.translated) {
-          translatedByParagraphId.set(paragraph.id, paragraph.translated);
-        }
-      }
-    }
-    const now = new Date().toISOString();
-    const version: TranslationVersion = {
-      id: `translation-${crypto.randomUUID()}`,
-      documentId: document.id,
-      jobId: result.jobId,
-      source: "pdf-experimental",
-      provider: settings.providerPreset,
-      model: settings.useMock ? "mock" : settings.model,
-      style: settings.style,
-      targetLanguage: "zh-CN",
-      status: "completed",
-      unitTranslations: document.units.map((unit) => {
-        const originalParagraphId = typeof unit.metadata?.originalParagraphId === "string" ? unit.metadata.originalParagraphId : undefined;
-        const translatedText = originalParagraphId ? translatedByParagraphId.get(originalParagraphId) : undefined;
-        return {
-          unitId: unit.id,
-          sourceUnitId: unit.id,
-          sourceText: unit.text,
-          translatedText,
-          status: translatedText ? "experimental" : "missing",
-          source: translatedText ? "pdf-experimental" : "missing",
-          updatedAt: now
-        };
-      }),
-      createdAt: now,
-      updatedAt: now
-    };
+    const version = buildTranslationVersionFromPdfResult(document, result, settings, inferPdfResultScope(result));
     return documentLibrary().updateDocument(document.id, (existing) => ({
-      ...existing,
-      translations: [...(existing.translations ?? []).filter((item) => item.jobId !== result.jobId), version]
+      ...mergeTranslationVersion(existing, version)
     }));
   }
 
   async function findDocumentBySourcePath(sourcePath: string): Promise<UnifiedDocument | null> {
     const documents = await documentLibrary().listDocuments();
     return documents.find((document) => document.sourcePath === sourcePath) ?? null;
+  }
+
+  function inferEpubResultScope(result: TranslationJobResult): TranslationScope {
+    return result.translatedChapters.length === 1 ? { type: "chapter", chapterId: chapterIdForTranslatedChapter(result.translatedChapters[0].chapterId) } : { type: "full" };
+  }
+
+  function inferPdfResultScope(result: PdfTranslationJobResult): TranslationScope {
+    return result.translatedPages.length === 1 ? { type: "page", pageNumber: result.translatedPages[0].pageNumber } : { type: "full" };
+  }
+
+  function chapterIdForTranslatedChapter(originalChapterId: string): string {
+    const match = currentUnifiedDocument?.chapters.find((chapter) => chapter.metadata?.originalChapterId === originalChapterId);
+    return match?.id ?? originalChapterId;
   }
 
   async function runManagedTranslation(book: ImportedBook, settings: TranslationSettings, options: TranslateBookOptions = {}): Promise<void> {
@@ -312,7 +274,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
         },
         { ...options, userDataDir: app.getPath("userData") }
       );
-      await persistEpubTranslationSnapshot(book, lastResult, settings);
+      await persistEpubTranslationSnapshot(book, lastResult, getSettings());
     } catch (error) {
       emitFailureProgress(mainWindow, error, lastProgress, running.abortController.signal.aborted);
       throw error;
@@ -410,6 +372,45 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       return { cleared: true };
     })
   );
+  ipcMain.handle("translation:versions", async (_event, documentId: string) =>
+    withIpcResult(async () => {
+      const versions = await documentLibrary().listTranslationVersions(documentId);
+      return versions.map(summarizeTranslationVersion);
+    })
+  );
+  ipcMain.handle("translation:translateCurrentChapter", async (_event, documentId: string, chapterId: string) =>
+    withIpcResult(async () => {
+      const library = documentLibrary();
+      const document = await resolveUnifiedDocument(library, currentUnifiedDocument, documentId);
+      const settings = getSettings();
+      const version = await buildTranslationVersionForSelectedUnits(document, { type: "chapter", chapterId }, createTranslator(settings), settings, "manual");
+      const updated = await library.addTranslationVersion(document.id, version);
+      currentUnifiedDocument = updated;
+      return summarizeTranslationVersion(version);
+    })
+  );
+  ipcMain.handle("translation:translateCurrentPageExperimental", async (_event, documentId: string, pageNumber: number) =>
+    withIpcResult(async () => {
+      const library = documentLibrary();
+      const document = await resolveUnifiedDocument(library, currentUnifiedDocument, documentId);
+      const settings = getSettings();
+      const version = await buildTranslationVersionForSelectedUnits(document, { type: "page", pageNumber }, createTranslator(settings), settings, "pdf-experimental");
+      const updated = await library.addTranslationVersion(document.id, version);
+      currentUnifiedDocument = updated;
+      return summarizeTranslationVersion(version);
+    })
+  );
+  ipcMain.handle("translation:translateUnits", async (_event, documentId: string, unitIds: string[]) =>
+    withIpcResult(async () => {
+      const library = documentLibrary();
+      const document = await resolveUnifiedDocument(library, currentUnifiedDocument, documentId);
+      const settings = getSettings();
+      const version = await buildTranslationVersionForSelectedUnits(document, { type: "units", unitIds }, createTranslator(settings), settings, document.sourceFormat === "pdf" ? "pdf-experimental" : "manual");
+      const updated = await library.addTranslationVersion(document.id, version);
+      currentUnifiedDocument = updated;
+      return summarizeTranslationVersion(version);
+    })
+  );
   ipcMain.handle("export:documentMarkdown", async (_event, documentId?: string): Promise<IpcResult<KnowledgeExportResult>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
@@ -453,37 +454,41 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       return saveKnowledgeBufferExport(document, "pptx", `${safeFileName(document.title)}.deck.pptx`, "PowerPoint", ["pptx"], exportCenter.baselinePptx(document));
     })
   );
-  ipcMain.handle("export:bilingualMarkdown", async (_event, documentId: string, scope: BilingualExportScope): Promise<IpcResult<KnowledgeExportResult>> =>
+  ipcMain.handle("export:bilingualMarkdown", async (_event, documentId: string, scope: BilingualExportScope, options: Pick<BilingualExportOptions, "translationVersionId" | "translationResolution"> = {}): Promise<IpcResult<KnowledgeExportResult>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
-      const payload = buildBilingualPayload(document, scope);
+      const payload = buildBilingualPayload(document, scope, options);
       return saveKnowledgeTextExport(
         document,
         scope.type === "full" ? "bilingual-markdown" : "bilingual-markdown-selected",
         bilingualDefaultPath(document, scope, "md"),
         "Markdown",
         ["md"],
-        exportCenter.bilingualMarkdown(document, scope),
+        exportCenter.bilingualMarkdown(document, scope, options),
         {
           exportScope: payload.scopeLabel,
+          translationVersionId: payload.translationVersionId,
+          translationVersionLabel: payload.translationVersionLabel,
           translationStatusSummary: formatTranslationSummary(payload.summary)
         }
       );
     })
   );
-  ipcMain.handle("export:bilingualHtml", async (_event, documentId: string, scope: BilingualExportScope, layout: BilingualHtmlLayout = "side-by-side"): Promise<IpcResult<KnowledgeExportResult>> =>
+  ipcMain.handle("export:bilingualHtml", async (_event, documentId: string, scope: BilingualExportScope, layout: BilingualHtmlLayout = "side-by-side", options: Pick<BilingualExportOptions, "translationVersionId" | "translationResolution"> = {}): Promise<IpcResult<KnowledgeExportResult>> =>
     withIpcResult(async () => {
       const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
-      const payload = buildBilingualPayload(document, scope);
+      const payload = buildBilingualPayload(document, scope, options);
       return saveKnowledgeTextExport(
         document,
         scope.type === "full" ? "bilingual-html" : "bilingual-html-selected",
         bilingualDefaultPath(document, scope, "html"),
         "HTML",
         ["html"],
-        exportCenter.bilingualHtml(document, scope, layout),
+        exportCenter.bilingualHtml(document, scope, layout, options),
         {
           exportScope: payload.scopeLabel,
+          translationVersionId: payload.translationVersionId,
+          translationVersionLabel: payload.translationVersionLabel,
           translationStatusSummary: formatTranslationSummary(payload.summary)
         }
       );
@@ -561,6 +566,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     if (!lastResult) {
       throw new Error("请先完成翻译再导出。");
     }
+    await persistEpubTranslationSnapshot(lastResult.book, lastResult, getSettings());
     const outputPath = await writeTranslatedEpub(lastResult.book, lastResult.translatedChapters);
     const validation = await validateEpub(outputPath);
     const externalValidation = await runExternalEpubCheck(outputPath, getSettings().epubCheckCommand);
@@ -643,6 +649,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
         throw new Error("Job does not have translated chapters to export.");
       }
       lastResult = { book, translatedChapters, jobId };
+      await persistEpubTranslationSnapshot(book, lastResult, getSettings());
       const outputPath = await writeTranslatedEpub(book, translatedChapters);
       const validation = await validateEpub(outputPath);
       const externalValidation = await runExternalEpubCheck(outputPath, getSettings().epubCheckCommand);

@@ -1,9 +1,14 @@
 import type { UnifiedDocument } from "../../shared/documentModel.js";
-import type { BilingualExportScope, BilingualHtmlLayout } from "../../shared/types.js";
+import type { BilingualExportOptions, BilingualExportScope, BilingualHtmlLayout } from "../../shared/types.js";
 import { buildBilingualPayload, formatTranslationSummary, MISSING_TRANSLATION_PLACEHOLDER } from "./bilingualExportCore.js";
 
-export function bilingualDocumentToHtml(document: UnifiedDocument, scope: BilingualExportScope, layout: BilingualHtmlLayout = "side-by-side"): string {
-  const payload = buildBilingualPayload(document, scope);
+export function bilingualDocumentToHtml(
+  document: UnifiedDocument,
+  scope: BilingualExportScope,
+  layout: BilingualHtmlLayout = "side-by-side",
+  options: Pick<BilingualExportOptions, "translationVersionId" | "translationResolution"> = {}
+): string {
+  const payload = buildBilingualPayload(document, scope, options);
   const sections = payload.units
     .map(
       (unit, index) => `<section class="unit ${escapeHtml(unit.translationStatus)}">
@@ -62,6 +67,7 @@ p { margin:0 0 10px; line-height:1.75; white-space:pre-wrap; overflow-wrap:anywh
   <div><dt>Scope</dt><dd>${escapeHtml(payload.scopeLabel)}</dd></div>
   <div><dt>Generated at</dt><dd>${escapeHtml(payload.generatedAt)}</dd></div>
   <div><dt>Translation summary</dt><dd>${escapeHtml(formatTranslationSummary(payload.summary))}</dd></div>
+  <div><dt>Translation version</dt><dd>${escapeHtml(payload.translationVersionLabel ?? "missing fallback")}</dd></div>
 </dl>
 ${sections}
 </main>

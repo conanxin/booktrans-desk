@@ -1,6 +1,7 @@
 import type { DocumentUnit, TranslationVersion, UnifiedDocument } from "../../shared/documentModel.js";
-import type { BilingualExportScope, BilingualExportUnit, TranslationSummary } from "../../shared/types.js";
+import type { BilingualExportOptions, BilingualExportScope, BilingualExportUnit, TranslationSummary } from "../../shared/types.js";
 import { getUnitSourceHint } from "../../shared/documentReaderUtils.js";
+import { findLatestMatchingTranslationVersion } from "../translate/translationVersionService.js";
 
 export const MISSING_TRANSLATION_PLACEHOLDER = "【暂无译文，请先完成翻译或在后续版本生成。】";
 
@@ -11,13 +12,15 @@ export interface BilingualExportPayload {
   units: BilingualExportUnit[];
   summary: TranslationSummary;
   generatedAt: string;
+  translationVersionId?: string;
+  translationVersionLabel?: string;
 }
 
-export function buildBilingualPayload(document: UnifiedDocument, scope: BilingualExportScope): BilingualExportPayload {
+export function buildBilingualPayload(document: UnifiedDocument, scope: BilingualExportScope, options: Pick<BilingualExportOptions, "translationVersionId" | "translationResolution"> = {}): BilingualExportPayload {
   const sourceUnits = selectUnits(document, scope).filter((unit) => unit.text.trim());
-  const translation = selectTranslationVersion(document);
+  const translation = findLatestMatchingTranslationVersion(document, scope, options);
   const translationByUnit = new Map<string, NonNullable<TranslationVersion["unitTranslations"][number]>>();
-  for (const item of translation?.unitTranslations ?? []) {
+  for (const item of translation?.units ?? translation?.unitTranslations ?? []) {
     translationByUnit.set(item.sourceUnitId ?? item.unitId, item);
   }
 
@@ -44,7 +47,9 @@ export function buildBilingualPayload(document: UnifiedDocument, scope: Bilingua
     scopeLabel: formatBilingualScope(document, scope),
     units,
     summary: summarizeTranslations(units),
-    generatedAt: new Date().toISOString()
+    generatedAt: new Date().toISOString(),
+    translationVersionId: translation?.id,
+    translationVersionLabel: translation?.label
   };
 }
 
@@ -85,12 +90,6 @@ export function formatBilingualScope(document: UnifiedDocument, scope: Bilingual
 
 export function formatTranslationSummary(summary: TranslationSummary): string {
   return `total=${summary.totalUnits}; translated=${summary.translatedUnits}; missing=${summary.missingUnits}; experimental=${summary.experimentalUnits}`;
-}
-
-function selectTranslationVersion(document: UnifiedDocument): TranslationVersion | undefined {
-  return [...(document.translations ?? [])]
-    .filter((version) => version.status === "completed")
-    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))[0];
 }
 
 function summarizeTranslations(units: BilingualExportUnit[]): TranslationSummary {

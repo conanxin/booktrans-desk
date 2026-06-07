@@ -293,6 +293,8 @@ export interface ExportHistoryItem {
     | "bilingual-markdown-selected"
     | "bilingual-html-selected";
   exportScope?: string;
+  translationVersionId?: string;
+  translationVersionLabel?: string;
   translationStatusSummary?: string;
   sourceDocumentId?: string;
   sourceDocumentTitle?: string;
@@ -344,6 +346,8 @@ export interface BilingualExportOptions {
   format: "markdown" | "html";
   scope: BilingualExportScope;
   htmlLayout?: BilingualHtmlLayout;
+  translationVersionId?: string;
+  translationResolution?: "latest" | "specific" | "none";
 }
 
 export interface BilingualExportUnit {

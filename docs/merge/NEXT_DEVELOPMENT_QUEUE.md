@@ -251,7 +251,7 @@ Result:
 
 ## Stage S9: Translation Version Persistence / Selected Translation Polish
 
-Status: planned.
+Status: complete.
 
 Goal:
 
@@ -265,4 +265,30 @@ Completion standard:
 - EPUB resume/retry and job export paths refresh translation snapshots.
 - Selected translation can produce a scoped translation version.
 - Bilingual export can choose the latest or user-selected translation version.
+- `npm run build`, `npm test`, and `npm run release:check` pass.
+
+Result:
+
+- `UnifiedDocument.translationVersions` now has a stronger persisted version model with source, scope, status, provider/model/style, job id, unit counts, and translated unit records.
+- The document library store can add, update, list, and resolve latest matching translation versions while keeping old snapshots compatible.
+- EPUB full translation, retry/resume result export, and translated EPUB export paths refresh best-effort `epub-translation` snapshots.
+- PDF translation snapshots remain internal and are marked `pdf-experimental`; PDF public release remains HOLD.
+- Selected EPUB chapter, selected PDF page, and selected units translation handlers can create scoped translation versions.
+- Bilingual Markdown/HTML export can use latest, specific, or no-translation resolution.
+- The renderer shows translation versions, lets the user select a version for bilingual export, and exposes current chapter/page translation actions.
+
+## Stage S10: Workspace README / Merge Branch Product Framing
+
+Status: next.
+
+Goal:
+
+- Update README and merge docs so the branch clearly explains the transition from BookTrans Desk to DocuMuse Studio.
+- Describe current internal alpha capabilities without implying public release readiness.
+- Keep PDF translation public release as HOLD.
+
+Completion standard:
+
+- README names the branch as a DocuMuse Studio merge branch and explains current user flows.
+- Known limitations and manual validation requirements remain visible.
 - `npm run build`, `npm test`, and `npm run release:check` pass.

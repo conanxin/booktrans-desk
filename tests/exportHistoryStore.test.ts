@@ -126,6 +126,8 @@ describe("ExportHistoryStore", () => {
       exportCategory: "knowledge",
       exportKind: "bilingual-markdown-selected",
       exportScope: "chapter:Introduction",
+      translationVersionId: "translation-1",
+      translationVersionLabel: "Chapter translation",
       translationStatusSummary: "total=2; translated=1; missing=1; experimental=0",
       sourceDocumentId: "doc-1",
       sourceDocumentTitle: "Book",
@@ -138,6 +140,8 @@ describe("ExportHistoryStore", () => {
     await expect(store.get(item.id)).resolves.toMatchObject({
       exportKind: "bilingual-markdown-selected",
       exportScope: "chapter:Introduction",
+      translationVersionId: "translation-1",
+      translationVersionLabel: "Chapter translation",
       translationStatusSummary: "total=2; translated=1; missing=1; experimental=0"
     });
   });

@@ -75,26 +75,47 @@ export interface UnifiedDocumentKind {
   detectedAt: string;
 }
 
+export type TranslationSource = "epub-translation" | "pdf-experimental" | "manual" | "imported" | "missing";
+
+export interface TranslationScope {
+  type: "full" | "chapter" | "page" | "units";
+  chapterId?: string;
+  pageNumber?: number;
+  unitIds?: string[];
+}
+
 export interface TranslationUnitRecord {
   unitId: string;
   sourceUnitId?: string;
   sourceText: string;
+  sourceTextPreview?: string;
+  sourceHash?: string;
   translatedText?: string;
-  status: "pending" | "completed" | "failed" | "missing" | "experimental";
-  source?: "epub-translation" | "pdf-experimental" | "manual" | "missing";
+  status: "pending" | "completed" | "translated" | "failed" | "missing" | "experimental";
+  error?: string;
+  source?: TranslationSource;
   updatedAt: string;
 }
+
+export type TranslatedUnit = TranslationUnitRecord;
 
 export interface TranslationVersion {
   id: string;
   documentId: string;
+  label?: string;
   jobId?: string;
-  source?: "epub-translation" | "pdf-experimental" | "manual" | "missing";
+  sourceFormat?: SourceFormat;
+  source?: TranslationSource;
+  scope?: TranslationScope;
   provider?: string;
   model?: string;
   style?: string;
   targetLanguage: string;
-  status: "pending" | "running" | "completed" | "failed" | "cancelled";
+  status: "pending" | "running" | "completed" | "partial" | "failed" | "cancelled" | "stale";
+  translatedUnitCount?: number;
+  totalUnitCount?: number;
+  missingUnitCount?: number;
+  units?: TranslatedUnit[];
   unitTranslations: TranslationUnitRecord[];
   createdAt: string;
   updatedAt: string;

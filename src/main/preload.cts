@@ -6,6 +6,7 @@ import type {
   ImportedDocument,
   IpcResult,
   KnowledgeExportResult,
+  BilingualExportOptions,
   BilingualExportScope,
   BilingualHtmlLayout,
   PdfValidationReport,
@@ -20,6 +21,7 @@ import type { UnifiedDocument } from "../shared/documentModel.js";
 import type { DocumentAnalysisRecord } from "./analysis/analysisService.js";
 import type { DocumentChatMessage } from "./chat/documentChatService.js";
 import type { ExportPresetDefinition, ExportPresetId } from "./export/exportPresets.js";
+import type { TranslationVersionSummary } from "./translate/translationVersionService.js";
 
 const electron = require("electron") as typeof import("electron");
 const { contextBridge, ipcRenderer } = electron;
@@ -34,6 +36,12 @@ const api = {
   askDocument: (documentId: string | undefined, question: string): Promise<IpcResult<DocumentChatMessage>> => ipcRenderer.invoke("chat:ask", documentId, question),
   listDocumentChat: (documentId: string): Promise<IpcResult<DocumentChatMessage[]>> => ipcRenderer.invoke("chat:list", documentId),
   clearDocumentChat: (documentId: string): Promise<IpcResult<{ cleared: true }>> => ipcRenderer.invoke("chat:clear", documentId),
+  listTranslationVersions: (documentId: string): Promise<IpcResult<TranslationVersionSummary[]>> => ipcRenderer.invoke("translation:versions", documentId),
+  translateCurrentChapter: (documentId: string, chapterId: string): Promise<IpcResult<TranslationVersionSummary>> =>
+    ipcRenderer.invoke("translation:translateCurrentChapter", documentId, chapterId),
+  translateCurrentPageExperimental: (documentId: string, pageNumber: number): Promise<IpcResult<TranslationVersionSummary>> =>
+    ipcRenderer.invoke("translation:translateCurrentPageExperimental", documentId, pageNumber),
+  translateUnits: (documentId: string, unitIds: string[]): Promise<IpcResult<TranslationVersionSummary>> => ipcRenderer.invoke("translation:translateUnits", documentId, unitIds),
   exportDocumentMarkdown: (documentId?: string): Promise<IpcResult<KnowledgeExportResult>> => ipcRenderer.invoke("export:documentMarkdown", documentId),
   exportDocumentJson: (documentId?: string): Promise<IpcResult<KnowledgeExportResult>> => ipcRenderer.invoke("export:documentJson", documentId),
   exportChatMarkdown: (documentId: string): Promise<IpcResult<KnowledgeExportResult>> => ipcRenderer.invoke("export:chatMarkdown", documentId),
@@ -42,10 +50,10 @@ const api = {
   exportPresetMarkdown: (documentId: string, presetId: ExportPresetId): Promise<IpcResult<KnowledgeExportResult>> => ipcRenderer.invoke("export:presetMarkdown", documentId, presetId),
   exportFullArchive: (documentId: string): Promise<IpcResult<KnowledgeExportResult>> => ipcRenderer.invoke("export:fullArchive", documentId),
   exportBaselinePptx: (documentId: string): Promise<IpcResult<KnowledgeExportResult>> => ipcRenderer.invoke("export:pptx", documentId),
-  exportBilingualMarkdown: (documentId: string, scope: BilingualExportScope): Promise<IpcResult<KnowledgeExportResult>> =>
-    ipcRenderer.invoke("export:bilingualMarkdown", documentId, scope),
-  exportBilingualHtml: (documentId: string, scope: BilingualExportScope, layout?: BilingualHtmlLayout): Promise<IpcResult<KnowledgeExportResult>> =>
-    ipcRenderer.invoke("export:bilingualHtml", documentId, scope, layout),
+  exportBilingualMarkdown: (documentId: string, scope: BilingualExportScope, options?: Pick<BilingualExportOptions, "translationVersionId" | "translationResolution">): Promise<IpcResult<KnowledgeExportResult>> =>
+    ipcRenderer.invoke("export:bilingualMarkdown", documentId, scope, options),
+  exportBilingualHtml: (documentId: string, scope: BilingualExportScope, layout?: BilingualHtmlLayout, options?: Pick<BilingualExportOptions, "translationVersionId" | "translationResolution">): Promise<IpcResult<KnowledgeExportResult>> =>
+    ipcRenderer.invoke("export:bilingualHtml", documentId, scope, layout, options),
   getSettings: (): Promise<TranslationSettings> => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings: TranslationSettings): Promise<TranslationSettings> => ipcRenderer.invoke("settings:save", settings),
   startTranslation: (settings: TranslationSettings): Promise<IpcResult<{ completed: true }>> => ipcRenderer.invoke("translation:start", settings),
