@@ -93,6 +93,12 @@ export function App() {
       return;
     }
     setDocuments(result.data);
+    if (!result.data.length) {
+      setCurrentDocument(null);
+      setAnalysis(null);
+      setChatMessages([]);
+      return;
+    }
     const sourcePath = imported ? getImportedSourcePath(imported) : currentDocument?.sourcePath;
     const selected = sourcePath ? result.data.find((document) => document.sourcePath === sourcePath) : result.data[0];
     if (selected) {
@@ -110,6 +116,21 @@ export function App() {
     setAnalysis(existingAnalysis.ok ? existingAnalysis.data ?? null : null);
     const existingChat = await window.bookTrans.listDocumentChat(document.id);
     setChatMessages(existingChat.ok ? existingChat.data ?? [] : []);
+  }
+
+  async function deleteLibraryDocument(document: UnifiedDocument) {
+    const result = await window.bookTrans.deleteDocument(document.id);
+    if (result.ok) {
+      if (currentDocument?.id === document.id) {
+        setCurrentDocument(null);
+        setAnalysis(null);
+        setChatMessages([]);
+      }
+      setMessage(`已删除文档快照：${document.title}`);
+      await refreshDocumentLibrary();
+    } else {
+      setMessage(formatIpcError(result));
+    }
   }
 
   async function saveSettings(next: TranslationSettings) {
@@ -272,7 +293,7 @@ export function App() {
           <section className="workspace-grid">
             <aside className="sidebar">
               <ImportPanel onImport={importBook} busy={busy} />
-              <DocumentLibraryPanel documents={documents} currentDocument={currentDocument} onSelect={selectLibraryDocument} />
+              <DocumentLibraryPanel documents={documents} currentDocument={currentDocument} onSelect={selectLibraryDocument} onDelete={deleteLibraryDocument} onRefresh={() => void refreshDocumentLibrary()} />
               <TranslationSettingsPanel settings={settings} onSave={saveSettings} onTestConnection={testTranslatorConnection} busy={busy} glossaryCount={glossaryCount} />
               <div className="actions">
                 <button className="primary" onClick={startTranslation} disabled={!book || busy || (isPdf(book) && book.isScannedLike)}>
@@ -358,11 +379,15 @@ function WorkflowSteps({ bookReady, busy, canExport }: { bookReady: boolean; bus
 function DocumentLibraryPanel({
   documents,
   currentDocument,
-  onSelect
+  onSelect,
+  onDelete,
+  onRefresh
 }: {
   documents: UnifiedDocument[];
   currentDocument: UnifiedDocument | null;
   onSelect: (document: UnifiedDocument) => void;
+  onDelete: (document: UnifiedDocument) => void;
+  onRefresh: () => void;
 }) {
   return (
     <section className="panel document-library-panel">
@@ -371,17 +396,25 @@ function DocumentLibraryPanel({
           <p className="section-kicker">文档库</p>
           <h2>当前导入文档</h2>
         </div>
-        <span className="mini-count">{documents.length}</span>
+        <div className="library-header-actions">
+          <button onClick={onRefresh}>刷新</button>
+          <span className="mini-count">{documents.length}</span>
+        </div>
       </div>
       <div className="document-library-list">
         {documents.length ? (
           documents.map((document) => (
-            <button className={`document-library-row ${currentDocument?.id === document.id ? "active" : ""}`} key={document.id} onClick={() => onSelect(document)}>
-              <strong>{document.title}</strong>
-              <span>
-                {document.sourceFormat.toUpperCase()} · {documentKindLabel(document)} · {document.units.length} units
-              </span>
-            </button>
+            <article className={`document-library-row ${currentDocument?.id === document.id ? "active" : ""}`} key={document.id}>
+              <button className="document-library-select" onClick={() => onSelect(document)}>
+                <strong>{document.title}</strong>
+                <span>
+                  {document.sourceFormat.toUpperCase()} · {documentKindLabel(document)} · {document.units.length} units
+                </span>
+              </button>
+              <button className="document-library-delete" onClick={() => onDelete(document)} title="删除文档快照">
+                删除
+              </button>
+            </article>
           ))
         ) : (
           <p className="empty-hint">导入 PDF / EPUB 后会在这里出现统一文档快照。</p>

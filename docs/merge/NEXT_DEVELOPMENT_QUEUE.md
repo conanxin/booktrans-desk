@@ -38,10 +38,18 @@
 
 ## Next Small Stage
 
-The next implementation stage should focus on the UnifiedDocument library UI:
+Stage S1 should focus on the UnifiedDocument library UI:
 
 - Refresh the library after import/delete/export.
 - Add document selection persistence.
 - Add current document details independent of current translation object.
 - Keep the current EPUB translation path untouched.
 
+## Stage S1 Result
+
+Planned implementation:
+
+- Add manual library refresh.
+- Add document snapshot delete action.
+- Clear current analysis/chat state when the selected snapshot is removed.
+- Keep current EPUB/PDF import and translation behavior unchanged.

@@ -254,12 +254,14 @@ small {
 
 .document-library-row {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 4px;
-  width: 100%;
   min-height: 56px;
-  justify-items: start;
+  align-items: center;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  text-align: left;
+  padding: 6px;
+  background: #fff;
 }
 
 .document-library-row.active {
@@ -267,17 +269,51 @@ small {
   background: #eefaf7;
 }
 
-.document-library-row strong,
-.document-library-row span {
+.document-library-select {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  min-height: 44px;
+  justify-items: start;
+  border: 0;
+  padding: 6px 8px;
+  text-align: left;
+  background: transparent;
+}
+
+.document-library-select:hover:not(:disabled) {
+  box-shadow: none;
+  transform: none;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.document-library-select strong,
+.document-library-select span {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.document-library-row span {
+.document-library-select span {
   color: var(--muted);
   font-size: 12px;
+}
+
+.document-library-delete {
+  min-height: 32px;
+  padding: 6px 9px;
+}
+
+.library-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.library-header-actions button {
+  min-height: 30px;
+  padding: 5px 9px;
 }
 
 .structure-grid {
