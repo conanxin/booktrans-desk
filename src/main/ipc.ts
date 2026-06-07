@@ -15,6 +15,8 @@ import type {
   ImportedPdfDocument,
   IpcResult,
   KnowledgeExportResult,
+  BilingualExportScope,
+  BilingualHtmlLayout,
   PdfValidationReport,
   PdfTranslationJobResult,
   TranslationJobResult,
@@ -24,7 +26,7 @@ import type {
   TranslatorConnectionTestResult,
   ValidationReport
 } from "../shared/types.js";
-import type { UnifiedDocument } from "../shared/documentModel.js";
+import type { TranslationVersion, UnifiedDocument } from "../shared/documentModel.js";
 import { fromImportedBook, fromImportedPdfDocument } from "../shared/documentAdapters.js";
 import { validationReportToMarkdown } from "../shared/validationReport.js";
 import { getSettings, saveSettings } from "./config/settings.js";
@@ -33,16 +35,19 @@ import { detectDocumentKindForDocument } from "./document/documentKindDetector.j
 import { extractOutline } from "./document/outlineExtractor.js";
 import { createDiagnosticBundle, defaultDiagnosticBundleName } from "./diagnostics/createDiagnosticBundle.js";
 import { runExternalEpubCheck } from "./epub/runExternalEpubCheck.js";
-import { readEpub } from "./epub/readEpub.js";
+import { extractBodyText, readEpub } from "./epub/readEpub.js";
 import { validateEpub } from "./epub/validateEpub.js";
 import { writeTranslatedEpub } from "./epub/writeTranslatedEpub.js";
 import { ExportCenter } from "./export/exportCenter.js";
 import type { ExportPresetId } from "./export/exportPresets.js";
+import { buildBilingualPayload, formatTranslationSummary } from "./export/bilingualExportCore.js";
 import { createExportHistoryStore, normalizeExternalStatus, normalizeValidationStatus } from "./export/exportHistoryStore.js";
 import {
   statusToValidationStatus,
   validateJsonExport,
   validateMarkdownExport,
+  validateBilingualHtmlExport,
+  validateBilingualMarkdownExport,
   validatePptxExport,
   validateZipExport
 } from "./export/exportValidation.js";
@@ -64,6 +69,11 @@ let currentUnifiedDocument: UnifiedDocument | null = null;
 let lastResult: TranslationJobResult | null = null;
 let lastPdfResult: PdfTranslationJobResult | null = null;
 const cancellation = new TranslationCancellationManager();
+
+interface KnowledgeExportMetadata {
+  exportScope?: string;
+  translationStatusSummary?: string;
+}
 
 export function registerIpc(mainWindow: BrowserWindow): void {
   const store = () => createTranslationJobStore(app.getPath("userData"));
@@ -122,9 +132,10 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     defaultPath: string,
     filterName: string,
     extensions: string[],
-    content: string
+    content: string,
+    metadata: KnowledgeExportMetadata = {}
   ): Promise<KnowledgeExportResult> {
-    return saveKnowledgeExport(document, exportKind, defaultPath, filterName, extensions, Buffer.from(content, "utf8"));
+    return saveKnowledgeExport(document, exportKind, defaultPath, filterName, extensions, Buffer.from(content, "utf8"), metadata);
   }
 
   async function saveKnowledgeBufferExport(
@@ -133,9 +144,10 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     defaultPath: string,
     filterName: string,
     extensions: string[],
-    content: Buffer
+    content: Buffer,
+    metadata: KnowledgeExportMetadata = {}
   ): Promise<KnowledgeExportResult> {
-    return saveKnowledgeExport(document, exportKind, defaultPath, filterName, extensions, content);
+    return saveKnowledgeExport(document, exportKind, defaultPath, filterName, extensions, content, metadata);
   }
 
   async function saveKnowledgeExport(
@@ -144,7 +156,8 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     defaultPath: string,
     filterName: string,
     extensions: string[],
-    content: Buffer
+    content: Buffer,
+    metadata: KnowledgeExportMetadata = {}
   ): Promise<KnowledgeExportResult> {
     const result = await dialog.showSaveDialog(mainWindow, {
       title: "Export",
@@ -167,6 +180,8 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       outputEpubPath: result.filePath,
       outputPath: result.filePath,
       validationStatus: statusToValidationStatus(validation.status),
+      exportScope: metadata.exportScope,
+      translationStatusSummary: metadata.translationStatusSummary,
       targetLanguage: "knowledge",
       model: document.analysisState?.model
     });
@@ -175,6 +190,12 @@ export function registerIpc(mainWindow: BrowserWindow): void {
 
   async function validateKnowledgeExport(outputPath: string, exportKind: NonNullable<ExportHistoryItem["exportKind"]>, title: string) {
     switch (exportKind) {
+      case "bilingual-markdown":
+      case "bilingual-markdown-selected":
+        return validateBilingualMarkdownExport(outputPath);
+      case "bilingual-html":
+      case "bilingual-html-selected":
+        return validateBilingualHtmlExport(outputPath);
       case "document-json":
         return validateJsonExport(outputPath);
       case "full-archive":
@@ -184,6 +205,93 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       default:
         return validateMarkdownExport(outputPath, title);
     }
+  }
+
+  async function persistEpubTranslationSnapshot(book: ImportedBook, result: TranslationJobResult, settings: TranslationSettings): Promise<void> {
+    const library = documentLibrary();
+    const document = currentUnifiedDocument ?? (await findDocumentBySourcePath(book.filePath));
+    if (!document) {
+      return;
+    }
+    const translatedByChapterId = new Map(result.translatedChapters.map((chapter) => [chapter.chapterId, extractBodyText(chapter.html)]));
+    const now = new Date().toISOString();
+    const version: TranslationVersion = {
+      id: `translation-${crypto.randomUUID()}`,
+      documentId: document.id,
+      jobId: result.jobId,
+      source: "epub-translation",
+      provider: settings.providerPreset,
+      model: settings.useMock ? "mock" : settings.model,
+      style: settings.style,
+      targetLanguage: "zh-CN",
+      status: "completed",
+      unitTranslations: document.units.map((unit) => {
+        const originalChapterId = typeof unit.metadata?.originalChapterId === "string" ? unit.metadata.originalChapterId : undefined;
+        const translatedText = originalChapterId ? translatedByChapterId.get(originalChapterId) : undefined;
+        return {
+          unitId: unit.id,
+          sourceUnitId: unit.id,
+          sourceText: unit.text,
+          translatedText,
+          status: translatedText ? "completed" : "missing",
+          source: translatedText ? "epub-translation" : "missing",
+          updatedAt: now
+        };
+      }),
+      createdAt: now,
+      updatedAt: now
+    };
+    currentUnifiedDocument = await library.updateDocument(document.id, (existing) => ({
+      ...existing,
+      translations: [...(existing.translations ?? []).filter((item) => item.jobId !== result.jobId), version]
+    }));
+  }
+
+  async function persistPdfTranslationSnapshot(document: UnifiedDocument, result: PdfTranslationJobResult, settings: TranslationSettings): Promise<UnifiedDocument> {
+    const translatedByParagraphId = new Map<string, string>();
+    for (const page of result.translatedPages) {
+      for (const paragraph of page.paragraphs) {
+        if (paragraph.id && paragraph.translated) {
+          translatedByParagraphId.set(paragraph.id, paragraph.translated);
+        }
+      }
+    }
+    const now = new Date().toISOString();
+    const version: TranslationVersion = {
+      id: `translation-${crypto.randomUUID()}`,
+      documentId: document.id,
+      jobId: result.jobId,
+      source: "pdf-experimental",
+      provider: settings.providerPreset,
+      model: settings.useMock ? "mock" : settings.model,
+      style: settings.style,
+      targetLanguage: "zh-CN",
+      status: "completed",
+      unitTranslations: document.units.map((unit) => {
+        const originalParagraphId = typeof unit.metadata?.originalParagraphId === "string" ? unit.metadata.originalParagraphId : undefined;
+        const translatedText = originalParagraphId ? translatedByParagraphId.get(originalParagraphId) : undefined;
+        return {
+          unitId: unit.id,
+          sourceUnitId: unit.id,
+          sourceText: unit.text,
+          translatedText,
+          status: translatedText ? "experimental" : "missing",
+          source: translatedText ? "pdf-experimental" : "missing",
+          updatedAt: now
+        };
+      }),
+      createdAt: now,
+      updatedAt: now
+    };
+    return documentLibrary().updateDocument(document.id, (existing) => ({
+      ...existing,
+      translations: [...(existing.translations ?? []).filter((item) => item.jobId !== result.jobId), version]
+    }));
+  }
+
+  async function findDocumentBySourcePath(sourcePath: string): Promise<UnifiedDocument | null> {
+    const documents = await documentLibrary().listDocuments();
+    return documents.find((document) => document.sourcePath === sourcePath) ?? null;
   }
 
   async function runManagedTranslation(book: ImportedBook, settings: TranslationSettings, options: TranslateBookOptions = {}): Promise<void> {
@@ -204,6 +312,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
         },
         { ...options, userDataDir: app.getPath("userData") }
       );
+      await persistEpubTranslationSnapshot(book, lastResult, settings);
     } catch (error) {
       emitFailureProgress(mainWindow, error, lastProgress, running.abortController.signal.aborted);
       throw error;
@@ -344,6 +453,42 @@ export function registerIpc(mainWindow: BrowserWindow): void {
       return saveKnowledgeBufferExport(document, "pptx", `${safeFileName(document.title)}.deck.pptx`, "PowerPoint", ["pptx"], exportCenter.baselinePptx(document));
     })
   );
+  ipcMain.handle("export:bilingualMarkdown", async (_event, documentId: string, scope: BilingualExportScope): Promise<IpcResult<KnowledgeExportResult>> =>
+    withIpcResult(async () => {
+      const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
+      const payload = buildBilingualPayload(document, scope);
+      return saveKnowledgeTextExport(
+        document,
+        scope.type === "full" ? "bilingual-markdown" : "bilingual-markdown-selected",
+        bilingualDefaultPath(document, scope, "md"),
+        "Markdown",
+        ["md"],
+        exportCenter.bilingualMarkdown(document, scope),
+        {
+          exportScope: payload.scopeLabel,
+          translationStatusSummary: formatTranslationSummary(payload.summary)
+        }
+      );
+    })
+  );
+  ipcMain.handle("export:bilingualHtml", async (_event, documentId: string, scope: BilingualExportScope, layout: BilingualHtmlLayout = "side-by-side"): Promise<IpcResult<KnowledgeExportResult>> =>
+    withIpcResult(async () => {
+      const document = await resolveUnifiedDocument(documentLibrary(), currentUnifiedDocument, documentId);
+      const payload = buildBilingualPayload(document, scope);
+      return saveKnowledgeTextExport(
+        document,
+        scope.type === "full" ? "bilingual-html" : "bilingual-html-selected",
+        bilingualDefaultPath(document, scope, "html"),
+        "HTML",
+        ["html"],
+        exportCenter.bilingualHtml(document, scope, layout),
+        {
+          exportScope: payload.scopeLabel,
+          translationStatusSummary: formatTranslationSummary(payload.summary)
+        }
+      );
+    })
+  );
 
   ipcMain.handle("settings:get", () => getSettings());
   ipcMain.handle("settings:save", (_event, settings: TranslationSettings) => saveSettings(settings));
@@ -371,6 +516,9 @@ export function registerIpc(mainWindow: BrowserWindow): void {
           lastProgress = progress;
           mainWindow.webContents.send("translation:progress", progress);
         });
+        if (currentUnifiedDocument) {
+          currentUnifiedDocument = await persistPdfTranslationSnapshot(currentUnifiedDocument, lastPdfResult, settings);
+        }
         return { ok: true, data: { completed: true } };
       } catch (error) {
         emitFailureProgress(mainWindow, error, lastProgress, running.abortController.signal.aborted, "pdf");
@@ -731,6 +879,22 @@ async function saveBufferWithDialog(
 
 function safeFileName(value: string): string {
   return (value || "document").replace(/[\\/:*?"<>|]+/g, "_").trim() || "document";
+}
+
+function bilingualDefaultPath(document: UnifiedDocument, scope: BilingualExportScope, extension: "md" | "html"): string {
+  const base = safeFileName(document.title);
+  if (scope.type === "chapter") {
+    const chapter = document.chapters.find((item) => item.id === scope.chapterId);
+    const label = safeFileName(chapter ? `chapter-${chapter.order + 1}` : "chapter");
+    return `${base}.${label}.bilingual.${extension}`;
+  }
+  if (scope.type === "page") {
+    return `${base}.page-${scope.pageNumber ?? "unknown"}.bilingual.${extension}`;
+  }
+  if (scope.type === "units") {
+    return `${base}.selected-units.bilingual.${extension}`;
+  }
+  return `${base}.bilingual.${extension}`;
 }
 
 function isPdfValidationReport(report: ValidationReport | PdfValidationReport): report is PdfValidationReport {

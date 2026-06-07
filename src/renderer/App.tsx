@@ -7,6 +7,7 @@ import { formatBoundingBox, getDocumentChapters, getDocumentPages, getUnitSource
 import type {
   ExportHistoryItem,
   ExternalEpubCheckReport,
+  BilingualExportScope,
   ImportedBook,
   ImportedDocument,
   ImportedPdfDocument,
@@ -34,7 +35,21 @@ const emptyProgress: TranslationProgress = {
   log: []
 };
 
-type UnifiedExportKind = "markdown" | "json" | "chat" | "analysis" | "study-notes" | "research-digest" | "presentation-outline" | "podcast-prep" | "full-archive" | "pptx";
+type UnifiedExportKind =
+  | "markdown"
+  | "json"
+  | "chat"
+  | "analysis"
+  | "study-notes"
+  | "research-digest"
+  | "presentation-outline"
+  | "podcast-prep"
+  | "full-archive"
+  | "pptx"
+  | "bilingual-markdown-full"
+  | "bilingual-markdown-selected"
+  | "bilingual-html-full"
+  | "bilingual-html-selected";
 
 export function App() {
   const [book, setBook] = useState<ImportedDocument | null>(null);
@@ -390,7 +405,25 @@ export function App() {
         return window.bookTrans.exportFullArchive(documentId);
       case "pptx":
         return window.bookTrans.exportBaselinePptx(documentId);
+      case "bilingual-markdown-full":
+        return window.bookTrans.exportBilingualMarkdown(documentId, { type: "full" });
+      case "bilingual-markdown-selected":
+        return window.bookTrans.exportBilingualMarkdown(documentId, selectedBilingualScope());
+      case "bilingual-html-full":
+        return window.bookTrans.exportBilingualHtml(documentId, { type: "full" }, "side-by-side");
+      case "bilingual-html-selected":
+        return window.bookTrans.exportBilingualHtml(documentId, selectedBilingualScope(), "side-by-side");
     }
+  }
+
+  function selectedBilingualScope(): BilingualExportScope {
+    if (currentDocument?.sourceFormat === "pdf" && typeof selectedPageNumber === "number") {
+      return { type: "page", pageNumber: selectedPageNumber };
+    }
+    if (currentDocument?.sourceFormat === "epub" && selectedChapterId) {
+      return { type: "chapter", chapterId: selectedChapterId };
+    }
+    return { type: "full" };
   }
 
   async function refreshExportHistory() {
@@ -1038,6 +1071,18 @@ function ExportPanel({
         <button onClick={() => onExport("pptx")} disabled={disabled}>
           {exportingKind === "pptx" ? "Exporting..." : "Baseline PPTX"}
         </button>
+        <button onClick={() => onExport("bilingual-markdown-full")} disabled={disabled}>
+          {exportingKind === "bilingual-markdown-full" ? "Exporting..." : "Bilingual Markdown · Full"}
+        </button>
+        <button onClick={() => onExport("bilingual-markdown-selected")} disabled={disabled}>
+          {exportingKind === "bilingual-markdown-selected" ? "Exporting..." : "Bilingual Markdown · Current"}
+        </button>
+        <button onClick={() => onExport("bilingual-html-full")} disabled={disabled}>
+          {exportingKind === "bilingual-html-full" ? "Exporting..." : "Bilingual HTML · Full"}
+        </button>
+        <button onClick={() => onExport("bilingual-html-selected")} disabled={disabled}>
+          {exportingKind === "bilingual-html-selected" ? "Exporting..." : "Bilingual HTML · Current"}
+        </button>
       </div>
       <div className="export-help-list">
         <span>Study Notes: reading notes with Q&A highlights.</span>
@@ -1046,6 +1091,9 @@ function ExportPanel({
         <span>Podcast Prep: questions, segments, and quotes.</span>
         <span>Full Archive: ZIP with all baseline knowledge files.</span>
         <span>Baseline PPTX: experimental minimal slide deck.</span>
+        <span>Bilingual exports pair original units with available translations.</span>
+        <span>Missing translations are shown as explicit placeholders, never fabricated.</span>
+        <span>PDF bilingual export does not change PDF translation HOLD status.</span>
       </div>
       {status ? <p className="export-status">{status}</p> : null}
       {lastResult?.outputPath ? (
@@ -1125,6 +1173,14 @@ function unifiedExportLabel(kind: UnifiedExportKind): string {
       return "Full Archive ZIP";
     case "pptx":
       return "Baseline PPTX";
+    case "bilingual-markdown-full":
+      return "Bilingual Markdown Full";
+    case "bilingual-markdown-selected":
+      return "Bilingual Markdown Current";
+    case "bilingual-html-full":
+      return "Bilingual HTML Full";
+    case "bilingual-html-selected":
+      return "Bilingual HTML Current";
     default:
       return exportKindLabel(kind);
   }
@@ -1152,6 +1208,14 @@ function unifiedExportLabelFromHistory(kind: ExportHistoryItem["exportKind"]): s
       return "Full Archive ZIP";
     case "pptx":
       return "Baseline PPTX";
+    case "bilingual-markdown":
+      return "Bilingual Markdown";
+    case "bilingual-markdown-selected":
+      return "Bilingual Markdown Selected";
+    case "bilingual-html":
+      return "Bilingual HTML";
+    case "bilingual-html-selected":
+      return "Bilingual HTML Selected";
     case "translated-pdf":
       return "Translated PDF";
     case "translated-epub":

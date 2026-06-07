@@ -77,9 +77,11 @@ export interface UnifiedDocumentKind {
 
 export interface TranslationUnitRecord {
   unitId: string;
+  sourceUnitId?: string;
   sourceText: string;
-  translatedText: string;
-  status: "pending" | "completed" | "failed";
+  translatedText?: string;
+  status: "pending" | "completed" | "failed" | "missing" | "experimental";
+  source?: "epub-translation" | "pdf-experimental" | "manual" | "missing";
   updatedAt: string;
 }
 
@@ -87,8 +89,10 @@ export interface TranslationVersion {
   id: string;
   documentId: string;
   jobId?: string;
+  source?: "epub-translation" | "pdf-experimental" | "manual" | "missing";
   provider?: string;
   model?: string;
+  style?: string;
   targetLanguage: string;
   status: "pending" | "running" | "completed" | "failed" | "cancelled";
   unitTranslations: TranslationUnitRecord[];

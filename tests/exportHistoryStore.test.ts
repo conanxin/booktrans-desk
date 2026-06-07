@@ -118,6 +118,29 @@ describe("ExportHistoryStore", () => {
     expect(refreshed?.fileExists).toBe(true);
     expect(refreshed?.fileSize).toBeGreaterThan(0);
   });
+
+  it("records bilingual export scope and translation summary", async () => {
+    const store = new ExportHistoryStore(await filePath());
+    const item = await store.add({
+      sourceType: "epub",
+      exportCategory: "knowledge",
+      exportKind: "bilingual-markdown-selected",
+      exportScope: "chapter:Introduction",
+      translationStatusSummary: "total=2; translated=1; missing=1; experimental=0",
+      sourceDocumentId: "doc-1",
+      sourceDocumentTitle: "Book",
+      outputEpubPath: "/tmp/book.chapter-1.bilingual.md",
+      outputPath: "/tmp/book.chapter-1.bilingual.md",
+      validationStatus: "warning",
+      targetLanguage: "knowledge"
+    });
+
+    await expect(store.get(item.id)).resolves.toMatchObject({
+      exportKind: "bilingual-markdown-selected",
+      exportScope: "chapter:Introduction",
+      translationStatusSummary: "total=2; translated=1; missing=1; experimental=0"
+    });
+  });
 });
 
 async function filePath(): Promise<string> {

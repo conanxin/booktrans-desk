@@ -6,6 +6,8 @@ import type {
   ImportedDocument,
   IpcResult,
   KnowledgeExportResult,
+  BilingualExportScope,
+  BilingualHtmlLayout,
   PdfValidationReport,
   TranslationProfile,
   TranslationJobSummary,
@@ -40,6 +42,10 @@ const api = {
   exportPresetMarkdown: (documentId: string, presetId: ExportPresetId): Promise<IpcResult<KnowledgeExportResult>> => ipcRenderer.invoke("export:presetMarkdown", documentId, presetId),
   exportFullArchive: (documentId: string): Promise<IpcResult<KnowledgeExportResult>> => ipcRenderer.invoke("export:fullArchive", documentId),
   exportBaselinePptx: (documentId: string): Promise<IpcResult<KnowledgeExportResult>> => ipcRenderer.invoke("export:pptx", documentId),
+  exportBilingualMarkdown: (documentId: string, scope: BilingualExportScope): Promise<IpcResult<KnowledgeExportResult>> =>
+    ipcRenderer.invoke("export:bilingualMarkdown", documentId, scope),
+  exportBilingualHtml: (documentId: string, scope: BilingualExportScope, layout?: BilingualHtmlLayout): Promise<IpcResult<KnowledgeExportResult>> =>
+    ipcRenderer.invoke("export:bilingualHtml", documentId, scope, layout),
   getSettings: (): Promise<TranslationSettings> => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings: TranslationSettings): Promise<TranslationSettings> => ipcRenderer.invoke("settings:save", settings),
   startTranslation: (settings: TranslationSettings): Promise<IpcResult<{ completed: true }>> => ipcRenderer.invoke("translation:start", settings),

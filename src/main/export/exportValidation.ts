@@ -72,6 +72,50 @@ export async function validatePptxExport(filePath: string): Promise<ExportValida
   };
 }
 
+export async function validateBilingualMarkdownExport(filePath: string): Promise<ExportValidation> {
+  const base = await validateMarkdownExport(filePath);
+  if (base.status === "fail") {
+    return base;
+  }
+  const content = await fs.readFile(filePath, "utf8");
+  const errors = [...base.errors];
+  const warnings = [...base.warnings];
+  if (!content.includes("### 原文") || !content.includes("### 译文")) {
+    errors.push("Bilingual Markdown is missing original or translation sections.");
+  }
+  if (content.includes("【暂无译文")) {
+    warnings.push("Bilingual Markdown contains missing translation placeholders.");
+  }
+  return finalizeValidation(errors, warnings, [filePath], "Bilingual Markdown export validated.");
+}
+
+export async function validateBilingualHtmlExport(filePath: string): Promise<ExportValidation> {
+  const base = await validateGenericExport(filePath);
+  if (base.status === "fail") {
+    return base;
+  }
+  const content = await fs.readFile(filePath, "utf8");
+  const errors = [...base.errors];
+  const warnings = [...base.warnings];
+  if (!/^<!doctype html>/i.test(content.trim()) || !content.includes("<html") || !content.includes("<body")) {
+    errors.push("Bilingual HTML is missing doctype, html, or body structure.");
+  }
+  if (!content.includes("原文") || !content.includes("译文")) {
+    errors.push("Bilingual HTML is missing original or translation labels.");
+  }
+  if (!content.includes("source")) {
+    warnings.push("Bilingual HTML does not appear to include source hints.");
+  }
+  if (/<script[\s>]/i.test(content)) {
+    errors.push("Bilingual HTML must not include script tags.");
+  }
+  if (content.includes("【暂无译文")) {
+    warnings.push("Bilingual HTML contains missing translation placeholders.");
+  }
+  addSensitiveWarnings(content, warnings);
+  return finalizeValidation(errors, warnings, [filePath], "Bilingual HTML export validated.");
+}
+
 export async function validateGenericExport(filePath: string): Promise<ExportValidation> {
   try {
     const stat = await fs.stat(filePath);

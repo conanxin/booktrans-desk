@@ -123,6 +123,8 @@ function normalizeDocument(document: UnifiedDocument): UnifiedDocument {
   return {
     ...document,
     analysisState: document.analysisState ?? { status: "idle", mode: "quick", updatedAt: document.updatedAt },
-    chatMessages: document.chatMessages ?? []
+    chatMessages: document.chatMessages ?? [],
+    translations: document.translations ?? [],
+    exports: document.exports ?? []
   };
 }

@@ -51,3 +51,22 @@ S7 keeps bilingual export as an evaluated next step instead of folding it into e
 ## S8 Recommendation
 
 S8 should implement bilingual Markdown baseline first. It should use existing UnifiedDocument units and add a small translation lookup layer that can read persisted `TranslationVersion` records when available. After Markdown is stable, add bilingual HTML preview/export with the same source pairing. Bilingual PDF should remain deferred.
+
+## S8 Implementation Result
+
+S8 implemented the recommended baseline:
+
+- Bilingual Markdown export supports full document, selected chapter, selected page, and selected units.
+- Bilingual HTML export supports the same scope model and uses inline CSS with side-by-side layout by default.
+- HTML output escapes source text, translation text, and source hints; it does not include scripts or external assets.
+- Missing translations render as an explicit placeholder: `【暂无译文，请先完成翻译或在后续版本生成。】`.
+- EPUB translation completion now creates a lightweight `TranslationVersion` snapshot when the current UnifiedDocument can be matched.
+- PDF translation snapshot support exists only for internal experimental results; PDF public release remains HOLD.
+- Export history records bilingual export kind, scope, and translation summary.
+
+## Remaining Follow-Up
+
+- Persist translation snapshots for EPUB resume/retry/job export flows.
+- Add user-facing translation-version selection when multiple versions exist.
+- Improve selected unit UI beyond chapter/page selection.
+- Keep bilingual PDF deferred.

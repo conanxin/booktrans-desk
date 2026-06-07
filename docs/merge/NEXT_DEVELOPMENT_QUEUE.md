@@ -223,7 +223,7 @@ Result:
 
 ## Stage S8: Bilingual Markdown / HTML Export Baseline
 
-Status: planned.
+Status: complete.
 
 Goal:
 
@@ -236,4 +236,33 @@ Completion standard:
 
 - Bilingual export uses UnifiedDocument units and persisted translation versions or selected translation output.
 - EPUB and PDF source hints remain visible.
+- `npm run build`, `npm test`, and `npm run release:check` pass.
+
+Result:
+
+- Added bilingual Markdown export for full document and selected chapter/page/unit scope.
+- Added bilingual HTML export with inline CSS and side-by-side default layout.
+- Selected EPUB chapter and selected PDF page are wired from the current reader selection.
+- Missing translations are represented with an explicit placeholder instead of fabricated text.
+- EPUB completed translation jobs create a lightweight `TranslationVersion` snapshot mapped to UnifiedDocument units.
+- PDF translated results can create an internal `pdf-experimental` translation snapshot, but PDF translation public release remains HOLD.
+- Export history records bilingual export kind, scope, and translation status summary.
+- Validation covers bilingual Markdown and HTML structure.
+
+## Stage S9: Translation Version Persistence / Selected Translation Polish
+
+Status: planned.
+
+Goal:
+
+- Make translation snapshots more robust across resume/retry/job export paths.
+- Add selected chapter/page/unit translation flows that persist directly to UnifiedDocument translation versions.
+- Improve bilingual export source selection when multiple translation versions exist.
+- Keep PDF translation public release as HOLD.
+
+Completion standard:
+
+- EPUB resume/retry and job export paths refresh translation snapshots.
+- Selected translation can produce a scoped translation version.
+- Bilingual export can choose the latest or user-selected translation version.
 - `npm run build`, `npm test`, and `npm run release:check` pass.

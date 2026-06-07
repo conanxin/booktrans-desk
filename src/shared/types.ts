@@ -287,7 +287,13 @@ export interface ExportHistoryItem {
     | "presentation-outline"
     | "podcast-prep"
     | "full-archive"
-    | "pptx";
+    | "pptx"
+    | "bilingual-markdown"
+    | "bilingual-html"
+    | "bilingual-markdown-selected"
+    | "bilingual-html-selected";
+  exportScope?: string;
+  translationStatusSummary?: string;
   sourceDocumentId?: string;
   sourceDocumentTitle?: string;
   sourceBookTitle?: string;
@@ -323,6 +329,40 @@ export interface KnowledgeExportResult {
   validation?: ExportValidation;
   historyItem?: ExportHistoryItem;
   error?: string;
+}
+
+export interface BilingualExportScope {
+  type: "full" | "chapter" | "page" | "units";
+  chapterId?: string;
+  pageNumber?: number;
+  unitIds?: string[];
+}
+
+export type BilingualHtmlLayout = "side-by-side" | "stacked";
+
+export interface BilingualExportOptions {
+  format: "markdown" | "html";
+  scope: BilingualExportScope;
+  htmlLayout?: BilingualHtmlLayout;
+}
+
+export interface BilingualExportUnit {
+  unitId: string;
+  sourceHint: string;
+  chapterId?: string;
+  chapterTitle?: string;
+  pageNumber?: number;
+  role?: string;
+  originalText: string;
+  translatedText?: string;
+  translationStatus: "available" | "missing" | "experimental";
+}
+
+export interface TranslationSummary {
+  totalUnits: number;
+  translatedUnits: number;
+  missingUnits: number;
+  experimentalUnits: number;
 }
 
 export interface TranslationProfile {
