@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import type { DocumentAnalysisRecord } from "../main/analysis/analysisService.js";
+import type { DocumentChatMessage } from "../main/chat/documentChatService.js";
+import type { UnifiedDocument, UnifiedDocumentOutlineNode } from "../shared/documentModel.js";
 import type { ExternalEpubCheckReport, ImportedBook, ImportedDocument, ImportedPdfDocument, PdfValidationReport, TranslationProgress, TranslationSettings, ValidationReport } from "../shared/types.js";
 import { BookInfoCard } from "./components/BookInfoCard.js";
 import { ChapterList } from "./components/ChapterList.js";
@@ -36,9 +39,15 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [canExport, setCanExport] = useState(false);
   const [activeTab, setActiveTab] = useState<"translate" | "jobs" | "exports" | "settings">("translate");
+  const [documents, setDocuments] = useState<UnifiedDocument[]>([]);
+  const [currentDocument, setCurrentDocument] = useState<UnifiedDocument | null>(null);
+  const [analysis, setAnalysis] = useState<DocumentAnalysisRecord | null>(null);
+  const [chatMessages, setChatMessages] = useState<DocumentChatMessage[]>([]);
+  const [chatQuestion, setChatQuestion] = useState("");
 
   useEffect(() => {
     void window.bookTrans.getSettings().then(setSettings);
+    void refreshDocumentLibrary();
     return window.bookTrans.onProgress((next: TranslationProgress) => {
       setProgress(next);
       setBusy(next.status === "translating" || next.status === "pending");
@@ -75,6 +84,32 @@ export function App() {
     } else {
       setMessage(`已导入《${imported.metadata.title}》。`);
     }
+    await refreshDocumentLibrary(imported);
+  }
+
+  async function refreshDocumentLibrary(imported?: ImportedDocument) {
+    const result = await window.bookTrans.listDocuments();
+    if (!result.ok || !result.data) {
+      return;
+    }
+    setDocuments(result.data);
+    const sourcePath = imported ? getImportedSourcePath(imported) : currentDocument?.sourcePath;
+    const selected = sourcePath ? result.data.find((document) => document.sourcePath === sourcePath) : result.data[0];
+    if (selected) {
+      setCurrentDocument(selected);
+      const existingAnalysis = await window.bookTrans.getAnalysis(selected.id);
+      setAnalysis(existingAnalysis.ok ? existingAnalysis.data ?? null : null);
+      const existingChat = await window.bookTrans.listDocumentChat(selected.id);
+      setChatMessages(existingChat.ok ? existingChat.data ?? [] : []);
+    }
+  }
+
+  async function selectLibraryDocument(document: UnifiedDocument) {
+    setCurrentDocument(document);
+    const existingAnalysis = await window.bookTrans.getAnalysis(document.id);
+    setAnalysis(existingAnalysis.ok ? existingAnalysis.data ?? null : null);
+    const existingChat = await window.bookTrans.listDocumentChat(document.id);
+    setChatMessages(existingChat.ok ? existingChat.data ?? [] : []);
   }
 
   async function saveSettings(next: TranslationSettings) {
@@ -150,6 +185,52 @@ export function App() {
     setMessage(result.ok ? "已重置本书配置。" : result.error ?? "重置本书配置失败。");
   }
 
+  async function startAnalysis() {
+    if (!currentDocument) {
+      setMessage("请先导入或选择文档。");
+      return;
+    }
+    const result = await window.bookTrans.startAnalysis(currentDocument.id);
+    if (result.ok && result.data) {
+      setAnalysis(result.data);
+      setMessage("分析已完成。");
+    } else {
+      setMessage(formatIpcError(result));
+    }
+  }
+
+  async function askDocument() {
+    if (!currentDocument || !chatQuestion.trim()) {
+      return;
+    }
+    const question = chatQuestion.trim();
+    setChatQuestion("");
+    const result = await window.bookTrans.askDocument(currentDocument.id, question);
+    if (result.ok && result.data) {
+      const list = await window.bookTrans.listDocumentChat(currentDocument.id);
+      setChatMessages(list.ok ? list.data ?? [] : [result.data]);
+      setMessage("问答已生成。");
+    } else {
+      setMessage(formatIpcError(result));
+    }
+  }
+
+  async function exportUnified(kind: "markdown" | "json" | "chat" | "analysis") {
+    if (!currentDocument) {
+      setMessage("请先导入或选择文档。");
+      return;
+    }
+    const result =
+      kind === "markdown"
+        ? await window.bookTrans.exportDocumentMarkdown(currentDocument.id)
+        : kind === "json"
+          ? await window.bookTrans.exportDocumentJson(currentDocument.id)
+          : kind === "chat"
+            ? await window.bookTrans.exportChatMarkdown(currentDocument.id)
+            : await window.bookTrans.exportAnalysisMarkdown(currentDocument.id);
+    setMessage(result.ok ? (result.data ? `已导出：${result.data}` : "已取消导出。") : formatIpcError(result));
+  }
+
   function acceptExportResult(result: Awaited<ReturnType<typeof window.bookTrans.exportEpub>>) {
     setValidation(result.validation);
     setExternalValidation("externalValidation" in result ? result.externalValidation : undefined);
@@ -164,15 +245,15 @@ export function App() {
     <main className="app-shell">
       <header className="app-header">
         <div>
-          <h1>BookTrans Desk</h1>
-          <p>AI 电子书翻译工作台</p>
+          <h1>DocuMuse Studio</h1>
+          <p>本地优先的 AI 阅读、翻译、分析与知识导出桌面工作台</p>
         </div>
         <div className={`status-pill ${topStatus.tone}`}>{topStatus.label}</div>
       </header>
 
       <nav className="app-tabs" aria-label="主导航">
-        <button className={activeTab === "translate" ? "active" : ""} onClick={() => setActiveTab("translate")}>
-          翻译工作台
+        <button className={activeTab === "translate" ? "active" : ""} title="翻译工作台" onClick={() => setActiveTab("translate")}>
+          阅读
         </button>
         <button className={activeTab === "jobs" ? "active" : ""} onClick={() => setActiveTab("jobs")}>
           任务
@@ -191,6 +272,7 @@ export function App() {
           <section className="workspace-grid">
             <aside className="sidebar">
               <ImportPanel onImport={importBook} busy={busy} />
+              <DocumentLibraryPanel documents={documents} currentDocument={currentDocument} onSelect={selectLibraryDocument} />
               <TranslationSettingsPanel settings={settings} onSave={saveSettings} onTestConnection={testTranslatorConnection} busy={busy} glossaryCount={glossaryCount} />
               <div className="actions">
                 <button className="primary" onClick={startTranslation} disabled={!book || busy || (isPdf(book) && book.isScannedLike)}>
@@ -212,9 +294,13 @@ export function App() {
                   重置本书配置
                 </button>
               </div>
+              <AnalysisPanel analysis={analysis} onStart={startAnalysis} disabled={!currentDocument} />
+              <ChatPanel messages={chatMessages} question={chatQuestion} onQuestion={setChatQuestion} onAsk={askDocument} disabled={!currentDocument} />
+              <ExportPanel disabled={!currentDocument} hasAnalysis={Boolean(analysis)} hasChat={chatMessages.length > 0} onExport={exportUnified} />
             </aside>
 
             <section className="content">
+              <DocumentOverview document={currentDocument} />
               <BookInfoCard book={book} />
               <ChapterList document={book} progress={progress.chapters} />
               <ProgressPanel progress={progress} percent={percent} message={message} validation={validation} />
@@ -269,6 +355,201 @@ function WorkflowSteps({ bookReady, busy, canExport }: { bookReady: boolean; bus
   );
 }
 
+function DocumentLibraryPanel({
+  documents,
+  currentDocument,
+  onSelect
+}: {
+  documents: UnifiedDocument[];
+  currentDocument: UnifiedDocument | null;
+  onSelect: (document: UnifiedDocument) => void;
+}) {
+  return (
+    <section className="panel document-library-panel">
+      <div className="panel-title-row">
+        <div>
+          <p className="section-kicker">文档库</p>
+          <h2>当前导入文档</h2>
+        </div>
+        <span className="mini-count">{documents.length}</span>
+      </div>
+      <div className="document-library-list">
+        {documents.length ? (
+          documents.map((document) => (
+            <button className={`document-library-row ${currentDocument?.id === document.id ? "active" : ""}`} key={document.id} onClick={() => onSelect(document)}>
+              <strong>{document.title}</strong>
+              <span>
+                {document.sourceFormat.toUpperCase()} · {documentKindLabel(document)} · {document.units.length} units
+              </span>
+            </button>
+          ))
+        ) : (
+          <p className="empty-hint">导入 PDF / EPUB 后会在这里出现统一文档快照。</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function DocumentOverview({ document }: { document: UnifiedDocument | null }) {
+  if (!document) {
+    return (
+      <section className="panel reading-panel">
+        <p className="section-kicker">阅读</p>
+        <h2>文档概览</h2>
+        <p className="empty-hint">导入或选择文档后，这里会显示文档类型、解析结构、来源定位和原文片段。</p>
+      </section>
+    );
+  }
+  return (
+    <section className="panel reading-panel">
+      <p className="section-kicker">阅读</p>
+      <div className="panel-title-row">
+        <div>
+          <h2>{document.title}</h2>
+          <p className="muted">来源定位：{document.sourcePath}</p>
+        </div>
+        <span className="source-format">{document.sourceFormat.toUpperCase()}</span>
+      </div>
+      <dl className="structure-grid">
+        <div>
+          <dt>文档类型</dt>
+          <dd>{documentKindLabel(document)}</dd>
+        </div>
+        <div>
+          <dt>解析结构</dt>
+          <dd>
+            {document.chapters.length} chapters / {document.units.length} units
+          </dd>
+        </div>
+        <div>
+          <dt>来源定位</dt>
+          <dd>{document.diagnostics.pageCount ? `${document.diagnostics.pageCount} pages` : document.sourceFormat.toUpperCase()}</dd>
+        </div>
+      </dl>
+      <div className="outline-preview">
+        <h3>解析结构</h3>
+        {document.outline.length ? <OutlineList nodes={document.outline.slice(0, 8)} /> : <p className="empty-hint">暂无 outline。</p>}
+      </div>
+      <div className="unit-preview">
+        <h3>原文片段</h3>
+        {document.units.slice(0, 4).map((unit) => (
+          <article key={unit.id}>
+            <span>{[unit.chapterTitle, unit.pageNumber ? `Page ${unit.pageNumber}` : undefined].filter(Boolean).join(" · ") || unit.role}</span>
+            <p>{unit.text}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function OutlineList({ nodes }: { nodes: UnifiedDocumentOutlineNode[] }) {
+  return (
+    <ul>
+      {nodes.map((node) => (
+        <li key={node.id}>
+          {node.title}
+          {node.children.length ? <OutlineList nodes={node.children.slice(0, 4)} /> : null}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function AnalysisPanel({ analysis, onStart, disabled }: { analysis: DocumentAnalysisRecord | null; onStart: () => void; disabled: boolean }) {
+  return (
+    <section className="panel compact-tool-panel">
+      <div className="panel-title-row">
+        <div>
+          <p className="section-kicker">分析</p>
+          <h2>快速分析</h2>
+        </div>
+        <button onClick={onStart} disabled={disabled}>
+          分析
+        </button>
+      </div>
+      {analysis ? (
+        <>
+          <p>{analysis.summary}</p>
+          <ul>{analysis.keyPoints.slice(0, 4).map((point) => <li key={point}>{point}</li>)}</ul>
+        </>
+      ) : (
+        <p className="empty-hint">先使用本地轻量分析，后续接入完整 chunked LLM 分析。</p>
+      )}
+    </section>
+  );
+}
+
+function ChatPanel({
+  messages,
+  question,
+  onQuestion,
+  onAsk,
+  disabled
+}: {
+  messages: DocumentChatMessage[];
+  question: string;
+  onQuestion: (value: string) => void;
+  onAsk: () => void;
+  disabled: boolean;
+}) {
+  const lastAnswer = [...messages].reverse().find((message) => message.role === "assistant");
+  return (
+    <section className="panel compact-tool-panel">
+      <p className="section-kicker">问答</p>
+      <h2>文档问答</h2>
+      <div className="qa-form">
+        <input value={question} onChange={(event) => onQuestion(event.target.value)} placeholder="询问当前文档" disabled={disabled} />
+        <button onClick={onAsk} disabled={disabled || !question.trim()}>
+          问答
+        </button>
+      </div>
+      {lastAnswer ? (
+        <div className="chat-answer">
+          <p>{lastAnswer.content}</p>
+          <small>来源定位：{lastAnswer.sources?.map((source) => source.pageNumber ? `${source.unitId} / page ${source.pageNumber}` : source.unitId).join(", ")}</small>
+        </div>
+      ) : (
+        <p className="empty-hint">使用关键词检索返回带来源的回答。</p>
+      )}
+    </section>
+  );
+}
+
+function ExportPanel({
+  disabled,
+  hasAnalysis,
+  hasChat,
+  onExport
+}: {
+  disabled: boolean;
+  hasAnalysis: boolean;
+  hasChat: boolean;
+  onExport: (kind: "markdown" | "json" | "chat" | "analysis") => void;
+}) {
+  return (
+    <section className="panel compact-tool-panel">
+      <p className="section-kicker">导出</p>
+      <h2>知识导出</h2>
+      <div className="inline-actions">
+        <button onClick={() => onExport("markdown")} disabled={disabled}>
+          Markdown
+        </button>
+        <button onClick={() => onExport("json")} disabled={disabled}>
+          JSON
+        </button>
+        <button onClick={() => onExport("chat")} disabled={disabled || !hasChat}>
+          Chat Markdown
+        </button>
+        <button onClick={() => onExport("analysis")} disabled={disabled || !hasAnalysis}>
+          Analysis Markdown
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function isPdf(document: ImportedDocument | null): document is ImportedPdfDocument {
   return document?.type === "pdf";
 }
@@ -282,6 +563,14 @@ function getDocumentTitle(document: ImportedDocument | null): string {
     return "BookTrans Desk";
   }
   return isPdf(document) ? document.title ?? "PDF" : document.metadata.title;
+}
+
+function getImportedSourcePath(document: ImportedDocument): string {
+  return isPdf(document) ? document.filePath : document.filePath;
+}
+
+function documentKindLabel(document: UnifiedDocument): string {
+  return document.documentKind?.kind ?? "unknown";
 }
 
 function getTopStatus({
