@@ -84,7 +84,7 @@ Result:
 
 ## Stage S3: PDF Reading / Analysis / Chat UI Closure
 
-Status: planned.
+Status: complete.
 
 Goal:
 
@@ -92,4 +92,37 @@ Goal:
 - PDF reader shows pages, paragraph counts, document kind, outline, page/paragraph sources, and text preview.
 - Quick analysis and document chat work against PDF units and source pages.
 - Markdown/JSON/Chat Markdown export works for PDF snapshots.
+- PDF translation remains HOLD for public release.
+
+Completion standard:
+
+- `npm run build` passes.
+- `npm test` passes.
+- `npm run release:check` passes.
+- S3 report is recorded in `docs/merge/PHASE_S3_PDF_READING_ANALYSIS_CHAT_REPORT.md`.
+
+Result:
+
+- PDF snapshots open in the unified workspace with a page-oriented reader.
+- Page selection displays page paragraphs with sourceHint, role, unit id, page number, and available bbox metadata.
+- Quick analysis and document chat reuse the existing local lightweight services for PDF units.
+- Markdown, JSON, Chat Markdown, and Analysis Markdown export work for PDF snapshots.
+- PDF translation remains experimental and public release remains HOLD.
+
+## Stage S4: Persistent Analysis / Chat State
+
+Status: planned.
+
+Goal:
+
+- Persist analysis records and chat histories per UnifiedDocument snapshot instead of keeping them only in memory.
+- Reopen the app and recover the latest analysis/chat state from the local document library.
+- Keep API keys out of persisted analysis/chat records.
+- Add clear/delete controls for analysis and chat state.
+
+Completion standard:
+
+- EPUB and PDF documents can be reopened with their saved analysis/chat records.
+- `npm run build`, `npm test`, and `npm run release:check` pass.
+- Existing EPUB translation and PDF experimental translation flows remain unchanged.
 - PDF translation remains HOLD for public release.

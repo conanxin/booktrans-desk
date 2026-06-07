@@ -1,6 +1,7 @@
 import type { DocumentAnalysisRecord } from "../analysis/analysisService.js";
 import type { DocumentChatMessage } from "../chat/documentChatService.js";
 import type { UnifiedDocument, UnifiedDocumentOutlineNode } from "../../shared/documentModel.js";
+import { getUnitSourceHint } from "../../shared/documentReaderUtils.js";
 
 export function unifiedDocumentToMarkdown(document: UnifiedDocument): string {
   const lines = [
@@ -18,7 +19,7 @@ export function unifiedDocumentToMarkdown(document: UnifiedDocument): string {
     "",
     "## Content",
     ...document.units.map((unit) => {
-      const source = [unit.chapterTitle, unit.pageNumber ? `page ${unit.pageNumber}` : undefined].filter(Boolean).join(", ");
+      const source = [getUnitSourceHint(unit), unit.pageNumber ? `page ${unit.pageNumber}` : undefined, unit.role].filter(Boolean).join(", ");
       return [`### ${unit.id}`, source ? `Source: ${source}` : undefined, "", unit.text].filter(Boolean).join("\n");
     })
   ];
@@ -35,7 +36,7 @@ export function chatToMarkdown(title: string, messages: DocumentChatMessage[]): 
             "",
             "Sources:",
             ...message.sources.map((source) => {
-              const locator = [source.unitId, source.pageNumber ? `page ${source.pageNumber}` : undefined].filter(Boolean).join(", ");
+              const locator = [source.unitId, source.pageNumber ? `page ${source.pageNumber}` : undefined, source.role].filter(Boolean).join(", ");
               return `- ${source.sourceHint || source.unitId} (${locator}): ${source.quote}`;
             })
           ]

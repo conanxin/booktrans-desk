@@ -1,4 +1,5 @@
 import type { UnifiedDocument } from "../../shared/documentModel.js";
+import { getUnitSourceHint } from "../../shared/documentReaderUtils.js";
 
 export interface DocumentChatSource {
   unitId: string;
@@ -6,6 +7,7 @@ export interface DocumentChatSource {
   pageNumber?: number;
   chapterId?: string;
   chapterTitle?: string;
+  role?: string;
   quote: string;
   score: number;
 }
@@ -71,26 +73,14 @@ function retrieveSources(document: UnifiedDocument, question: string): DocumentC
   const fallback = scored.length ? scored : document.units.filter((unit) => unit.text.trim()).slice(0, 2).map((unit) => ({ unit, score: 0 }));
   return fallback.map(({ unit, score }) => ({
     unitId: unit.id,
-    sourceHint: buildSourceHint(unit.chapterTitle, unit.pageNumber, unit.id),
+    sourceHint: getUnitSourceHint(unit),
     pageNumber: unit.pageNumber,
     chapterId: unit.chapterId,
     chapterTitle: unit.chapterTitle,
+    role: unit.role,
     quote: trimQuote(unit.text),
     score
   }));
-}
-
-function buildSourceHint(chapterTitle: string | undefined, pageNumber: number | undefined, unitId: string): string {
-  if (chapterTitle && pageNumber) {
-    return `${chapterTitle}, page ${pageNumber}`;
-  }
-  if (chapterTitle) {
-    return chapterTitle;
-  }
-  if (pageNumber) {
-    return `Page ${pageNumber}`;
-  }
-  return unitId;
 }
 
 function buildAnswer(question: string, sources: DocumentChatSource[]): string {

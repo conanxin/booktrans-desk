@@ -8,7 +8,7 @@ describe("DocumentChatService", () => {
     const answer = service.ask(documentFixture(), "What does the document say about revenue?");
 
     expect(answer.role).toBe("assistant");
-    expect(answer.sources?.[0]).toMatchObject({ unitId: "unit-2", pageNumber: 2, sourceHint: "Page 2" });
+    expect(answer.sources?.[0]).toMatchObject({ unitId: "unit-2", pageNumber: 2, sourceHint: "Page 2", role: "paragraph" });
     expect(answer.content).toContain("Revenue increased");
     expect(service.list("doc")).toHaveLength(2);
   });

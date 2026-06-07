@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { DocumentAnalysisRecord } from "../main/analysis/analysisService.js";
 import type { DocumentChatMessage } from "../main/chat/documentChatService.js";
 import type { UnifiedDocument, UnifiedDocumentOutlineNode } from "../shared/documentModel.js";
+import { formatBoundingBox, getDocumentChapters, getDocumentPages, getUnitSourceHint, getUnitsForChapter, getUnitsForPage } from "../shared/documentReaderUtils.js";
 import type { ExternalEpubCheckReport, ImportedBook, ImportedDocument, ImportedPdfDocument, PdfValidationReport, TranslationProgress, TranslationSettings, ValidationReport } from "../shared/types.js";
 import { BookInfoCard } from "./components/BookInfoCard.js";
 import { ChapterList } from "./components/ChapterList.js";
@@ -42,6 +43,7 @@ export function App() {
   const [documents, setDocuments] = useState<UnifiedDocument[]>([]);
   const [currentDocument, setCurrentDocument] = useState<UnifiedDocument | null>(null);
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
+  const [selectedPageNumber, setSelectedPageNumber] = useState<number | null>(null);
   const [analysis, setAnalysis] = useState<DocumentAnalysisRecord | null>(null);
   const [analysisStatus, setAnalysisStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [analysisError, setAnalysisError] = useState("");
@@ -102,6 +104,7 @@ export function App() {
     if (!result.data.length) {
       setCurrentDocument(null);
       setSelectedChapterId(null);
+      setSelectedPageNumber(null);
       setAnalysis(null);
       setAnalysisStatus("idle");
       setAnalysisError("");
@@ -123,7 +126,8 @@ export function App() {
 
   async function loadUnifiedDocument(document: UnifiedDocument) {
     setCurrentDocument(document);
-    setSelectedChapterId(document.chapters[0]?.id ?? null);
+    setSelectedChapterId(document.sourceFormat === "pdf" ? null : document.chapters[0]?.id ?? null);
+    setSelectedPageNumber(document.sourceFormat === "pdf" ? getDocumentPages(document)[0]?.pageNumber ?? null : null);
     setAnalysisStatus("idle");
     setAnalysisError("");
     setChatStatus("idle");
@@ -147,6 +151,7 @@ export function App() {
       if (currentDocument?.id === document.id) {
         setCurrentDocument(null);
         setSelectedChapterId(null);
+        setSelectedPageNumber(null);
         setAnalysis(null);
         setAnalysisStatus("idle");
         setAnalysisError("");
@@ -367,7 +372,13 @@ export function App() {
             </aside>
 
             <section className="content">
-              <DocumentOverview document={currentDocument} selectedChapterId={selectedChapterId} onSelectChapter={setSelectedChapterId} />
+              <DocumentOverview
+                document={currentDocument}
+                selectedChapterId={selectedChapterId}
+                selectedPageNumber={selectedPageNumber}
+                onSelectChapter={setSelectedChapterId}
+                onSelectPage={setSelectedPageNumber}
+              />
               <BookInfoCard book={book} />
               <ChapterList document={book} progress={progress.chapters} />
               <ProgressPanel progress={progress} percent={percent} message={message} validation={validation} />
@@ -473,11 +484,15 @@ function DocumentLibraryPanel({
 function DocumentOverview({
   document,
   selectedChapterId,
-  onSelectChapter
+  selectedPageNumber,
+  onSelectChapter,
+  onSelectPage
 }: {
   document: UnifiedDocument | null;
   selectedChapterId: string | null;
+  selectedPageNumber: number | null;
   onSelectChapter: (chapterId: string) => void;
+  onSelectPage: (pageNumber: number) => void;
 }) {
   if (!document) {
     return (
@@ -488,8 +503,12 @@ function DocumentOverview({
       </section>
     );
   }
-  const selectedChapter = document.chapters.find((chapter) => chapter.id === selectedChapterId) ?? document.chapters[0] ?? null;
-  const selectedUnits = selectedChapter ? document.units.filter((unit) => selectedChapter.unitIds.includes(unit.id)) : document.units.slice(0, 1);
+  if (document.sourceFormat === "pdf") {
+    return <PdfDocumentReader document={document} selectedPageNumber={selectedPageNumber} onSelectPage={onSelectPage} />;
+  }
+  const chapters = getDocumentChapters(document);
+  const selectedChapter = chapters.find((chapter) => chapter.id === selectedChapterId) ?? chapters[0] ?? null;
+  const selectedUnits = selectedChapter ? getUnitsForChapter(document, selectedChapter.id) : document.units.slice(0, 1);
   const sourceFileName = document.sourcePath.replace(/\\/g, "/").split("/").pop() ?? document.sourcePath;
   return (
     <section className="panel reading-panel">
@@ -510,7 +529,7 @@ function DocumentOverview({
         <div>
           <dt>解析结构</dt>
           <dd>
-            {document.chapters.length} chapters / {document.units.length} units
+            {chapters.length} chapters / {document.units.length} units
           </dd>
         </div>
         <div>
@@ -520,9 +539,9 @@ function DocumentOverview({
       </dl>
       <div className="outline-preview">
         <h3>章节列表</h3>
-        {document.chapters.length ? (
+        {chapters.length ? (
           <div className="reader-chapter-list">
-            {document.chapters.map((chapter) => (
+            {chapters.map((chapter) => (
               <button className={selectedChapter?.id === chapter.id ? "active" : ""} key={chapter.id} onClick={() => onSelectChapter(chapter.id)}>
                 <span>{chapter.order + 1}</span>
                 <strong>{chapter.title}</strong>
@@ -550,6 +569,107 @@ function DocumentOverview({
             <p>{unit.text}</p>
           </article>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function PdfDocumentReader({ document, selectedPageNumber, onSelectPage }: { document: UnifiedDocument; selectedPageNumber: number | null; onSelectPage: (pageNumber: number) => void }) {
+  const pages = getDocumentPages(document);
+  const activePage = selectedPageNumber ?? pages[0]?.pageNumber ?? null;
+  const selectedUnits = getUnitsForPage(document, activePage);
+  const sourceFileName = document.sourcePath.replace(/\\/g, "/").split("/").pop() ?? document.sourcePath;
+  const textStatus = document.diagnostics.isScannedLike ? "text-sparse / scanned-like" : "text extracted";
+  const layoutStatus = document.units.some((unit) => unit.bbox) ? "layout-aware blocks available" : "paragraph positions limited";
+  return (
+    <section className="panel reading-panel">
+      <p className="section-kicker">PDF 阅读</p>
+      <div className="panel-title-row">
+        <div>
+          <h2>{document.title}</h2>
+          <p className="muted">文件名：{sourceFileName}</p>
+          <p className="muted">来源定位：{document.sourcePath}</p>
+        </div>
+        <span className="source-format">PDF</span>
+      </div>
+      <dl className="structure-grid">
+        <div>
+          <dt>文档类型</dt>
+          <dd>{documentKindLabel(document)}</dd>
+        </div>
+        <div>
+          <dt>解析结构</dt>
+          <dd>
+            {pages.length || document.diagnostics.pageCount || 0} pages / {document.units.length} units
+          </dd>
+        </div>
+        <div>
+          <dt>布局状态</dt>
+          <dd>{layoutStatus}</dd>
+        </div>
+        <div>
+          <dt>文本状态</dt>
+          <dd>{textStatus}</dd>
+        </div>
+        <div>
+          <dt>段落数量</dt>
+          <dd>{document.units.length}</dd>
+        </div>
+        <div>
+          <dt>PDF 翻译</dt>
+          <dd>HOLD / experimental</dd>
+        </div>
+      </dl>
+      <div className="pdf-hold-notice">
+        <strong>PDF public release remains HOLD.</strong>
+        <span>当前闭环支持 PDF 阅读、快速分析、文档问答和知识导出；PDF 翻译链路仍保留为实验能力，不作为 public release。</span>
+      </div>
+      <div className="outline-preview">
+        <h3>页面列表</h3>
+        {pages.length ? (
+          <div className="reader-page-list">
+            {pages.map((page) => (
+              <button className={activePage === page.pageNumber ? "active" : ""} key={page.pageNumber} onClick={() => onSelectPage(page.pageNumber)}>
+                <strong>Page {page.pageNumber}</strong>
+                <span>
+                  {page.unitCount} units · {page.textLength} chars
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-hint">暂无可阅读页面。扫描版 PDF 需要 OCR，当前阶段不引入 OCR。</p>
+        )}
+      </div>
+      <div className="chapter-reader pdf-page-reader">
+        <div className="panel-title-row">
+          <div>
+            <h3>{activePage ? `Page ${activePage}` : "正文预览"}</h3>
+            <p className="muted">
+              {selectedUnits.length} units · {document.diagnostics.parser}
+            </p>
+          </div>
+        </div>
+        {selectedUnits.length ? (
+          selectedUnits.map((unit) => {
+            const bbox = formatBoundingBox(unit);
+            return (
+              <article className="pdf-paragraph" key={unit.id}>
+                <div className="source-meta-row">
+                  <span>{getUnitSourceHint(unit)}</span>
+                  <em className="role-badge">{unit.role}</em>
+                </div>
+                <p>{unit.text}</p>
+                <small className="source-meta">
+                  unit {unit.id}
+                  {bbox ? ` · bbox ${bbox}` : ""}
+                </small>
+              </article>
+            );
+          })
+        ) : (
+          <p className="empty-hint">当前页面没有可显示文本。</p>
+        )}
       </div>
     </section>
   );

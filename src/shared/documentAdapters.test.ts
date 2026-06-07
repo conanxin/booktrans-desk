@@ -28,6 +28,9 @@ describe("document adapters", () => {
     expect(document.units[0].role).toBe("title");
     expect(document.units[1].pageNumber).toBe(1);
     expect(document.units[2].pageNumber).toBe(2);
+    expect(document.units[0].metadata?.sourceHint).toBe("Page 1 - title - paragraph 1");
+    expect(document.units[1].metadata?.sourceHint).toBe("Page 1 - paragraph 2");
+    expect(document.units[1].bbox).toEqual({ x: 12, y: 40, width: 300, height: 24 });
     expect(document.diagnostics.pageCount).toBe(2);
   });
 
@@ -113,7 +116,7 @@ function createPdf(overrides: Partial<ImportedPdfDocument> = {}): ImportedPdfDoc
         text: "Heading\n\nBody one",
         paragraphs: [
           { id: "p1-title", pageNumber: 1, index: 0, text: "Heading", role: "title" },
-          { id: "p1-body", pageNumber: 1, index: 1, text: "Body one", role: "body-left-column" }
+          { id: "p1-body", pageNumber: 1, index: 1, text: "Body one", role: "body-left-column", bbox: { x: 12, y: 40, width: 300, height: 24 } }
         ]
       },
       {
@@ -125,4 +128,3 @@ function createPdf(overrides: Partial<ImportedPdfDocument> = {}): ImportedPdfDoc
     ...overrides
   };
 }
-

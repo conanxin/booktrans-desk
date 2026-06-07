@@ -85,11 +85,12 @@ export function fromImportedPdfDocument(pdf: ImportedPdfDocument): UnifiedDocume
     const pageUnitIds: string[] = [];
     for (const paragraph of [...page.paragraphs].sort((left, right) => left.index - right.index)) {
       const unitId = stableId("unit", [documentId, String(page.pageNumber), paragraph.id, String(paragraph.index), paragraph.text]);
+      const mappedRole = mapPdfRole(paragraph.role);
       units.push({
         id: unitId,
         documentId,
         sourceFormat: "pdf",
-        role: mapPdfRole(paragraph.role),
+        role: mappedRole,
         text: paragraph.text,
         order: units.length,
         chapterId,
@@ -99,7 +100,8 @@ export function fromImportedPdfDocument(pdf: ImportedPdfDocument): UnifiedDocume
         metadata: {
           originalParagraphId: paragraph.id,
           paragraphIndex: paragraph.index,
-          pdfRole: paragraph.role
+          pdfRole: paragraph.role,
+          sourceHint: buildPdfSourceHint(page.pageNumber, mappedRole, paragraph.index)
         }
       });
       pageUnitIds.push(unitId);
@@ -183,6 +185,11 @@ function fallbackTitleFromPath(filePath: string, fallback: string): string {
   return name || fallback;
 }
 
+function buildPdfSourceHint(pageNumber: number, role: DocumentUnitRole, paragraphIndex: number): string {
+  const roleText = role === "paragraph" ? undefined : role;
+  return [`Page ${pageNumber}`, roleText, `paragraph ${paragraphIndex + 1}`].filter(Boolean).join(" - ");
+}
+
 function stableId(prefix: string, parts: string[]): string {
   return `${prefix}-${hash(parts.join("\u001f"))}`;
 }
@@ -195,4 +202,3 @@ function hash(input: string): string {
   }
   return (value >>> 0).toString(36);
 }
-
