@@ -26,6 +26,7 @@ import { fromImportedBook, fromImportedPdfDocument } from "../shared/documentAda
 import { validationReportToMarkdown } from "../shared/validationReport.js";
 import { getSettings, saveSettings } from "./config/settings.js";
 import { createDocumentLibraryStore } from "./document/documentLibraryStore.js";
+import { detectDocumentKindForDocument } from "./document/documentKindDetector.js";
 import { createDiagnosticBundle, defaultDiagnosticBundleName } from "./diagnostics/createDiagnosticBundle.js";
 import { runExternalEpubCheck } from "./epub/runExternalEpubCheck.js";
 import { readEpub } from "./epub/readEpub.js";
@@ -139,7 +140,8 @@ export function registerIpc(mainWindow: BrowserWindow): void {
     lastPdfResult = null;
     if (extension === ".pdf") {
       currentPdf = await readPdf(filePath);
-      currentUnifiedDocument = await documentLibrary().importDocumentSnapshot(fromImportedPdfDocument(currentPdf));
+      currentUnifiedDocument = withDetectedDocumentKind(fromImportedPdfDocument(currentPdf));
+      currentUnifiedDocument = await documentLibrary().importDocumentSnapshot(currentUnifiedDocument);
       return currentPdf;
     }
     currentBook = await readEpub(filePath);
@@ -157,7 +159,8 @@ export function registerIpc(mainWindow: BrowserWindow): void {
         style: loadedProfile.style
       });
     }
-    currentUnifiedDocument = await documentLibrary().importDocumentSnapshot(fromImportedBook(currentBook));
+    currentUnifiedDocument = withDetectedDocumentKind(fromImportedBook(currentBook));
+    currentUnifiedDocument = await documentLibrary().importDocumentSnapshot(currentUnifiedDocument);
     return currentBook;
   });
 
@@ -501,4 +504,11 @@ function reportToMarkdown(
 
 function isPdfValidationReport(report: ValidationReport | PdfValidationReport): report is PdfValidationReport {
   return "fileSize" in report || "pageCount" in report;
+}
+
+function withDetectedDocumentKind(document: UnifiedDocument): UnifiedDocument {
+  return {
+    ...document,
+    documentKind: detectDocumentKindForDocument(document)
+  };
 }
